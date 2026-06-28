@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0d0d0d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Guido PRO">
+<title>Guido PRO</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+:root {
+  --gold: #c9a84c; --gold2: #a07830; --bg: #0d0d0d; --bg2: #161410;
+  --bg3: #1e1c18; --border: #2a2010; --text: #e8e0d0;
+  --muted: #8a7a60; --dim: #6a5a40; --green: #4caf80; --red: #cf4a4a; --blue: #4a8fbf;
+  --c1: #c9a84c; --c2: #4a8fbf; --c3: #4abf7a;
+}
+html, body { background: var(--bg); color: var(--text); font-family: Georgia, serif; min-height: 100vh; font-size: 16px; }
+body { max-width: 500px; margin: 0 auto; padding-bottom: 100px; overflow-x: hidden; }
+
+/* ── PIN ── */
+#pin-screen { position: fixed; inset: 0; background: var(--bg); z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 30px; }
+.pin-logo { font-size: 52px; color: var(--gold); margin-bottom: 10px; }
+.pin-title { font-size: 24px; font-weight: 700; color: var(--gold); letter-spacing: 2px; margin-bottom: 6px; }
+.pin-sub { font-size: 15px; color: var(--muted); margin-bottom: 40px; }
+#pin-dots { display: flex; gap: 18px; margin-bottom: 36px; }
+.pin-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); transition: all 0.15s; }
+.pin-dot.filled { background: var(--gold); border-color: var(--gold); }
+#pin-error { font-size: 14px; color: #bf4a4a; margin-bottom: 16px; min-height: 20px; text-align: center; }
+#pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; width: 100%; max-width: 290px; }
+.pin-key { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 20px 10px; font-size: 24px; font-weight: 700; color: var(--text); cursor: pointer; text-align: center; font-family: Georgia, serif; user-select: none; }
+.pin-key:active { background: var(--bg3); }
+.pin-key.del { font-size: 20px; color: var(--muted); }
+.pin-key.empty { background: transparent; border-color: transparent; cursor: default; }
+#pin-change-btn { margin-top: 28px; background: none; border: none; color: var(--dim); font-size: 13px; cursor: pointer; font-family: Georgia, serif; text-decoration: underline; }
+
+/* ── CENTER SELECTOR ── */
+#center-screen { position: fixed; inset: 0; background: var(--bg); z-index: 998; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 30px 24px; }
+#center-screen.show { display: flex; }
+.center-title { font-size: 28px; font-weight: 700; color: var(--gold); letter-spacing: 2px; margin-bottom: 6px; }
+.center-sub { font-size: 14px; color: var(--muted); margin-bottom: 40px; text-align: center; }
+.center-btn { width: 100%; max-width: 320px; padding: 20px 24px; border-radius: 14px; border: 2px solid; cursor: pointer; font-family: Georgia, serif; margin-bottom: 14px; display: flex; align-items: center; gap: 16px; transition: all 0.2s; }
+.center-btn:active { opacity: 0.8; }
+.center-btn-icon { font-size: 28px; flex-shrink: 0; }
+.center-btn-info { text-align: left; }
+.center-btn-name { font-size: 17px; font-weight: 700; }
+.center-btn-meta { font-size: 12px; margin-top: 3px; opacity: 0.7; }
+.center-btn-1 { background: #1a1408; border-color: var(--gold); color: var(--gold); }
+.center-btn-2 { background: #0a1420; border-color: var(--blue); color: var(--blue); }
+.center-btn-3 { background: #0a1a0a; border-color: var(--green); color: var(--green); }
+.center-btn-4 { background: #180a2a; border-color: #9a6abf; color: #9a6abf; }
+.m-desc { font-size: 11px; color: var(--dim); margin-top: 3px; line-height: 1.4; font-style: italic; }
+
+/* ── MODALS ── */
+.modal-overlay { display: none; position: fixed; inset: 0; background: #000c; z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.open { display: flex; }
+.modal-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 100%; max-width: 340px; max-height: 90vh; overflow-y: auto; }
+.modal-box h3 { color: var(--gold); font-size: 17px; margin-bottom: 16px; }
+.modal-box input, .modal-box select, .modal-box textarea { width: 100%; background: var(--bg); border: 1px solid #333; border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: 16px; font-family: Georgia, serif; outline: none; margin-bottom: 10px; color-scheme: dark; resize: none; }
+.modal-box input[type=password] { font-size: 22px; font-family: monospace; letter-spacing: 10px; text-align: center; }
+.modal-btns { display: flex; gap: 10px; margin-top: 6px; }
+.modal-save { flex: 1; background: linear-gradient(135deg,var(--gold),var(--gold2)); border: none; border-radius: 9px; padding: 12px; color: #0d0d0d; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Georgia,serif; }
+.modal-cancel { flex: 1; background: var(--bg3); border: 1px solid #333; border-radius: 9px; padding: 12px; color: var(--muted); font-size: 15px; cursor: pointer; font-family: Georgia,serif; }
+.modal-err { font-size: 13px; color: #bf4a4a; min-height: 18px; margin-bottom: 4px; }
+
+/* ── HEADER ── */
+#header { border-bottom: 1px solid var(--border); padding: 12px 15px; display: flex; align-items: center; gap: 11px; position: sticky; top: 0; z-index: 100; }
+#hamburger { background: none; border: none; color: var(--gold); font-size: 28px; cursor: pointer; padding: 0; line-height: 1; flex-shrink: 0; }
+.h-logo { font-size: 20px; flex-shrink: 0; }
+.h-info { flex: 1; }
+.h-title { font-size: 15px; font-weight: 700; letter-spacing: 1px; }
+.h-center { font-size: 10px; margin-top: 1px; opacity: 0.8; }
+#h-accum { text-align: right; display: none; }
+.h-total { font-size: 15px; font-weight: 700; }
+.h-label { font-size: 10px; margin-top: 1px; opacity: 0.7; }
+#switch-center-btn { background: none; border: 1px solid; border-radius: 7px; padding: 5px 9px; font-size: 11px; cursor: pointer; font-family: Georgia, serif; flex-shrink: 0; }
+#current-page { background: #0f0f0d; border-bottom: 1px solid var(--border); padding: 8px 18px; font-size: 14px; color: var(--muted); }
+#current-page span { font-weight: 700; }
+
+/* ── DRAWER ── */
+#drawer-overlay { position: fixed; inset: 0; background: #000a; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+#drawer-overlay.open { opacity: 1; pointer-events: all; }
+#drawer { position: fixed; top: 0; left: -310px; width: 290px; height: 100vh; background: #0f0e0a; border-right: 1px solid var(--border); z-index: 201; transition: left 0.28s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; }
+#drawer.open { left: 0; }
+.drawer-header { padding: 24px 20px 16px; border-bottom: 1px solid var(--border); }
+.drawer-app-name { font-size: 20px; font-weight: 700; color: var(--gold); letter-spacing: 1px; }
+.drawer-center-name { font-size: 13px; margin-top: 4px; }
+.drawer-nav { flex: 1; padding: 10px 0; overflow-y: auto; }
+.drawer-item { display: flex; align-items: center; gap: 14px; padding: 14px 20px; cursor: pointer; transition: background 0.15s; border-left: 3px solid transparent; }
+.drawer-item:active { background: var(--bg3); }
+.drawer-item.active { background: #1a1408; border-left-color: var(--gold); }
+.drawer-icon { font-size: 19px; width: 24px; text-align: center; flex-shrink: 0; }
+.drawer-label { font-size: 15px; color: var(--text); font-family: Georgia, serif; }
+.drawer-item.active .drawer-label { color: var(--gold); font-weight: 700; }
+.drawer-section { padding: 10px 20px 4px; font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+.drawer-footer { padding: 14px 18px; border-top: 1px solid var(--border); display: flex; gap: 7px; flex-wrap: wrap; }
+.drawer-footer button { flex: 1; min-width: 80px; background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); padding: 8px 8px; font-size: 11px; cursor: pointer; font-family: Georgia, serif; text-align: center; }
+
+/* ── BODY ── */
+#body { padding: 13px 13px 20px; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── CARDS ── */
+.card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+.card-title { font-size: 14px; font-weight: 700; color: var(--gold); margin-bottom: 11px; border-bottom: 1px solid var(--border); padding-bottom: 7px; }
+
+/* ── FORM ── */
+.lbl { display: block; font-size: 11px; color: var(--muted); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+input[type=date], input[type=time], input[type=number], input[type=text], textarea, select {
+  width: 100%; background: var(--bg); border: 1px solid #333; border-radius: 8px;
+  padding: 10px 12px; color: var(--text); font-size: 16px; font-family: Georgia, serif;
+  outline: none; color-scheme: dark; resize: none;
+}
+textarea { min-height: 60px; font-size: 14px; }
+.row2 { display: flex; gap: 10px; margin-top: 10px; }
+.row2 > div { flex: 1; }
+
+/* ── NOTICES ── */
+.notice { border-radius: 10px; padding: 10px 13px; margin-bottom: 11px; font-size: 13px; display: none; line-height: 1.5; }
+.notice.green { background: #0a2010; border: 1px solid #1a5030; color: var(--green); }
+.notice.blue { background: #0a1a2a; border: 1px solid #1a3a5a; color: var(--blue); }
+.notice.amber { background: #1a1000; border: 1px solid #3a2800; color: #bf8a2a; }
+.notice.holiday { background: #1a0a00; border: 1px solid #5a3000; color: #ffaa44; }
+.notice.fatigue { background: #1a0a0a; border: 1px solid #5a2020; color: #ff7777; }
+.notice.red { background: #1a0a0a; border: 1px solid #5a1a1a; color: #ff8888; }
+
+/* ── INSTALL ── */
+#install-banner { display: none; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 11px; align-items: center; gap: 10px; }
+#install-banner.show { display: flex; }
+#install-btn { background: linear-gradient(135deg,var(--gold),var(--gold2)); border: none; border-radius: 8px; color: #0d0d0d; padding: 7px 12px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+#install-close { background: none; border: none; color: #555; font-size: 20px; cursor: pointer; margin-left: auto; }
+
+/* ── DASHBOARD ── */
+.dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 12px; }
+.dash-box { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 13px; text-align: center; }
+.dash-val { font-size: 22px; font-weight: 700; color: var(--text); }
+.dash-val.gold { color: var(--gold); font-size: 18px; }
+.dash-val.green { color: var(--green); }
+.dash-lbl { font-size: 11px; color: var(--dim); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.4px; }
+.dash-pending { background: var(--bg); border: 2px solid #3a2800; border-radius: 12px; padding: 16px; margin-bottom: 12px; text-align: center; }
+.dash-pending-lbl { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+.dash-pending-val { font-size: 32px; font-weight: 700; color: #bf8a2a; }
+.dash-pending-meta { font-size: 12px; color: var(--dim); margin-top: 5px; }
+.center-summary { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 9px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+.cs-name { font-size: 14px; font-weight: 700; }
+.cs-meta { font-size: 11px; color: var(--dim); margin-top: 2px; }
+.cs-total { font-size: 16px; font-weight: 700; }
+.cs-pending { font-size: 11px; text-align: right; margin-top: 2px; }
+
+/* ── MASSAGES ── */
+.massage-row { display: flex; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--bg3); gap: 8px; }
+.massage-row:last-child { border-bottom: none; }
+.m-name { font-size: 13px; color: var(--text); line-height: 1.35; }
+.m-meta { font-size: 11px; color: var(--dim); margin-top: 2px; }
+.counter { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.cnt-btn { width: 30px; height: 30px; background: var(--bg3); border: 1px solid #333; border-radius: 6px; color: var(--gold); font-size: 19px; cursor: pointer; display: flex; align-items: center; justify-content: center; user-select: none; }
+.cnt-num { font-size: 15px; font-weight: 700; color: var(--gold); min-width: 20px; text-align: center; }
+
+/* ── PREVIEW ── */
+.preview-box { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 11px; margin-top: 8px; font-size: 13px; color: var(--muted); }
+.preview-box span { color: var(--gold); font-weight: 700; }
+.total-row { display: flex; justify-content: space-between; font-size: 14px; color: #888; padding: 5px 0; border-bottom: 1px solid #1a1a18; }
+.total-final { display: flex; justify-content: space-between; font-size: 17px; font-weight: 700; color: var(--gold); padding: 8px 0 2px; margin-top: 3px; }
+
+/* ── BUTTONS ── */
+.btn-gold { width: 100%; padding: 13px; background: linear-gradient(135deg,var(--gold),var(--gold2)); border: none; border-radius: 11px; color: #0d0d0d; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Georgia, serif; margin-top: 3px; }
+.btn-gold:disabled { background: var(--bg3); color: #444; cursor: not-allowed; }
+.btn-ghost { width: 100%; padding: 10px; background: none; border: 1px solid #333; border-radius: 11px; color: var(--muted); font-size: 14px; cursor: pointer; font-family: Georgia, serif; margin-top: 7px; display: none; }
+.btn-green { width: 100%; padding: 12px; background: linear-gradient(135deg,#4abf7a,#2a8f5a); border: none; border-radius: 11px; color: #0d0d0d; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Georgia,serif; margin-top: 11px; }
+.btn-blue { width: 100%; padding: 12px; background: linear-gradient(135deg,#2a6abf,#1a4a8f); border: none; border-radius: 11px; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Georgia,serif; margin-top: 8px; }
+
+/* ── HISTORY ── */
+.day-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 9px; overflow: hidden; }
+.day-card.holiday-day { border-color: #5a3000; }
+.day-hdr { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; cursor: pointer; }
+.day-date-txt { font-size: 15px; font-weight: 700; color: var(--text); }
+.day-dow { font-size: 11px; color: var(--dim); }
+.day-meta-txt { font-size: 11px; color: var(--dim); margin-top: 2px; }
+.day-total-txt { font-size: 15px; font-weight: 700; color: var(--gold); text-align: right; }
+.day-eph-txt { font-size: 11px; color: var(--dim); text-align: right; margin-top: 1px; }
+.day-detail { padding: 11px 14px 13px; border-top: 1px solid var(--bg3); background: var(--bg); display: none; }
+.day-detail.open { display: block; }
+.d-row { display: flex; justify-content: space-between; font-size: 13px; color: #888; padding: 4px 0; border-bottom: 1px solid #1a1a18; }
+.d-row span:last-child { color: var(--gold); }
+.action-btns { display: flex; gap: 8px; margin-top: 11px; flex-wrap: wrap; }
+.edit-btn { flex: 1; background: #0a1a2a; border: 1px solid #1a3a5a; border-radius: 7px; color: var(--blue); padding: 8px 9px; font-size: 12px; cursor: pointer; font-family: Georgia, serif; }
+.del-btn { background: none; border: 1px solid #3a1010; border-radius: 7px; color: #804040; padding: 8px 12px; font-size: 12px; cursor: pointer; font-family: Georgia, serif; }
+.wa-btn { background: #0a2a10; border: 1px solid #1a5a20; border-radius: 7px; color: #4abf7a; padding: 8px 10px; font-size: 12px; cursor: pointer; font-family: Georgia, serif; }
+.email-btn { background: #0a1020; border: 1px solid #1a2a4a; border-radius: 7px; color: #6a8abf; padding: 8px 10px; font-size: 12px; cursor: pointer; font-family: Georgia, serif; }
+.del-confirm { display: flex; gap: 8px; margin-top: 11px; }
+.del-yes { background: #3a1010; border: none; border-radius: 7px; color: #ff6060; padding: 8px 13px; font-size: 12px; cursor: pointer; font-family: Georgia, serif; }
+.del-no { background: #1a1a18; border: 1px solid #333; border-radius: 7px; color: #aaa; padding: 8px 13px; font-size: 12px; cursor: pointer; font-family: Georgia, serif; }
+.empty { text-align: center; color: #555; padding: 40px 20px; line-height: 2.2; font-size: 15px; }
+
+/* ── PRO ── */
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 11px; }
+.stat-box { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center; }
+.stat-val { font-size: 20px; font-weight: 700; color: var(--text); }
+.stat-val.gold { font-size: 14px; color: var(--gold); }
+.stat-lbl { font-size: 10px; color: var(--dim); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.4px; }
+.pro-row { display: flex; justify-content: space-between; align-items: flex-start; font-size: 13px; color: #888; padding: 6px 0; border-bottom: 1px solid #1a1a18; }
+.pro-val { color: var(--text); text-align: right; }
+.pro-val.gold { color: var(--gold); font-weight: 700; }
+.pro-sub { font-size: 10px; color: var(--dim); }
+.insight { display: flex; gap: 8px; padding: 8px 10px; background: var(--bg); border-radius: 9px; margin-bottom: 6px; font-size: 13px; color: #aaa; line-height: 1.6; }
+.insight.good { border: 1px solid #4abf7a33; }
+.insight.warn { border: 1px solid #bf8f3a33; }
+.insight.dead { border: 1px solid #bf4a4a33; }
+.insight.info { border: 1px solid #4a8fbf33; }
+.rank-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #1a1a18; gap: 8px; }
+.rank-left { display: flex; align-items: flex-start; gap: 8px; flex: 1; }
+.rank-medal { font-size: 15px; flex-shrink: 0; }
+.rank-name { font-size: 13px; color: var(--text); line-height: 1.3; }
+.rank-sub { font-size: 10px; color: var(--dim); margin-top: 1px; }
+.rank-right { text-align: right; flex-shrink: 0; }
+.rank-earn { font-size: 13px; font-weight: 700; color: var(--gold); }
+.rank-earn-sub { font-size: 10px; color: var(--dim); }
+.goal-bar-wrap { background: var(--bg); border-radius: 100px; height: 9px; overflow: hidden; margin: 7px 0 3px; }
+.goal-bar { height: 100%; background: linear-gradient(90deg,var(--gold2),var(--gold)); border-radius: 100px; transition: width 0.5s; }
+.goal-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); }
+.record-box { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #1a1a18; }
+.record-label { font-size: 13px; color: #888; }
+.record-val { font-size: 14px; font-weight: 700; color: var(--gold); }
+.record-date { font-size: 10px; color: var(--dim); }
+
+/* ── CHART ── */
+.chart-wrap { width: 100%; padding-bottom: 4px; }
+.chart-bars { display: flex; align-items: flex-end; gap: 3px; height: 110px; width: 100%; }
+.chart-bar-wrap { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 0; }
+.chart-bar { width: 100%; border-radius: 3px 3px 0 0; transition: height 0.4s; min-height: 2px; }
+.chart-bar-lbl { font-size: 8px; color: var(--dim); margin-top: 3px; text-align: center; width: 100%; overflow: hidden; white-space: nowrap; }
+.chart-bar-val { font-size: 8px; color: var(--gold); margin-bottom: 2px; text-align: center; width: 100%; overflow: hidden; white-space: nowrap; }
+
+/* ── CALENDAR ── */
+.cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 11px; }
+.cal-title { font-size: 15px; font-weight: 700; color: var(--gold); }
+.cal-nav { background: none; border: 1px solid var(--border); border-radius: 7px; color: var(--gold); padding: 5px 11px; font-size: 16px; cursor: pointer; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.cal-dow { text-align: center; font-size: 10px; color: var(--dim); padding: 3px 0; }
+.cal-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 7px; font-size: 12px; cursor: pointer; }
+.cal-day.empty { background: transparent; cursor: default; }
+.cal-day.weekend { background: #1a1a18; color: #555; }
+.cal-day.holiday { background: #2a1800; color: #ffaa44; border: 1px solid #5a3000; }
+.cal-day.worked { background: #0a2010; color: var(--green); border: 1px solid #1a5030; }
+.cal-day.no-work { background: #1a0a0a; color: #804040; border: 1px solid #3a1010; }
+.cal-day.today-marker { outline: 2px solid var(--gold); }
+.cal-day-num { font-size: 13px; font-weight: 700; }
+.cal-dot { width: 4px; height: 4px; border-radius: 50%; margin-top: 2px; }
+.cal-legend { display: flex; gap: 10px; margin-top: 9px; flex-wrap: wrap; }
+.cal-legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--dim); }
+.cal-legend-dot { width: 9px; height: 9px; border-radius: 2px; }
+
+/* ── SIMULATOR ── */
+.sim-result { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 13px; margin-top: 11px; }
+.sim-line { display: flex; justify-content: space-between; font-size: 13px; color: #888; padding: 4px 0; border-bottom: 1px solid #1a1a18; }
+.sim-total { display: flex; justify-content: space-between; font-size: 17px; font-weight: 700; color: var(--gold); padding: 8px 0 0; margin-top: 3px; }
+
+/* ── PAGOS ── */
+.pending-box { background: var(--bg); border: 1px solid #3a2800; border-radius: 11px; padding: 14px; margin-bottom: 11px; }
+.pending-lbl { font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.pending-val { font-size: 26px; font-weight: 700; color: #bf8a2a; }
+.pending-meta { font-size: 12px; color: var(--dim); margin-top: 4px; }
+.pay-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #1a1a18; }
+.pay-date { font-size: 13px; color: var(--text); }
+.pay-note { font-size: 11px; color: var(--dim); margin-top: 1px; }
+.pay-amount { font-size: 14px; font-weight: 700; color: var(--green); }
+.pay-del { background: none; border: none; color: #804040; font-size: 19px; cursor: pointer; padding: 0 3px; }
+.month-pay-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #1a1a18; }
+.month-pay-name { font-size: 13px; color: var(--text); }
+.month-pay-vals { text-align: right; }
+.month-pay-earned { font-size: 13px; color: var(--gold); }
+.month-pay-paid { font-size: 11px; color: var(--green); }
+.month-pay-pending { font-size: 11px; color: #bf8a2a; }
+
+/* ── EXPORT ── */
+.period-btns { display: flex; gap: 7px; margin-bottom: 11px; flex-wrap: wrap; }
+.period-btn { flex: 1; min-width: 80px; padding: 8px 4px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-size: 12px; cursor: pointer; font-family: Georgia, serif; text-align: center; }
+.period-btn.active { background: var(--bg3); border-color: var(--gold); color: var(--gold); }
+.export-output { background: var(--bg); border: 1px solid #333; border-radius: 9px; padding: 11px; font-size: 11px; color: #aaa; white-space: pre-wrap; font-family: monospace; line-height: 1.7; max-height: 360px; overflow-y: auto; margin-top: 11px; }
+.btn-copy { width: 100%; padding: 12px; background: linear-gradient(135deg,var(--gold),var(--gold2)); border: none; border-radius: 10px; color: #0d0d0d; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Georgia, serif; margin-top: 9px; }
+
+/* ── CONFIG ── */
+.config-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid #1a1a18; gap: 10px; }
+.config-label { font-size: 13px; color: var(--text); flex: 1; }
+.config-sub { font-size: 11px; color: var(--dim); margin-top: 2px; }
+.config-input { width: 90px; background: var(--bg); border: 1px solid #333; border-radius: 7px; padding: 7px 9px; color: var(--text); font-size: 14px; font-family: Georgia, serif; outline: none; text-align: right; color-scheme: dark; flex-shrink: 0; }
+.holiday-tag { display: inline-block; background: #2a1800; border: 1px solid #5a3000; border-radius: 5px; color: #ffaa44; font-size: 11px; padding: 3px 7px; margin: 2px; }
+
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-9px)} 75%{transform:translateX(9px)} }
+</style>
+</head>
+<body>
+
+<!-- PIN -->
+<div id="pin-screen">
+  <div class="pin-logo">✦</div>
+  <div class="pin-title">GUIDO PRO</div>
+  <div class="pin-sub">Sistema de Gestión Profesional</div>
+  <div id="pin-dots">
+    <div class="pin-dot" id="dot-0"></div><div class="pin-dot" id="dot-1"></div>
+    <div class="pin-dot" id="dot-2"></div><div class="pin-dot" id="dot-3"></div>
+  </div>
+  <div id="pin-error"></div>
+  <div id="pin-keypad">
+    <button class="pin-key" onclick="pinKey('1')">1</button><button class="pin-key" onclick="pinKey('2')">2</button><button class="pin-key" onclick="pinKey('3')">3</button>
+    <button class="pin-key" onclick="pinKey('4')">4</button><button class="pin-key" onclick="pinKey('5')">5</button><button class="pin-key" onclick="pinKey('6')">6</button>
+    <button class="pin-key" onclick="pinKey('7')">7</button><button class="pin-key" onclick="pinKey('8')">8</button><button class="pin-key" onclick="pinKey('9')">9</button>
+    <button class="pin-key empty"></button><button class="pin-key" onclick="pinKey('0')">0</button><button class="pin-key del" onclick="pinDel()">⌫</button>
+  </div>
+  <button id="pin-change-btn" onclick="openModal('pin-modal')">Cambiar PIN</button>
+</div>
+
+<!-- CENTER SELECTOR -->
+<div id="center-screen">
+  <div style="font-size:36px;color:var(--gold);margin-bottom:12px">✦</div>
+  <div class="center-title">GUIDO PRO</div>
+  <div class="center-sub">Selecciona el centro de trabajo</div>
+  <button class="center-btn center-btn-1" onclick="selectCenter(0)">
+    <span class="center-btn-icon">🏨</span>
+    <div class="center-btn-info"><div class="center-btn-name">Hotel 5 Elementos</div><div class="center-btn-meta">Sapareva Bania · Salario + Comisión 15%</div></div>
+  </button>
+  <button class="center-btn center-btn-2" onclick="selectCenter(1)">
+    <span class="center-btn-icon">💆</span>
+    <div class="center-btn-info"><div class="center-btn-name">Salón Aleksa</div><div class="center-btn-meta">Gorna Bania · Comisión 50%</div></div>
+  </button>
+  <button class="center-btn center-btn-3" onclick="selectCenter(2)">
+    <span class="center-btn-icon">🏥</span>
+    <div class="center-btn-info"><div class="center-btn-name">Sanatorium</div><div class="center-btn-meta">Sapareva Bania · Comisión 30%</div></div>
+  </button>
+  <button class="center-btn center-btn-4" onclick="selectCenter(3)">
+    <span class="center-btn-icon">🌿</span>
+    <div class="center-btn-info"><div class="center-btn-name">Deva Spa</div><div class="center-btn-meta">Sofía · Musagenitsa · Comisión 50%</div></div>
+  </button>
+</div>
+
+<!-- PIN MODAL -->
+<div class="modal-overlay" id="pin-modal">
+  <div class="modal-box">
+    <h3>🔐 Cambiar PIN</h3>
+    <label class="lbl">PIN actual</label><input type="password" inputmode="numeric" maxlength="4" id="pm-cur" placeholder="····">
+    <label class="lbl">PIN nuevo</label><input type="password" inputmode="numeric" maxlength="4" id="pm-new" placeholder="····">
+    <label class="lbl">Confirmar</label><input type="password" inputmode="numeric" maxlength="4" id="pm-conf" placeholder="····">
+    <div class="modal-err" id="pin-modal-err"></div>
+    <div class="modal-btns"><button class="modal-cancel" onclick="closeModal('pin-modal')">Cancelar</button><button class="modal-save" onclick="saveNewPin()">Guardar</button></div>
+  </div>
+</div>
+
+<!-- EMAIL MODAL -->
+<div class="modal-overlay" id="email-modal">
+  <div class="modal-box">
+    <h3>📧 Enviar Reporte por Email</h3>
+    <label class="lbl">Email destinatario</label><input type="text" id="email-to" placeholder="contadora@email.com">
+    <label class="lbl">Idioma</label>
+    <select id="email-lang"><option value="es">🇪🇸 Español</option><option value="bg">🇧🇬 Búlgaro</option></select>
+    <label class="lbl">Tipo de reporte</label>
+    <select id="email-type"><option value="detail">Detallado (día por día + masajes)</option><option value="summary">Resumen (solo totales)</option></select>
+    <div class="modal-btns"><button class="modal-cancel" onclick="closeModal('email-modal')">Cancelar</button><button class="modal-save" onclick="sendEmail()">Abrir Email</button></div>
+  </div>
+</div>
+
+<!-- DRAWER -->
+<div id="drawer-overlay" onclick="closeDrawer()"></div>
+<div id="drawer">
+  <div class="drawer-header">
+    <div class="drawer-app-name">✦ GUIDO PRO</div>
+    <div class="drawer-center-name" id="drawer-center-name"></div>
+  </div>
+  <nav class="drawer-nav">
+    <div class="drawer-section">Trabajo</div>
+    <div class="drawer-item active" id="nav-0" onclick="showTab(0)"><span class="drawer-icon">🏠</span><span class="drawer-label">Dashboard</span></div>
+    <div class="drawer-item" id="nav-1" onclick="showTab(1)"><span class="drawer-icon">➕</span><span class="drawer-label">Añadir día</span></div>
+    <div class="drawer-item" id="nav-2" onclick="showTab(2)"><span class="drawer-icon">📋</span><span class="drawer-label">Historial</span></div>
+    <div class="drawer-item" id="nav-3" onclick="showTab(3)"><span class="drawer-icon">📅</span><span class="drawer-label">Calendario</span></div>
+    <div class="drawer-section">Análisis</div>
+    <div class="drawer-item" id="nav-4" onclick="showTab(4)"><span class="drawer-icon">📊</span><span class="drawer-label">Análisis PRO</span></div>
+    <div class="drawer-item" id="nav-5" onclick="showTab(5)"><span class="drawer-icon">🎯</span><span class="drawer-label">Simulador</span></div>
+    <div class="drawer-section">Gestión</div>
+    <div class="drawer-item" id="nav-6" onclick="showTab(6)"><span class="drawer-icon">💰</span><span class="drawer-label">Pagos</span></div>
+    <div class="drawer-item" id="nav-7" onclick="showTab(7)"><span class="drawer-icon">📤</span><span class="drawer-label">Exportar</span></div>
+    <div class="drawer-section">Profesional</div>
+    <div class="drawer-item" id="nav-8" onclick="showTab(8)"><span class="drawer-icon">🏆</span><span class="drawer-label">Mi Valor Profesional</span></div>
+    <div class="drawer-item" id="nav-9" onclick="showTab(9)"><span class="drawer-icon">⚙️</span><span class="drawer-label">Configuración</span></div>
+  </nav>
+  <div class="drawer-footer">
+    <button onclick="closeDrawer();openModal('pin-modal')">🔐 PIN</button>
+    <button onclick="closeDrawer();exportBackup()">💾 Backup</button>
+    <button onclick="closeDrawer();showCenterScreen()">🔄 Centro</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div id="header">
+  <button id="hamburger" onclick="openDrawer()">☰</button>
+  <div class="h-logo" id="h-logo">✦</div>
+  <div class="h-info">
+    <div class="h-title" id="h-title">GUIDO PRO</div>
+    <div class="h-center" id="h-center"></div>
+  </div>
+  <button id="switch-center-btn" onclick="showCenterScreen()">🔄</button>
+  <div id="h-accum">
+    <div class="h-total" id="h-total-val"></div>
+    <div class="h-label">pendiente</div>
+  </div>
+</div>
+<div id="current-page">Sección: <span id="page-name">Dashboard</span></div>
+
+<div id="body">
+  <div class="panel active" id="panel-0"><div id="dashboard-content"></div></div>
+  <div class="panel" id="panel-1">
+    <div class="notice green" id="notice-saved"></div>
+    <div class="notice blue" id="notice-edit">✏️ Editando día — modifica y guarda.</div>
+    <div class="notice amber" id="notice-unreg"></div>
+    <div class="notice holiday" id="notice-holiday"></div>
+    <div class="notice fatigue" id="notice-fatigue"></div>
+    <div id="install-banner">
+      <div style="flex:1;font-size:12px;color:var(--muted);line-height:1.4">📲 <strong style="color:var(--gold)">Instalar Guido PRO</strong></div>
+      <button id="install-btn" onclick="installApp()">Instalar</button>
+      <button id="install-close" onclick="document.getElementById('install-banner').classList.remove('show')">×</button>
+    </div>
+    <div class="card">
+      <div class="card-title">📅 Fecha y Horario</div>
+      <label class="lbl">Fecha</label><input type="date" id="f-date" oninput="onDateChange()">
+      <div class="row2">
+        <div><label class="lbl">Entrada</label><input type="time" id="f-entry" oninput="updatePreview()"></div>
+        <div><label class="lbl">Salida</label><input type="time" id="f-exit" oninput="updatePreview()"></div>
+      </div>
+      <div class="preview-box" id="hours-preview" style="display:none">⏱ <span id="hours-val"></span></div>
+    </div>
+    <div class="card">
+      <div class="card-title" id="massage-card-title">💆 Masajes Realizados</div>
+      <div id="massage-list"></div>
+    </div>
+    <div class="card" id="tips-card">
+      <div class="card-title">💵 Propinas y Notas</div>
+      <label class="lbl">Propina (€)</label>
+      <input type="number" id="f-tips" min="0" step="0.5" placeholder="0" oninput="updatePreview()">
+      <div style="margin-top:9px"><label class="lbl">Notas del día</label><textarea id="f-notes" placeholder="Observaciones..."></textarea></div>
+    </div>
+    <div class="card" id="preview-card" style="display:none">
+      <div id="preview-rows"></div>
+      <div class="total-final"><span>TOTAL DÍA</span><span id="preview-total"></span></div>
+    </div>
+    <button class="btn-gold" id="save-btn" disabled onclick="saveDay()">💾 Guardar Día</button>
+    <button class="btn-ghost" id="cancel-edit-btn" onclick="cancelEdit()">✕ Cancelar edición</button>
+  </div>
+  <div class="panel" id="panel-2"><div id="history-list"></div></div>
+  <div class="panel" id="panel-3"><div id="calendar-content"></div></div>
+  <div class="panel" id="panel-4"><div id="pro-content"></div></div>
+  <div class="panel" id="panel-5"><div id="sim-content"></div></div>
+  <div class="panel" id="panel-6"><div id="pagos-content"></div></div>
+  <div class="panel" id="panel-7"><div id="export-content"></div></div>
+  <div class="panel" id="panel-8"><div id="portfolio-content"></div></div>
+  <div class="panel" id="panel-9"><div id="config-content"></div></div>
+</div>
+
+<script>
+// ═══════════════ VERSIÓN ═══════════════
+const SCHEMA_VERSION = 3;
+const STORAGE_KEY = "guidopro_v3";
+const LEGACY_KEYS = ["h5_master","guido_hotel5_v2","guido_hotel5_v3","hotel5_pro","h5_days"].map(k=>({key:k}));
+
+// ═══════════════ CENTROS ═══════════════
+const CENTERS = [
+  {
+    id: 0, key: "hotel5",
+    name: "Hotel 5 Elementos", nameShort: "Hotel 5 Elem.",
+    icon: "🏨", color: "#c9a84c",
+    location: "Sapareva Bania",
+    hasSalary: true, salary: 557.31,
+    hasVat: true, vatRate: 20,
+    commRate: 15,
+    hasHolidays: true,
+    paymentCycle: "weekly",
+    massages: [
+      {id:1,  name:"Tejido Profundo",                              nameBG:"Дълбокотъканен масаж",                                                   duration:"50 min", durationBG:"50 мин", price:71},
+      {id:2,  name:"Masaje Clásico",                               nameBG:"Класически масаж",                                                        duration:"50 min", durationBG:"50 мин", price:61},
+      {id:3,  name:"Terapéutico Lecheven (Lodo Mar Negro)",        nameBG:"Лечебен масаж с масло от Черноморска луга",                               duration:"50 min", durationBG:"50 мин", price:66},
+      {id:4,  name:"Parcial Lecheven (Lodo Mar Negro)",            nameBG:"Частичен (Лечебен) масаж с масло от Черноморска луга",                    duration:"30 min", durationBG:"30 мин", price:40},
+      {id:5,  name:"Drenaje Linfático Parcial",                    nameBG:"Лимфо-дренажен - частичен",                                               duration:"30 min", durationBG:"30 мин", price:50},
+      {id:6,  name:"Drenaje Linfático Completo",                   nameBG:"Лимфен дренаж – цялостен",                                                duration:"60 min", durationBG:"60 мин", price:100},
+      {id:7,  name:"Miofascial",                                   nameBG:"Мио фасциален",                                                           duration:"40 min", durationBG:"40 мин", price:50},
+      {id:8,  name:"Combinado (Tejido Profundo + Miofascial)",     nameBG:"Комбиниран - дълбокотъканен + Мио",                                      duration:"60 min", durationBG:"60 мин", price:100},
+      {id:9,  name:"Sinergia (Linfático + Miofascial + Tejido Profundo)", nameBG:"Авторски Масаж Синергия (ръчен лимфо + Мио + дълбокотъканен)",    duration:"150 min",durationBG:"150 мин",price:150},
+      {id:10, name:"Masaje Anticelulítico",                        nameBG:"Антицелулитен масаж",                                                     duration:"30 min", durationBG:"30 мин", price:40},
+      {id:11, name:"Masaje Parcial",                                  nameBG:"Частичен масаж",                                                          duration:"30 min", durationBG:"30 мин", price:35},
+      {id:12, name:"Fuerza del Agua",                                 nameBG:"Силата на водата",                                                        duration:"50 min", durationBG:"50 мин", price:61},
+    ]
+  },
+  {
+    id: 1, key: "aleksa",
+    name: "Salón Aleksa", nameShort: "Aleksa",
+    icon: "💆", color: "#4a8fbf",
+    location: "Gorna Bania",
+    hasSalary: false, salary: 0,
+    hasVat: false, vatRate: 0,
+    commRate: 50,
+    hasHolidays: false,
+    paymentCycle: "daily",
+    massages: [
+      {id:1, name:"Tejido Profundo 30 min (parcial)",          nameBG:"Дълбокотъканен масаж 30 мин (частичен)",                                    duration:"30 min", durationBG:"30 мин", price:30},
+      {id:2, name:"Tejido Profundo 45 min (zona amplia)",      nameBG:"Дълбокотъканен масаж 45 мин (по-голяма зона)",                              duration:"45 min", durationBG:"45 мин", price:40},
+      {id:3, name:"Tejido Profundo 70 min (cuerpo completo)",  nameBG:"Дълбокотъканен масаж 70 мин (цяло тяло)",                                   duration:"70 min", durationBG:"70 мин", price:60},
+      {id:4, name:"Tejido Profundo 100 min (cuerpo completo)", nameBG:"Дълбокотъканен масаж 100 мин (цяло тяло)",                                  duration:"100 min",durationBG:"100 мин",price:80},
+      {id:5, name:"Tejido Profundo 150 min (combinada)",       nameBG:"Дълбокотъканен масаж 150 мин (комбинирана терапия)",                        duration:"150 min",durationBG:"150 мин",price:105},
+      {id:6, name:"Drenaje Linfático Manual 30 min",           nameBG:"Лимфен дренаж (ръчен) 30 мин",                                              duration:"30 min", durationBG:"30 мин", price:25},
+    ]
+  },
+  {
+    id: 2, key: "sanatorium",
+    name: "Sanatorium", nameShort: "Sanatorium",
+    icon: "🏥", color: "#4abf7a",
+    location: "Sapareva Bania",
+    hasSalary: false, salary: 0,
+    hasVat: false, vatRate: 0,
+    commRate: 30,
+    hasHolidays: false,
+    paymentCycle: "weekly",
+    massages: [
+      {id:1, name:"Tejido Profundo Cuerpo Completo", nameBG:"Дълбокотъканен масаж на цяло тяло", duration:"50 min", durationBG:"50 мин", price:41, desc:"Masaje de cuerpo completo"},
+      {id:2, name:"Tejido Profundo Parcial",         nameBG:"Частичен дълбокотъканен масаж",     duration:"20 min", durationBG:"20 мин", price:20.45, desc:"Masaje parcial"},
+    ]
+  },
+  {
+    id: 3, key: "devaspa",
+    name: "Deva Spa", nameShort: "Deva Spa",
+    icon: "🌿", color: "#9a6abf",
+    location: "Sofía · Musagenitsa",
+    hasSalary: false, salary: 0,
+    hasVat: false, vatRate: 0,
+    commRate: 50,
+    hasHolidays: false,
+    paymentCycle: "daily",
+    massages: [
+      {id:1,  name:"Express Alivio Espalda",      nameBG:"Експрес Облекчение Гръб",       duration:"40 min", durationBG:"40 мин", price:60,  desc:"Tejido profundo parcial — libera tensión en espalda, hombros y zona lumbar. Ideal para contracturas, fatiga y estrés acumulado."},
+      {id:2,  name:"Sin Cadenas",                 nameBG:"Без Вериги",                    duration:"60 min", durationBG:"60 мин", price:70,  desc:"Miofascial espalda y cuello — libera restricciones fasciales profundas. Ideal para dolor cervical, mala postura y trabajo prolongado frente al ordenador."},
+      {id:3,  name:"Piernas Ligeras",             nameBG:"Леки Крака",                    duration:"30 min", durationBG:"30 мин", price:40,  desc:"Drenaje linfático parcial — reduce edemas, pesadez y retención de líquidos en las piernas."},
+      {id:4,  name:"Piernas Esculpidas",          nameBG:"Изваяни Крака",                 duration:"40 min", durationBG:"40 мин", price:50,  desc:"Anticelulítico — estimula la circulación y favorece el modelado y firmeza de la piel."},
+      {id:5,  name:"Renovación Profunda",         nameBG:"Дълбоко Обновяване",            duration:"90 min", durationBG:"90 мин", price:90,  desc:"Tejido profundo cuerpo completo — terapia integral para eliminar tensión crónica, bloqueos musculares y fatiga acumulada."},
+      {id:6,  name:"Ritual Mar Negro",            nameBG:"Ритуал Черно Море",             duration:"70 min", durationBG:"70 мин", price:80,  desc:"Terapia con aceite de luga del Mar Negro — ritual único con aceite mineralizado para relajación profunda, recuperación y nutrición del cuerpo."},
+      {id:7,  name:"Combinado Restaurador",       nameBG:"Комбиниращ Възстановяващ",      duration:"70 min", durationBG:"70 мин", price:85,  desc:"Tejido profundo + Miofascial cuerpo completo — creado para personas con tensión crónica, estrés y largas horas frente al ordenador."},
+      {id:8,  name:"Detox y Ligereza",            nameBG:"Детокс и Лекота",               duration:"70 min", durationBG:"70 мин", price:80,  desc:"Drenaje linfático manual cuerpo completo — indicado para piernas pesadas, edemas y retención de líquidos. La sensación de ligereza aparece desde la primera sesión."},
+      {id:9,  name:"Reinicio Total",              nameBG:"Пълен Рестарт",                 duration:"150 min",durationBG:"150 мин",price:150, desc:"Linfático + Tejido profundo + Miofascial — sesión completa que combina las tres técnicas. Detoxifica, elimina tensión y restaura el movimiento natural del cuerpo."},
+      {id:10, name:"Mandíbula en Reposo",         nameBG:"Челюст в Покой",                duration:"45 min", durationBG:"45 мин", price:65,  desc:"Terapia para bruxismo — indicada para tensión en mandíbula, cefaleas y contractura de la musculatura facial."},
+      {id:11, name:"Plantas sin Dolor",           nameBG:"Стъпала Без Болка",             duration:"40 min", durationBG:"40 мин", price:60,  desc:"Terapia para fascitis plantar — alivia el dolor al caminar y la tensión crónica en la planta del pie."},
+      {id:12, name:"La Gran Recuperación",        nameBG:"Голямото Възстановяване",       duration:"120 min",durationBG:"120 мин",price:110, desc:"Protocolo clínico para dolor crónico — terapia intensiva para estados dolorosos de larga evolución y tensión muscular acumulada durante meses."},
+    ]
+  }
+];
+
+// ═══════════════ FERIADOS ═══════════════
+const BG_FIXED = ["01-01","03-03","05-01","05-06","05-24","09-06","09-22","11-01","12-24","12-25","12-26"];
+const BG_SPECIAL = {"2026":["2026-01-02","2026-04-10","2026-04-11","2026-04-12","2026-04-13","2026-05-25","2026-09-07"],"2027":["2027-04-30","2027-05-01","2027-05-03"]};
+const HOLIDAY_NAMES = {"01-01":"Año Nuevo","03-03":"Liberación de Bulgaria","05-01":"Día del Trabajo","05-06":"San Jorge","05-24":"Día del Alfabeto Búlgaro","09-06":"Unificación","09-22":"Independencia","11-01":"Despertar Nacional","12-24":"Nochebuena","12-25":"Navidad","12-26":"Navidad","2026-01-02":"Feriado especial","2026-04-10":"Viernes Santo Ortodoxo","2026-04-11":"Sábado Santo","2026-04-12":"Pascua Ortodoxa","2026-04-13":"Lunes de Pascua","2026-05-25":"Día del Alfabeto (traslado)","2026-09-07":"Unificación (traslado)"};
+function isHoliday(d){const mm=d.slice(5),y=d.slice(0,4);return BG_FIXED.includes(mm)||(BG_SPECIAL[y]||[]).includes(d);}
+function getHolidayName(d){const mm=d.slice(5),y=d.slice(0,4);return (BG_SPECIAL[y]||[]).includes(d)?HOLIDAY_NAMES[d]:HOLIDAY_NAMES[mm]||"Feriado";}
+
+function getWorkingDays(year,month){
+  const days=new Date(year,month+1,0).getDate();let c=0;
+  for(let d=1;d<=days;d++){const dow=new Date(year,month,d).getDay();if(dow===0||dow===6)continue;const ds=year+"-"+String(month+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");if(!isHoliday(ds))c++;}
+  return c;
+}
+function getHourlyRate(dateStr){const d=new Date(dateStr+"T12:00:00");return currentCenter().salary/getWorkingDays(d.getFullYear(),d.getMonth())/8;}
+
+// ═══════════════ STATE ═══════════════
+const DOW_ES=["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+const DOW_BG=["Нед","Пон","Вт","Ср","Чет","Пет","Съб"];
+const MEDAL=["🥇","🥈","🥉"];
+const ICONS={good:"✅",warn:"⚠️",dead:"🔴",info:"💡"};
+const PAGE_NAMES=["Dashboard","Añadir día","Historial","Calendario","Análisis PRO","Simulador","Pagos","Exportar","Mi Valor Profesional","Configuración"];
+const DEFAULT_CFG={lockMinutes:10,fatigueHours:45};
+
+let allData={};  // { hotel5: {days,payments,goal,cfg}, aleksa: {...}, sanatorium: {...} }
+let currentCenterIdx=0;
+let qty={}, editingDate=null, deferredPrompt=null;
+let exportPeriod="week", exportLang="es", exportType="detail", lastExportText="", pendingEmailFrom=null, pendingEmailTo=null;
+let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
+let lastActivity=Date.now();
+
+// ── Accessors ──
+const currentCenter=()=>CENTERS[currentCenterIdx];
+const cData=()=>allData[currentCenter().key];
+const cDays=()=>cData().days;
+const cPayments=()=>cData().payments;
+const cGoal=()=>cData().goal;
+const cCfg=()=>({...DEFAULT_CFG,...cData().cfg});
+
+// ═══════════════ HELPERS ═══════════════
+const ef=n=>n.toFixed(2).replace(".",",")+"\u00a0€";
+const fmtH=h=>{const hh=Math.floor(h),mm=Math.round((h-hh)*60);return hh+"h "+String(mm).padStart(2,"0")+"m";};
+const fmtDate=d=>{const[y,m,day]=d.split("-");return day+"/"+m+"/"+y;};
+const dow=(d,bg=false)=>(bg?DOW_BG:DOW_ES)[new Date(d+"T12:00:00").getDay()];
+const toMin=t=>{const[h,m]=t.split(":").map(Number);return h*60+m;};
+function calcH(en,ex){if(!en||!ex)return 0;let s=toMin(en),e2=toMin(ex);if(e2<=s)return 0;let m=e2-s;const os=Math.max(s,720),oe=Math.min(e2,780);if(oe>os)m-=(oe-os);return Math.max(0,m/60);}
+const today=()=>new Date().toISOString().split("T")[0];
+const yesterday=()=>{const d=new Date();d.setDate(d.getDate()-1);return d.toISOString().split("T")[0];};
+const getMonday=()=>{const d=new Date(),day=d.getDay(),diff=d.getDate()-day+(day===0?-6:1);d.setDate(diff);return d.toISOString().split("T")[0];};
+const getMonthStart=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-01";};
+const monthName=(m)=>["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"][m];
+
+function calcCommission(massages, center){
+  const totalRaw=massages.reduce((s,m)=>s+m.price,0);
+  if(center.hasVat){const afterVat=totalRaw/(1+center.vatRate/100);return afterVat*center.commRate/100;}
+  return totalRaw*center.commRate/100;
+}
+
+function calcDayTotal(workedH, massages, tips, dateStr, center){
+  const holiday=center.hasHolidays&&isHoliday(dateStr);
+  let hourlyPay=0, rate=0;
+  if(center.hasSalary){rate=getHourlyRate(dateStr);hourlyPay=workedH*rate*(holiday?2:1);}
+  const commission=calcCommission(massages,center);
+  return{hourlyPay,commission,tips:tips||0,dayTotal:hourlyPay+commission+(tips||0),rate,holiday};
+}
+
+// ═══════════════ STORAGE ═══════════════
+function initCenterData(){return{days:[],payments:[],goal:0,cfg:{...DEFAULT_CFG}};}
+
+function normalizeMassage(m,center){
+  const ref=(center||currentCenter()).massages.find(r=>r.id===m.id);
+  return{id:m.id,name:m.name||(ref?ref.name:""),nameBG:m.nameBG||(ref?ref.nameBG:""),duration:m.duration||(ref?ref.duration:""),durationBG:m.durationBG||(ref?ref.durationBG:""),price:m.price||(ref?ref.price:0)};
+}
+
+function normalizeDay(d,center){
+  const c=center||currentCenter();
+  const massages=(d.massages||[]).map(m=>normalizeMassage(m,c));
+  const workedH=d.workedH!==undefined?d.workedH:calcH(d.entry||"",d.exit||"");
+  const calc=calcDayTotal(workedH,massages,d.tips||0,d.date,c);
+  return{date:d.date,entry:d.entry||"",exit:d.exit||"",massages,workedH,hourlyPay:calc.hourlyPay,commission:calc.commission,tips:d.tips||0,notes:d.notes||"",dayTotal:calc.dayTotal,holiday:calc.holiday||false};
+}
+
+function loadData(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(raw){allData=JSON.parse(raw);
+      // Normalize each center
+      CENTERS.forEach(c=>{if(!allData[c.key])allData[c.key]=initCenterData();
+        allData[c.key].days=(allData[c.key].days||[]).map(d=>normalizeDay(d,c));
+        if(!allData[c.key].payments)allData[c.key].payments=[];
+        if(!allData[c.key].goal)allData[c.key].goal=0;
+        if(!allData[c.key].cfg)allData[c.key].cfg={...DEFAULT_CFG};
+      });return;}
+  }catch(e){}
+  // Try legacy migration from hotel5
+  allData={};CENTERS.forEach(c=>allData[c.key]=initCenterData());
+  for(const l of LEGACY_KEYS){
+    try{const raw=localStorage.getItem(l.key);if(raw){
+      const stored=JSON.parse(raw);const days=stored.days||stored;
+      if(Array.isArray(days)&&days.length>0){
+        allData.hotel5.days=days.map(d=>normalizeDay(d,CENTERS[0]));
+        if(stored.payments)allData.hotel5.payments=stored.payments;
+        if(stored.goal)allData.hotel5.goal=stored.goal;
+        LEGACY_KEYS.forEach(lk=>{try{localStorage.removeItem(lk.key);}catch{}});
+        setTimeout(()=>{const el=document.getElementById("notice-unreg");if(el){el.textContent="✦ Datos del Hotel 5 Elementos migrados automáticamente a Guido PRO.";el.style.display="block";setTimeout(()=>el.style.display="none",6000);}},1000);
+        break;
+      }
+    }}catch(e){}
+  }
+  saveData();
+}
+function saveData(){localStorage.setItem(STORAGE_KEY,JSON.stringify(allData));}
+
+// ═══════════════ AUTO-LOCK ═══════════════
+document.addEventListener("touchstart",()=>lastActivity=Date.now());
+document.addEventListener("click",()=>lastActivity=Date.now());
+function checkLock(){const cfg=cCfg();if(cfg.lockMinutes>0&&Date.now()-lastActivity>cfg.lockMinutes*60*1000){document.getElementById("pin-screen").style.display="flex";pinInput="";updateDots();}}
+
+// ═══════════════ PIN ═══════════════
+let pinInput="";
+const getPin=()=>localStorage.getItem("gp_pin")||"5588";
+function pinKey(k){if(pinInput.length>=4)return;pinInput+=k;updateDots();if(pinInput.length===4)setTimeout(checkPin,120);}
+function pinDel(){pinInput=pinInput.slice(0,-1);updateDots();document.getElementById("pin-error").textContent="";}
+function updateDots(){for(let i=0;i<4;i++)document.getElementById("dot-"+i).classList.toggle("filled",i<pinInput.length);}
+function checkPin(){
+  if(pinInput===getPin()){document.getElementById("pin-screen").style.display="none";lastActivity=Date.now();
+    // Show center screen if first time
+    const lastCenter=localStorage.getItem("gp_last_center");
+    if(lastCenter!==null){currentCenterIdx=parseInt(lastCenter);applyCenter();}
+    else{showCenterScreen();}
+  }else{document.getElementById("pin-error").textContent="PIN incorrecto.";pinInput="";updateDots();const d=document.getElementById("pin-dots");d.style.animation="none";setTimeout(()=>{d.style.animation="shake 0.3s ease";},10);}
+}
+function saveNewPin(){const cur=document.getElementById("pm-cur").value,nw=document.getElementById("pm-new").value,cf=document.getElementById("pm-conf").value;const err=document.getElementById("pin-modal-err");if(cur!==getPin()){err.textContent="PIN actual incorrecto.";return;}if(!/^\d{4}$/.test(nw)){err.textContent="El PIN debe ser 4 dígitos.";return;}if(nw!==cf){err.textContent="Los PINs no coinciden.";return;}localStorage.setItem("gp_pin",nw);closeModal("pin-modal");document.getElementById("pin-error").textContent="✅ PIN actualizado.";setTimeout(()=>document.getElementById("pin-error").textContent="",2500);}
+
+// ═══════════════ MODALS ═══════════════
+function openModal(id){["pm-cur","pm-new","pm-conf"].forEach(x=>{try{const e=document.getElementById(x);if(e)e.value="";}catch{}});try{document.getElementById("pin-modal-err").textContent="";}catch{}document.getElementById(id).classList.add("open");}
+function closeModal(id){document.getElementById(id).classList.remove("open");}
+
+// ═══════════════ CENTER ═══════════════
+function showCenterScreen(){document.getElementById("center-screen").classList.add("show");}
+function selectCenter(idx){currentCenterIdx=idx;localStorage.setItem("gp_last_center",idx);document.getElementById("center-screen").classList.remove("show");applyCenter();showTab(0);}
+
+function applyCenter(){
+  const c=currentCenter();
+  // Header color
+  document.getElementById("header").style.background=`linear-gradient(135deg,${c.color}22,#0d0d0d)`;
+  document.getElementById("header").style.borderBottomColor=c.color+"44";
+  document.getElementById("h-logo").textContent=c.icon;
+  document.getElementById("h-title").style.color=c.color;
+  document.getElementById("h-title").textContent="GUIDO PRO";
+  document.getElementById("h-center").textContent=c.name+" · "+c.location;
+  document.getElementById("h-center").style.color=c.color+"99";
+  document.getElementById("switch-center-btn").style.borderColor=c.color+"66";
+  document.getElementById("switch-center-btn").style.color=c.color;
+  document.getElementById("current-page").style.borderBottomColor=c.color+"33";
+  document.getElementById("page-name").style.color=c.color;
+  document.getElementById("drawer-center-name").textContent=c.icon+" "+c.name;
+  document.getElementById("drawer-center-name").style.color=c.color;
+  // Tips card: only for hotel (has salary)
+  document.getElementById("tips-card").style.display=c.hasSalary?"block":"block"; // always show
+  buildMassageList();
+  updateHeader();
+  checkUnregistered();
+  renderDashboard();
+}
+
+// ═══════════════ DRAWER ═══════════════
+function openDrawer(){document.getElementById("drawer").classList.add("open");document.getElementById("drawer-overlay").classList.add("open");}
+function closeDrawer(){document.getElementById("drawer").classList.remove("open");document.getElementById("drawer-overlay").classList.remove("open");}
+
+// ═══════════════ TABS ═══════════════
+function showTab(i){
+  document.querySelectorAll(".panel").forEach((p,j)=>p.classList.toggle("active",j===i));
+  document.querySelectorAll(".drawer-item").forEach((b,j)=>b.classList.toggle("active",j===i));
+  document.getElementById("page-name").textContent=PAGE_NAMES[i];
+  closeDrawer();
+  if(i===0)renderDashboard();if(i===2)renderHistory();if(i===3)renderCalendar();
+  if(i===4)renderPro();if(i===5)renderSim();if(i===6)renderPagos();if(i===7)renderExport();if(i===8)renderPortfolio();if(i===9)renderConfig();
+}
+
+// ═══════════════ MASSAGE LIST ═══════════════
+function buildMassageList(){
+  const c=currentCenter();
+  document.getElementById("massage-card-title").textContent="💆 Masajes Realizados · "+c.name;
+  document.getElementById("massage-list").innerHTML=c.massages.map(m=>{
+    const comm=c.hasVat?(m.price/(1+c.vatRate/100)*c.commRate/100):(m.price*c.commRate/100);
+    return`<div class="massage-row"><div style="flex:1"><div class="m-name">${m.nameBG||m.name}</div><div class="m-meta">${m.name} · ${m.duration} · ${m.price} € · comisión: ${ef(comm)}</div>${m.desc?`<div class="m-desc">${m.desc}</div>`:""}</div><div class="counter"><button class="cnt-btn" onclick="adjQty(${m.id},-1)">−</button><span class="cnt-num" id="qty-${m.id}">0</span><button class="cnt-btn" onclick="adjQty(${m.id},+1)">+</button></div></div>`;
+  }).join("");
+}
+function adjQty(id,d){qty[id]=Math.max(0,(qty[id]||0)+d);document.getElementById("qty-"+id).textContent=qty[id]||0;updatePreview();}
+const getMassages=()=>currentCenter().massages.flatMap(m=>Array(qty[m.id]||0).fill(null).map(()=>({...m})));
+
+// ═══════════════ DATE CHANGE ═══════════════
+function onDateChange(){
+  const ds=document.getElementById("f-date").value;
+  if(!ds){document.getElementById("notice-holiday").style.display="none";updatePreview();return;}
+  const c=currentCenter();
+  if(c.hasHolidays&&isHoliday(ds)){
+    document.getElementById("notice-holiday").textContent="🎉 "+getHolidayName(ds)+" — horas al doble automáticamente.";
+    document.getElementById("notice-holiday").style.display="block";
+  }else document.getElementById("notice-holiday").style.display="none";
+  updatePreview();
+}
+
+// ═══════════════ PREVIEW ═══════════════
+function updatePreview(){
+  const ds=document.getElementById("f-date").value,en=document.getElementById("f-entry").value,ex=document.getElementById("f-exit").value;
+  const tips=parseFloat(document.getElementById("f-tips").value)||0;
+  const massages=getMassages(),workedH=calcH(en,ex),c=currentCenter();
+  if(!ds){document.getElementById("save-btn").disabled=true;return;}
+  const calc=calcDayTotal(workedH,massages,tips,ds,c);
+  const hp=document.getElementById("hours-preview");
+  if(en&&ex&&workedH>0){
+    let txt=fmtH(workedH);
+    if(c.hasSalary)txt+=" × "+calc.rate.toFixed(2)+"€/h"+(calc.holiday?" × 2":"")+" = "+ef(calc.hourlyPay);
+    document.getElementById("hours-val").textContent=txt;hp.style.display="block";
+  }else hp.style.display="none";
+  const canSave=!!(ds&&en&&ex);
+  const pc=document.getElementById("preview-card");
+  if(canSave){
+    const totalRaw=massages.reduce((s,m)=>s+m.price,0);
+    const eph=workedH>0?calc.dayTotal/workedH:0;
+    let rows="";
+    if(c.hasSalary)rows+=`<div class="total-row"><span>🕐 Horas ${c.hasHolidays&&calc.holiday?"(×2 feriado)":""}</span><span>${ef(calc.hourlyPay)}</span></div>`;
+    if(massages.length>0){
+      if(c.hasVat){const av=totalRaw/(1+c.vatRate/100);rows+=`<div class="total-row"><span>💆 ${ef(totalRaw)} − IVA ${c.vatRate}% = ${ef(av)}</span><span></span></div>`;rows+=`<div class="total-row"><span>💆 Comisión ${c.commRate}% neta</span><span>${ef(calc.commission)}</span></div>`;}
+      else rows+=`<div class="total-row"><span>💆 Comisión ${c.commRate}% (${ef(totalRaw)})</span><span>${ef(calc.commission)}</span></div>`;
+    }
+    if(tips>0)rows+=`<div class="total-row"><span>💵 Propina</span><span>${ef(tips)}</span></div>`;
+    if(workedH>0&&totalRaw>0)rows+=`<div class="total-row" style="color:var(--gold);font-weight:700"><span>📈 €/hora real</span><span>${eph.toFixed(2)} €/h</span></div>`;
+    document.getElementById("preview-rows").innerHTML=rows;document.getElementById("preview-total").textContent=ef(calc.dayTotal);pc.style.display="block";
+  }else pc.style.display="none";
+  document.getElementById("save-btn").disabled=!canSave;
+  // Fatigue
+  const cfg=cCfg();const td=today(),ws=getMonday();
+  const wh=cDays().filter(d=>d.date>=ws&&d.date<=td).reduce((s,d)=>s+d.workedH,0)+workedH;
+  const el=document.getElementById("notice-fatigue");
+  if(wh>=cfg.fatigueHours){el.textContent="⚠️ Llevas "+fmtH(wh)+" esta semana. Cerca de tu límite.";el.style.display="block";}else el.style.display="none";
+}
+
+// ═══════════════ SAVE ═══════════════
+function saveDay(){
+  const ds=document.getElementById("f-date").value,en=document.getElementById("f-entry").value,ex=document.getElementById("f-exit").value;
+  const tips=parseFloat(document.getElementById("f-tips").value)||0,notes=document.getElementById("f-notes").value.trim();
+  if(!ds||!en||!ex)return;
+  const c=currentCenter(),massages=getMassages(),workedH=calcH(en,ex);
+  const calc=calcDayTotal(workedH,massages,tips,ds,c);
+  const rec={date:ds,entry:en,exit:ex,massages,workedH,hourlyPay:calc.hourlyPay,commission:calc.commission,tips,notes,dayTotal:calc.dayTotal,holiday:calc.holiday};
+  const idx=cDays().findIndex(d=>d.date===ds);
+  if(idx>=0)cData().days[idx]=rec;else{cData().days.push(rec);cData().days.sort((a,b)=>a.date.localeCompare(b.date));}
+  saveData();updateHeader();
+  const wasEdit=!!editingDate;editingDate=null;resetForm();
+  showNotice("notice-saved","✅ Día "+(wasEdit?"actualizado":"guardado")+" en "+c.name);
+  document.getElementById("save-btn").textContent="💾 Guardar Día";
+  document.getElementById("notice-edit").style.display="none";document.getElementById("cancel-edit-btn").style.display="none";
+  setTimeout(()=>showTab(4),1500);
+}
+function resetForm(){["f-date","f-entry","f-exit"].forEach(id=>document.getElementById(id).value="");document.getElementById("f-tips").value="";document.getElementById("f-notes").value="";qty={};currentCenter().massages.forEach(m=>{const el=document.getElementById("qty-"+m.id);if(el)el.textContent="0";});document.getElementById("preview-card").style.display="none";document.getElementById("hours-preview").style.display="none";document.getElementById("notice-holiday").style.display="none";document.getElementById("save-btn").disabled=true;}
+function showNotice(id,msg){const el=document.getElementById(id);if(!el)return;el.textContent=msg;el.style.display="block";setTimeout(()=>el.style.display="none",3000);}
+
+function editDay(ds){const day=cDays().find(d=>d.date===ds);if(!day)return;editingDate=ds;document.getElementById("f-date").value=day.date;document.getElementById("f-entry").value=day.entry;document.getElementById("f-exit").value=day.exit;document.getElementById("f-tips").value=day.tips||"";document.getElementById("f-notes").value=day.notes||"";qty={};day.massages.forEach(m=>{qty[m.id]=(qty[m.id]||0)+1;});currentCenter().massages.forEach(m=>{const el=document.getElementById("qty-"+m.id);if(el)el.textContent=qty[m.id]||0;});onDateChange();document.getElementById("save-btn").textContent="💾 Actualizar Día";document.getElementById("notice-edit").style.display="block";document.getElementById("cancel-edit-btn").style.display="block";showTab(1);window.scrollTo(0,0);}
+function cancelEdit(){editingDate=null;resetForm();document.getElementById("save-btn").textContent="💾 Guardar Día";document.getElementById("notice-edit").style.display="none";document.getElementById("cancel-edit-btn").style.display="none";}
+function deleteDay(ds){cData().days=cDays().filter(d=>d.date!==ds);saveData();updateHeader();renderHistory();}
+
+// ═══════════════ SHARE ═══════════════
+function shareDay(ds){
+  const d=cDays().find(x=>x.date===ds),c=currentCenter();if(!d)return;
+  const totalRaw=d.massages.reduce((s,m)=>s+m.price,0);
+  let msg="✦ "+c.name+"\n📅 "+dow(d.date)+" "+fmtDate(d.date)+(d.holiday?" 🎉":"")+"\n⏰ "+d.entry+" → "+d.exit+" ("+fmtH(d.workedH)+(d.holiday?" ×2":"")+")\n\n";
+  if(d.massages.length>0){d.massages.forEach(m=>msg+="💆 "+m.name+" — "+m.price+" €\n");msg+="\n";}
+  if(c.hasSalary)msg+="💶 Horas: "+ef(d.hourlyPay)+"\n";
+  if(d.massages.length>0){if(c.hasVat){const av=totalRaw/(1+c.vatRate/100);msg+="💆 Facturado: "+ef(totalRaw)+" − IVA = "+ef(av)+" → comisión: "+ef(d.commission)+"\n";}else msg+="💆 Comisión "+c.commRate+"%: "+ef(d.commission)+"\n";}
+  if(d.tips>0)msg+="💵 Propina: "+ef(d.tips)+"\n";
+  msg+="══════\n💰 TOTAL: "+ef(d.dayTotal);
+  navigator.clipboard.writeText(msg).then(()=>alert("✅ Copiado para WhatsApp/Viber")).catch(()=>{const wa=encodeURIComponent(msg);window.open("https://wa.me/?text="+wa,"_blank");});
+}
+
+// ═══════════════ HEADER ═══════════════
+function updateHeader(){
+  const pending=CENTERS.reduce((s,c)=>{const d=allData[c.key];if(!d)return s;const earned=d.days.reduce((ss,dd)=>ss+dd.dayTotal,0);const paid=d.payments.reduce((ss,p)=>ss+p.amount,0);return s+Math.max(0,earned-paid);},0);
+  const el=document.getElementById("h-accum");
+  const total=cDays().reduce((s,d)=>s+d.dayTotal,0);
+  if(total>0){el.style.display="block";const cp=Math.max(0,total-cPayments().reduce((s,p)=>s+p.amount,0));document.getElementById("h-total-val").textContent=ef(cp);document.getElementById("h-total-val").style.color=cp>0?"#bf8a2a":"var(--green)";}
+  else el.style.display="none";
+}
+
+// ═══════════════ DASHBOARD ═══════════════
+function renderDashboard(){
+  const el=document.getElementById("dashboard-content");
+  const c=currentCenter(),days=cDays(),payments=cPayments();
+  const td=today(),ms=getMonthStart(),ws=getMonday();
+  const totalEarned=days.reduce((s,d)=>s+d.dayTotal,0);
+  const totalPaid=payments.reduce((s,p)=>s+p.amount,0);
+  const pending=Math.max(0,totalEarned-totalPaid);
+  const todayDay=days.find(d=>d.date===td);
+  const weekDays=days.filter(d=>d.date>=ws&&d.date<=td);
+  const monthDays=days.filter(d=>d.date>=ms&&d.date<=td);
+  const weekTotal=weekDays.reduce((s,d)=>s+d.dayTotal,0);
+  const monthTotal=monthDays.reduce((s,d)=>s+d.dayTotal,0);
+  const weekH=weekDays.reduce((s,d)=>s+d.workedH,0);
+  const goal=cGoal();
+  const goalPct=goal>0?Math.min(100,(monthTotal/goal)*100):0;
+
+  // Alerts
+  let alerts="";
+  // Days without massages alert
+  const lastNoMassage=days.filter(d=>d.massages.length===0);
+  if(lastNoMassage.length>0){const last=lastNoMassage[lastNoMassage.length-1];alerts+=`<div class="notice amber" style="display:block">💆 El ${fmtDate(last.date)} trabajaste sin registrar masajes.</div>`;}
+  // Payment alert
+  if(payments.length>0){const lastPay=payments.reduce((a,p)=>p.date>a.date?p:a);const daysSince=Math.floor((new Date()-new Date(lastPay.date+"T12:00:00"))/(1000*60*60*24));const maxDays=c.paymentCycle==="daily"?2:c.paymentCycle==="weekly"?9:32;if(daysSince>maxDays&&pending>0)alerts+=`<div class="notice red" style="display:block">⚠️ Han pasado ${daysSince} días desde tu último pago. Pendiente: ${ef(pending)}</div>`;}
+  // Massage not sold alert
+  if(days.length>7){const recent=days.slice(-14);c.massages.forEach(m=>{const used=recent.some(d=>d.massages.some(x=>x.id===m.id));if(!used)alerts+=`<div class="notice blue" style="display:block">💆 No has ofrecido "${m.name}" en 2 semanas.</div>`;});}
+
+  // All centers summary
+  const allSummary=CENTERS.map(ct=>{const d=allData[ct.key];if(!d)return"";const e=d.days.reduce((s,dd)=>s+dd.dayTotal,0);const p=d.payments.reduce((s,pp)=>s+pp.amount,0);const pend=Math.max(0,e-p);if(e===0)return"";return`<div class="center-summary" onclick="selectCenter(${ct.id})"><div><div class="cs-name" style="color:${ct.color}">${ct.icon} ${ct.name}</div><div class="cs-meta">${d.days.length} días · ${ct.location}</div></div><div><div class="cs-total" style="color:${ct.color}">${ef(e)}</div><div class="cs-pending" style="color:${pend>0?"#bf8a2a":"var(--green)"}">⏳ ${ef(pend)}</div></div></div>`;}).join("");
+
+  el.innerHTML=`
+    ${alerts}
+    <div class="dash-pending"><div class="dash-pending-lbl">Pendiente de cobro · ${c.name}</div><div class="dash-pending-val">${ef(pending)}</div><div class="dash-pending-meta">Generado: ${ef(totalEarned)} · Cobrado: ${ef(totalPaid)}</div></div>
+    <div class="dash-grid">
+      <div class="dash-box"><div class="dash-val">${todayDay?ef(todayDay.dayTotal):"—"}</div><div class="dash-lbl">Hoy</div></div>
+      <div class="dash-box"><div class="dash-val gold">${ef(weekTotal)}</div><div class="dash-lbl">Esta semana</div></div>
+      <div class="dash-box"><div class="dash-val">${ef(monthTotal)}</div><div class="dash-lbl">Este mes</div></div>
+      <div class="dash-box"><div class="dash-val">${fmtH(weekH)}</div><div class="dash-lbl">Horas semana</div></div>
+    </div>
+    ${goal>0?`<div class="card"><div class="card-title">🎯 Meta del Mes</div><div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:3px"><span>${ef(monthTotal)}</span><span>Meta: ${ef(goal)}</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:${goalPct}%"></div></div><div class="goal-labels"><span>${goalPct.toFixed(0)}%</span><span>${ef(goal-monthTotal>0?goal-monthTotal:0)} para la meta</span></div></div>`:""}
+    ${allSummary?`<div class="card"><div class="card-title">🏢 Todos los Centros</div>${allSummary}</div>`:""}
+    <button class="btn-gold" onclick="showTab(1)" style="margin-top:0">➕ Añadir día en ${c.name}</button>`;
+}
+
+// ═══════════════ HISTORY ═══════════════
+function renderHistory(){
+  const el=document.getElementById("history-list"),c=currentCenter(),days=cDays();
+  if(days.length===0){el.innerHTML='<div class="empty">Sin registros en '+c.name+'.<br>Añade tu primer día.</div>';return;}
+  el.innerHTML=[...days].reverse().map(d=>{
+    const eph=d.workedH>0?d.dayTotal/d.workedH:0;
+    const totalRaw=d.massages.reduce((s,m)=>s+m.price,0);
+    const massDetail=d.massages.length>0?`<div style="margin-top:8px"><div class="pro-sub" style="text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Masajes</div>`+d.massages.map(m=>`<div class="d-row"><span>· ${m.name} (${m.duration})</span><span>${m.price} €</span></div>`).join("")+(c.hasVat?`<div class="d-row"><span>− IVA ${c.vatRate}% → comisión ${c.commRate}%</span><span>${ef(d.commission)}</span></div>`:`<div class="d-row"><span>Comisión ${c.commRate}%</span><span>${ef(d.commission)}</span></div>`)+"</div>":"";
+    const tipsH=d.tips>0?`<div class="d-row"><span>💵 Propina</span><span>${ef(d.tips)}</span></div>`:"";
+    const notesH=d.notes?`<div style="margin-top:7px;font-size:11px;color:var(--muted)">📝 ${d.notes}</div>`:"";
+    return`<div class="day-card${d.holiday?" holiday-day":""}"><div class="day-hdr" onclick="toggleDetail('${d.date}')"><div><div class="day-date-txt">${fmtDate(d.date)} <span class="day-dow">· ${dow(d.date)}${d.holiday?" 🎉":""}</span></div><div class="day-meta-txt">${d.entry}→${d.exit} · ${fmtH(d.workedH)} · ${d.massages.length} masaje${d.massages.length!==1?"s":""}</div></div><div><div class="day-total-txt">${ef(d.dayTotal)}</div><div class="day-eph-txt">${eph.toFixed(2)} €/h ▼</div></div></div><div class="day-detail" id="detail-${d.date}">${c.hasSalary?`<div class="d-row"><span>💶 Por horas${d.holiday?" (×2)":""}</span><span>${ef(d.hourlyPay)}</span></div>`:""}<div class="d-row"><span>💆 Comisión</span><span>${ef(d.commission)}</span></div>${tipsH}<div class="d-row" style="color:var(--gold);font-weight:700"><span>📈 €/hora real</span><span>${eph.toFixed(2)} €/h</span></div>${massDetail}${notesH}<div class="action-btns"><button class="edit-btn" onclick="editDay('${d.date}')">✏️ Editar</button><button class="wa-btn" onclick="shareDay('${d.date}')">📱 Compartir</button><div id="delzone-${d.date}"><button class="del-btn" onclick="showConfirm('${d.date}')">🗑</button></div></div></div></div>`;
+  }).join("");
+}
+function toggleDetail(ds){document.getElementById("detail-"+ds)?.classList.toggle("open");}
+function showConfirm(ds){document.getElementById("delzone-"+ds).innerHTML=`<div class="del-confirm"><button class="del-yes" onclick="deleteDay('${ds}')">Eliminar</button><button class="del-no" onclick="renderHistory()">No</button></div>`;}
+
+// ═══════════════ CALENDAR ═══════════════
+function renderCalendar(){
+  const el=document.getElementById("calendar-content"),c=currentCenter(),days=cDays();
+  const dIM=new Date(calYear,calMonth+1,0).getDate(),firstDow=new Date(calYear,calMonth,1).getDay(),offset=(firstDow+6)%7;
+  const mStr=calYear+"-"+String(calMonth+1).padStart(2,"0"),td=today();
+  const workDays=c.hasSalary?getWorkingDays(calYear,calMonth):0;
+  const rate=c.hasSalary?(c.salary/workDays/8):0;
+  let cells="";
+  for(let i=0;i<offset;i++)cells+=`<div class="cal-day empty"></div>`;
+  for(let d=1;d<=dIM;d++){
+    const ds=mStr+"-"+String(d).padStart(2,"0"),dow2=new Date(calYear,calMonth,d).getDay();
+    const isWE=dow2===0||dow2===6,isHol=c.hasHolidays&&isHoliday(ds),worked=days.find(x=>x.date===ds);
+    const isPast=ds<td&&!isWE&&!isHol&&!worked;
+    let cls="cal-day";if(isWE&&!isHol)cls+=" weekend";if(isHol)cls+=" holiday";if(worked)cls+=" worked";if(isPast&&!isWE)cls+=" no-work";if(ds===td)cls+=" today-marker";
+    cells+=`<div class="${cls}" onclick="calClick('${ds}')"><span class="cal-day-num">${d}</span><div class="cal-dot"></div></div>`;
+  }
+  const mTotal=days.filter(d=>d.date.startsWith(mStr)).reduce((s,d)=>s+d.dayTotal,0);
+  const mH=days.filter(d=>d.date.startsWith(mStr)).reduce((s,d)=>s+d.workedH,0);
+  const mMass=days.filter(d=>d.date.startsWith(mStr)).reduce((s,d)=>s+d.massages.length,0);
+  const hols=[];for(let d=1;d<=dIM;d++){const ds=mStr+"-"+String(d).padStart(2,"0");if(c.hasHolidays&&isHoliday(ds))hols.push(ds);}
+  el.innerHTML=`<div class="card"><div class="cal-header"><button class="cal-nav" onclick="calPrev()">‹</button><div class="cal-title">${monthName(calMonth)} ${calYear}</div><button class="cal-nav" onclick="calNext()">›</button></div><div class="cal-grid">${["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"].map(d=>`<div class="cal-dow">${d}</div>`).join("")}${cells}</div><div class="cal-legend"><div class="cal-legend-item"><div class="cal-legend-dot" style="background:#0a2010;border:1px solid #1a5030"></div>Trabajado</div><div class="cal-legend-item"><div class="cal-legend-dot" style="background:#1a0a0a;border:1px solid #3a1010"></div>Libre</div>${c.hasHolidays?`<div class="cal-legend-item"><div class="cal-legend-dot" style="background:#2a1800;border:1px solid #5a3000"></div>Feriado</div>`:""}${hols.length?`<div style="margin-top:8px;font-size:11px;color:var(--dim);width:100%">${hols.map(h=>`<span class="holiday-tag">🎉 ${fmtDate(h)} ${getHolidayName(h)}</span>`).join("")}</div>`:""}</div></div>
+  <div class="card"><div class="card-title">📊 ${monthName(calMonth)} · ${c.name}</div>${c.hasSalary?`<div class="pro-row"><span>Días laborales</span><div class="pro-val">${workDays}</div></div><div class="pro-row"><span>Tarifa/hora</span><div class="pro-val gold">${rate.toFixed(2)} €/h</div></div>`:""}${c.hasSalary?`<div class="pro-row"><span>Días trabajados</span><div class="pro-val">${days.filter(d=>d.date.startsWith(mStr)).length}</div></div>`:""}<div class="pro-row"><span>Horas trabajadas</span><div class="pro-val">${fmtH(mH)}</div></div><div class="pro-row"><span>Masajes</span><div class="pro-val">${mMass}</div></div><div class="pro-row"><span>Total del mes</span><div class="pro-val gold">${ef(mTotal)}</div></div></div>`;
+}
+function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
+function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
+function calClick(ds){const day=cDays().find(d=>d.date===ds);if(day){editDay(ds);}else{document.getElementById("f-date").value=ds;onDateChange();showTab(1);window.scrollTo(0,0);}}
+
+// ═══════════════ PRO ═══════════════
+function renderPro(){
+  const el=document.getElementById("pro-content"),c=currentCenter(),days=cDays();
+  if(days.length===0){el.innerHTML='<div class="empty">Añade tu primer día en '+c.name+'.</div>';return;}
+  const tot=days.reduce((a,d)=>({h:a.h+d.workedH,hp:a.hp+d.hourlyPay,cm:a.cm+d.commission,tp:a.tp+(d.tips||0),tt:a.tt+d.dayTotal,ms:a.ms+d.massages.length}),{h:0,hp:0,cm:0,tp:0,tt:0,ms:0});
+  const globalEPH=tot.h>0?tot.tt/tot.h:0;
+  const allPrices=days.flatMap(d=>d.massages.map(m=>m.price));
+  const avgTicket=allPrices.length>0?allPrices.reduce((s,p)=>s+p,0)/allPrices.length:0;
+  const avgMassPerDay=days.length>0?tot.ms/days.length:0;
+  const td=today(),ms=getMonthStart(),ws=getMonday();
+  const mDays=days.filter(d=>d.date>=ms&&d.date<=td),mTotal=mDays.reduce((s,d)=>s+d.dayTotal,0);
+  const goal=cGoal(),goalPct=goal>0?Math.min(100,(mTotal/goal)*100):0;
+  const dom=new Date().getDate(),proj=mDays.length>0&&dom>0?(mTotal/dom)*new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate():0;
+
+  // Prev month comparison
+  const pm=new Date();pm.setDate(1);pm.setMonth(pm.getMonth()-1);
+  const pmS=pm.toISOString().split("T")[0],pmE=new Date(pm.getFullYear(),pm.getMonth()+1,0).toISOString().split("T")[0];
+  const prevTotal=days.filter(d=>d.date>=pmS&&d.date<=pmE).reduce((s,d)=>s+d.dayTotal,0);
+
+  // Best hour analysis
+  const hourBuckets={morning:0,afternoon:0};days.forEach(d=>{const h=parseInt((d.entry||"12").split(":")[0]);if(h<12)hourBuckets.morning+=d.dayTotal;else hourBuckets.afternoon+=d.dayTotal;});
+  const bestHour=hourBuckets.morning>hourBuckets.afternoon?"mañana":"tarde";
+
+  // Week history chart
+  const weeks=[];for(let w=5;w>=0;w--){const wd=new Date();wd.setDate(wd.getDate()-w*7);const ws2=new Date(wd);ws2.setDate(wd.getDate()-wd.getDay()+(wd.getDay()===0?-6:1));const we=new Date(ws2);we.setDate(ws2.getDate()+6);const wsS=ws2.toISOString().split("T")[0],weS=we.toISOString().split("T")[0];const wt=days.filter(d=>d.date>=wsS&&d.date<=weS).reduce((s,d)=>s+d.dayTotal,0);weeks.push({label:wsS.slice(5),val:wt});}
+  const maxW=Math.max(...weeks.map(w=>w.val),1);
+  const chartHTML=`<div class="chart-wrap"><div class="chart-bars">${weeks.map(w=>`<div class="chart-bar-wrap"><div class="chart-bar-val">${w.val>0?Math.round(w.val)+"€":""}</div><div class="chart-bar" style="height:${Math.max((w.val/maxW)*80,w.val>0?4:2)}px;background:linear-gradient(180deg,var(--gold),var(--gold2))"></div><div class="chart-bar-lbl">${w.label}</div></div>`).join("")}</div></div>`;
+
+  // Records
+  const bestDay=days.reduce((b,d)=>d.dayTotal>b.dayTotal?d:b,days[0]);
+  const bestMassDay=days.reduce((b,d)=>d.massages.length>b.massages.length?d:b,days[0]);
+  const weekH=days.filter(d=>d.date>=ws&&d.date<=td).reduce((s,d)=>s+d.workedH,0);
+  // Best week
+  const weekTotals={};days.forEach(d=>{const wd=new Date(d.date+"T12:00:00"),diff=wd.getDay()===0?6:wd.getDay()-1;const wstart=new Date(wd);wstart.setDate(wd.getDate()-diff);const wk=wstart.toISOString().split("T")[0];weekTotals[wk]=(weekTotals[wk]||0)+d.dayTotal;});
+  const bestWeekEntry=Object.entries(weekTotals).sort((a,b)=>b[1]-a[1])[0];
+  let streak=0;const sd=[...days].map(d=>d.date).sort((a,b)=>b.localeCompare(a));for(let i=0;i<sd.length;i++){const d=new Date(sd[i]+"T12:00:00"),exp=new Date();exp.setDate(exp.getDate()-i);if(d.toDateString()===exp.toDateString())streak++;else break;}
+
+  // Insights
+  const byType={};days.forEach(d=>d.massages.forEach(m=>{if(!byType[m.id])byType[m.id]={name:m.name,count:0,revenue:0,commission:0};byType[m.id].count++;byType[m.id].revenue+=m.price;byType[m.id].commission+=calcCommission([m],c);}));
+  const ranking=Object.values(byType).sort((a,b)=>b.commission-a.commission);
+  const daysEPH=days.map(d=>({...d,eph:d.workedH>0?d.dayTotal/d.workedH:0}));
+  const byDow={};days.forEach(d=>{const dw=dow(d.date);if(!byDow[dw])byDow[dw]={total:0,count:0};byDow[dw].total+=d.dayTotal;byDow[dw].count++;});
+  const bestDow=Object.entries(byDow).sort((a,b)=>(b[1].total/b[1].count)-(a[1].total/a[1].count))[0];
+  const ins=[];
+  if(days.length>=3){
+    if(bestDow)ins.push({t:`Los ${bestDow[0]} son tu mejor día en ${c.name} (${ef(bestDow[1].total/bestDow[1].count)} de media).`,c:"good"});
+    ins.push({t:`Rindes mejor por las ${bestHour} (${ef(hourBuckets[bestHour==="mañana"?"morning":"afternoon"])} acumulado).`,c:"info"});
+    if(prevTotal>0&&mTotal>0){const diff=((mTotal-prevTotal)/prevTotal*100);ins.push({t:`Este mes vas un ${Math.abs(diff).toFixed(0)}% ${diff>=0?"mejor":"peor"} que el mes anterior.`,c:diff>=0?"good":"warn"});}
+    if(ranking.length>0)ins.push({t:`Masaje más rentable: ${ranking[0].name} (${ef(ranking[0].commission)} en comisiones).`,c:"good"});
+    if(goal>0&&proj>goal)ins.push({t:`¡Proyección de ${ef(proj)}! Superarás tu meta de ${ef(goal)}.`,c:"good"});
+    else if(goal>0&&proj<goal*0.8)ins.push({t:`Proyección de ${ef(proj)}. Necesitas más actividad para ${ef(goal)}.`,c:"warn"});
+    if(weekH>=cCfg().fatigueHours)ins.push({t:`Llevas ${fmtH(weekH)} esta semana. Considera descansar.`,c:"dead"});
+  }
+  const goalHTML=goal>0?`<div class="card"><div class="card-title">🎯 Meta del Mes</div><div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:3px"><span>${ef(mTotal)}</span><span>Meta: ${ef(goal)}</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:${goalPct}%"></div></div><div class="goal-labels"><span>${goalPct.toFixed(0)}%</span><span>Proyección: ${ef(proj)}</span></div></div>`:"";
+
+  el.innerHTML=`<div class="card"><div class="card-title">📊 Acumulado · ${c.name}</div><div class="stat-grid"><div class="stat-box"><div class="stat-val">${days.length}</div><div class="stat-lbl">Días</div></div><div class="stat-box"><div class="stat-val">${tot.ms}</div><div class="stat-lbl">Masajes</div></div><div class="stat-box"><div class="stat-val" style="font-size:15px">${fmtH(tot.h)}</div><div class="stat-lbl">Horas</div></div><div class="stat-box"><div class="stat-val gold">${ef(tot.tt)}</div><div class="stat-lbl">Total</div></div></div>${c.hasSalary?`<div class="pro-row"><span>💶 Por horas</span><div class="pro-val">${ef(tot.hp)}</div></div>`:""}<div class="pro-row"><span>💆 Comisiones</span><div class="pro-val">${ef(tot.cm)}</div></div>${tot.tp>0?`<div class="pro-row"><span>💵 Propinas</span><div class="pro-val">${ef(tot.tp)}</div></div>`:""}<div class="pro-row"><span>🎫 Ticket promedio</span><div class="pro-val">${ef(avgTicket)}</div></div><div class="pro-row"><span>💆 Promedio masajes/día</span><div class="pro-val">${avgMassPerDay.toFixed(1)}</div></div><div class="pro-row"><span>📈 €/hora real global</span><div class="pro-val gold">${globalEPH.toFixed(2)} €/h</div></div>${prevTotal>0?`<div class="pro-row"><span>📅 Mes anterior</span><div class="pro-val">${ef(prevTotal)}</div></div>`:""}</div>
+  ${goalHTML}
+  <div class="card"><div class="card-title">🎯 Meta mensual</div><div style="display:flex;gap:9px;align-items:flex-end"><div style="flex:1"><label class="lbl">Meta en €</label><input type="number" id="goal-input" value="${goal||""}" placeholder="Ej: 500" min="0"></div><button onclick="saveGoal()" style="background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:9px;color:#0d0d0d;padding:10px 13px;font-size:13px;font-weight:700;cursor:pointer;font-family:Georgia,serif;flex-shrink:0">Guardar</button></div></div>
+  <div class="card"><div class="card-title">📈 Ingresos por Semana</div>${chartHTML}</div>
+  <div class="card"><div class="card-title">⭐ Récords · ${c.name}</div><div class="record-box"><div><div class="record-label">💰 Mejor día</div><div class="record-date">${fmtDate(bestDay.date)}</div></div><div class="record-val">${ef(bestDay.dayTotal)}</div></div><div class="record-box"><div><div class="record-label">📅 Mejor semana</div><div class="record-date">${bestWeekEntry?fmtDate(bestWeekEntry[0]):"-"}</div></div><div class="record-val">${bestWeekEntry?ef(bestWeekEntry[1]):"-"}</div></div><div class="record-box"><div><div class="record-label">💆 Más masajes en un día</div><div class="record-date">${fmtDate(bestMassDay.date)}</div></div><div class="record-val">${bestMassDay.massages.length}</div></div><div class="record-box"><div><div class="record-label">🔥 Racha actual</div></div><div class="record-val">${streak} día${streak!==1?"s":""}</div></div><div class="record-box"><div><div class="record-label">⏱ Horas esta semana</div></div><div class="record-val" style="color:${weekH>=cCfg().fatigueHours?"var(--red)":"var(--gold)"}">${fmtH(weekH)}</div></div></div>
+  ${ins.length?`<div class="card"><div class="card-title">🧠 Inteligencia Operativa</div>${ins.map(i=>`<div class="insight ${i.c}"><span>${ICONS[i.c]}</span><span>${i.t}</span></div>`).join("")}</div>`:""}
+  ${ranking.length?`<div class="card"><div class="card-title">🏆 Ranking de Masajes</div>${ranking.map((r,i)=>`<div class="rank-row"><div class="rank-left"><span class="rank-medal">${MEDAL[i]||"·"}</span><div><div class="rank-name">${r.name}</div><div class="rank-sub">×${r.count} · ${ef(r.revenue)} facturado</div></div></div><div class="rank-right"><div class="rank-earn">${ef(r.commission)}</div><div class="rank-earn-sub">comisión</div></div></div>`).join("")}</div>`:""}
+  <div class="card"><div class="card-title">📅 Desglose por Día</div>${[...days].reverse().map(d=>`<div class="pro-row"><div><div style="font-size:12px;color:var(--text)">${fmtDate(d.date)} <span style="color:var(--dim)">· ${dow(d.date)}${d.holiday?" 🎉":""}</span></div><div class="pro-sub">${fmtH(d.workedH)} · ${d.massages.length} masaje${d.massages.length!==1?"s":""}</div></div><div class="pro-val gold">${ef(d.dayTotal)}</div></div>`).join("")}<div style="display:flex;justify-content:space-between;padding:9px 0 0;font-weight:700"><span style="font-size:13px;color:var(--text)">TOTAL ACUMULADO</span><span style="font-size:16px;color:var(--gold)">${ef(tot.tt)}</span></div></div>`;
+}
+function saveGoal(){cData().goal=parseFloat(document.getElementById("goal-input").value)||0;saveData();renderPro();}
+
+// ═══════════════ SIMULATOR ═══════════════
+function renderSim(){
+  const td=today(),ms=getMonthStart(),c=currentCenter(),days=cDays();
+  const mDays=days.filter(d=>d.date>=ms&&d.date<=td);
+  const mTotal=mDays.reduce((s,d)=>s+d.dayTotal,0),mH=mDays.reduce((s,d)=>s+d.workedH,0),mMass=mDays.reduce((s,d)=>s+d.massages.length,0);
+  const daysLeft=new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate()-new Date().getDate();
+  const rate=c.hasSalary?getHourlyRate(td):0;const goal=cGoal();
+  document.getElementById("sim-content").innerHTML=`<div class="card"><div class="card-title">🎯 Simulador · ${c.name}</div><div style="font-size:12px;color:var(--dim);margin-bottom:11px">Quedan ${daysLeft} días en el mes. Llevas ${ef(mTotal)}.</div><label class="lbl">Horas extra planeadas</label><input type="number" id="sim-h" min="0" placeholder="Ej: 20" oninput="calcSim()"><div style="margin-top:9px"><label class="lbl">Masajes extra planeados</label><input type="number" id="sim-m" min="0" placeholder="Ej: 5" oninput="calcSim()"></div><div style="margin-top:9px"><label class="lbl">Precio promedio por masaje (€)</label><input type="number" id="sim-p" min="0" placeholder="Ej: 60" value="${c.massages.length>0?Math.round(c.massages.reduce((s,m)=>s+m.price,0)/c.massages.length):60}" oninput="calcSim()"></div><div id="sim-result" class="sim-result" style="display:none"></div></div>
+  <div class="card"><div class="card-title">📊 Situación Actual</div><div class="pro-row"><span>Días trabajados</span><div class="pro-val">${mDays.length}</div></div><div class="pro-row"><span>Horas</span><div class="pro-val">${fmtH(mH)}</div></div><div class="pro-row"><span>Masajes</span><div class="pro-val">${mMass}</div></div><div class="pro-row"><span>Total hasta hoy</span><div class="pro-val gold">${ef(mTotal)}</div></div>${goal>0?`<div class="pro-row"><span>Falta para meta</span><div class="pro-val" style="color:${mTotal>=goal?"var(--green)":"var(--red)"}">${mTotal>=goal?"✅ Meta superada":ef(Math.max(0,goal-mTotal))}</div></div>`:""}</div>`;
+}
+function calcSim(){
+  const h=parseFloat(document.getElementById("sim-h").value)||0,m=parseFloat(document.getElementById("sim-m").value)||0,p=parseFloat(document.getElementById("sim-p").value)||0;
+  const c=currentCenter(),td=today(),rate=c.hasSalary?getHourlyRate(td):0;
+  const extraH=h*rate,extraComm=c.hasVat?(p/(1+c.vatRate/100)*c.commRate/100*m):(p*c.commRate/100*m);
+  const extra=extraH+extraComm;
+  const ms=getMonthStart(),mTotal=cDays().filter(d=>d.date>=ms&&d.date<=td).reduce((s,d)=>s+d.dayTotal,0);
+  const total=mTotal+extra,goal=cGoal();
+  const el=document.getElementById("sim-result");
+  el.innerHTML=`${c.hasSalary?`<div class="sim-line"><span>💶 Extra por ${fmtH(h)}</span><span>${ef(extraH)}</span></div>`:""}<div class="sim-line"><span>💆 Comisión ${m} masajes × ${p} €</span><span>${ef(extraComm)}</span></div><div class="sim-line"><span>📈 Extra total</span><span>${ef(extra)}</span></div><div class="sim-total"><span>MES ESTIMADO</span><span>${ef(total)}</span></div>${goal>0?`<div style="font-size:12px;color:${total>=goal?"var(--green)":"var(--red)"};margin-top:7px;text-align:center">${total>=goal?"✅ ¡Alcanzarías tu meta de "+ef(goal)+"!":"⚠️ Te faltarían "+ef(goal-total)+" para la meta."}</div>`:""}`; el.style.display="block";
+}
+
+// ═══════════════ PAGOS ═══════════════
+function renderPagos(){
+  const el=document.getElementById("pagos-content"),c=currentCenter(),days=cDays(),payments=cPayments();
+  const totalEarned=days.reduce((s,d)=>s+d.dayTotal,0),totalPaid=payments.reduce((s,p)=>s+p.amount,0),pending=Math.max(0,totalEarned-totalPaid);
+  const monthMap={};
+  days.forEach(d=>{const mk=d.date.slice(0,7);if(!monthMap[mk])monthMap[mk]={earned:0,paid:0,hotelRevenue:0};monthMap[mk].earned+=d.dayTotal;monthMap[mk].hotelRevenue+=d.massages.reduce((s,m)=>s+m.price,0);});
+  payments.forEach(p=>{const mk=p.date.slice(0,7);if(!monthMap[mk])monthMap[mk]={earned:0,paid:0,hotelRevenue:0};monthMap[mk].paid+=p.amount;});
+  const monthRows=Object.entries(monthMap).sort((a,b)=>b[0].localeCompare(a[0])).map(([mk,mv])=>{const[y,m]=mk.split("-");const pend=Math.max(0,mv.earned-mv.paid);return`<div class="month-pay-row"><div><div class="month-pay-name">${monthName(parseInt(m)-1)} ${y}</div><div class="pay-note">Hotel generó: ${ef(mv.hotelRevenue)}</div></div><div class="month-pay-vals"><div class="month-pay-earned">Tu parte: ${ef(mv.earned)}</div><div class="month-pay-paid">✅ ${ef(mv.paid)}</div>${pend>0?`<div class="month-pay-pending">⏳ ${ef(pend)}</div>`:""}</div></div>`;}).join("");
+
+  el.innerHTML=`<div class="pending-box"><div class="pending-lbl">Pendiente · ${c.name}</div><div class="pending-val">${ef(pending)}</div><div class="pending-meta">Generado: ${ef(totalEarned)} · Cobrado: ${ef(totalPaid)}</div></div>
+  <div class="card"><div class="card-title">💰 Registrar Pago Recibido</div>
+    <div class="row2">
+      <div><label class="lbl">Período desde</label><input type="date" id="pay-from" value="${getMonday()}" onchange="calcPayAmount()"></div>
+      <div><label class="lbl">Período hasta</label><input type="date" id="pay-to" value="${today()}" onchange="calcPayAmount()"></div>
+    </div>
+    <div id="pay-calc-preview" style="display:none;margin-top:9px"></div>
+    <div style="margin-top:9px"><label class="lbl">Importe recibido (€) — editable si difiere</label><input type="number" id="pay-amount" min="0" step="0.01" placeholder="0,00"></div>
+    <div style="margin-top:9px"><label class="lbl">Nota (opcional)</label><input type="text" id="pay-note" placeholder="Ej: Semana del 14 al 20 de abril"></div>
+    <button class="btn-green" onclick="addPayment()">✅ Registrar Pago</button>
+  </div>
+  ${monthRows?`<div class="card"><div class="card-title">📅 Historial Mensual</div>${monthRows}</div>`:""}
+  ${payments.length?`<div class="card"><div class="card-title">📋 Pagos Recibidos</div>${[...payments].reverse().map(p=>`<div class="pay-item"><div><div class="pay-date">${p.dateFrom?fmtDate(p.dateFrom)+" → "+fmtDate(p.dateTo):fmtDate(p.date)}</div>${p.note?`<div class="pay-note">${p.note}</div>`:""}</div><div style="display:flex;align-items:center;gap:7px"><div class="pay-amount">+${ef(p.amount)}</div><button class="pay-del" onclick="deletePayment('${p.id}')">×</button></div></div>`).join("")}<div style="display:flex;justify-content:space-between;padding:9px 0 0;font-weight:700;font-size:13px"><span style="color:var(--text)">TOTAL COBRADO</span><span style="color:var(--green)">${ef(totalPaid)}</span></div></div>`:""}`;
+  setTimeout(calcPayAmount, 50);
+}
+function calcPayAmount(){
+  const from=document.getElementById("pay-from")?.value;
+  const to=document.getElementById("pay-to")?.value;
+  if(!from||!to)return;
+  const filtered=cDays().filter(d=>d.date>=from&&d.date<=to);
+  const total=filtered.reduce((s,d)=>s+d.dayTotal,0);
+  const totalRevenue=filtered.reduce((s,d)=>s+d.massages.reduce((ss,m)=>ss+m.price,0),0);
+  const totalH=filtered.reduce((s,d)=>s+d.workedH,0);
+  const totalMass=filtered.reduce((s,d)=>s+d.massages.length,0);
+  const prev=document.getElementById("pay-calc-preview");
+  if(!prev)return;
+  if(filtered.length===0){
+    prev.innerHTML=`<div style="background:var(--bg);border:1px solid #3a2800;border-radius:8px;padding:9px 12px;font-size:12px;color:#bf8a2a">⚠️ No hay días registrados en ese período.</div>`;
+    prev.style.display="block";
+    document.getElementById("pay-amount").value="";
+    return;
+  }
+  prev.innerHTML=`<div style="background:var(--bg);border:1px solid #1a5030;border-radius:8px;padding:9px 12px;font-size:12px;color:var(--muted)">
+    <div style="display:flex;justify-content:space-between;padding:3px 0"><span>${filtered.length} días · ${fmtH(totalH)} · ${totalMass} masajes</span></div>
+    <div style="display:flex;justify-content:space-between;padding:3px 0"><span>Tu parte calculada:</span><span style="color:var(--green);font-weight:700">${ef(total)}</span></div>
+  </div>`;
+  prev.style.display="block";
+  document.getElementById("pay-amount").value=total.toFixed(2);
+}
+function addPayment(){
+  const dateFrom=document.getElementById("pay-from").value,dateTo=document.getElementById("pay-to").value;
+  const amount=parseFloat(document.getElementById("pay-amount").value)||0,note=document.getElementById("pay-note").value.trim();
+  if(!dateFrom||!dateTo||amount<=0)return;
+  cData().payments.push({id:Date.now().toString(),date:dateTo,dateFrom,dateTo,amount,note});
+  saveData();updateHeader();renderPagos();
+}
+function deletePayment(id){cData().payments=cPayments().filter(p=>p.id!==id);saveData();updateHeader();renderPagos();}
+
+
+// ═══════════════ EXPORT ═══════════════
+function renderExport(){
+  const now=today(),ms=getMonthStart(),mon=getMonday(),c=currentCenter();
+  document.getElementById("export-content").innerHTML=`<div class="card"><div class="card-title">📤 Exportar · ${c.name}</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:7px">Período</div>
+    <div class="period-btns"><button class="period-btn ${exportPeriod==="week"?"active":""}" onclick="setPeriod('week')">Esta semana</button><button class="period-btn ${exportPeriod==="month"?"active":""}" onclick="setPeriod('month')">Este mes</button><button class="period-btn ${exportPeriod==="custom"?"active":""}" onclick="setPeriod('custom')">Personalizado</button></div>
+    ${exportPeriod==="custom"?`<div class="row2" style="margin-bottom:10px"><div><label class="lbl">Desde</label><input type="date" id="exp-from" value="${ms}"></div><div><label class="lbl">Hasta</label><input type="date" id="exp-to" value="${now}"></div></div>`:`<div style="font-size:12px;color:var(--dim);margin-bottom:10px">${exportPeriod==="week"?fmtDate(mon)+" → "+fmtDate(now):fmtDate(ms)+" → "+fmtDate(now)}</div>`}
+    <div style="font-size:12px;color:var(--muted);margin-bottom:7px">Idioma</div>
+    <div class="period-btns" style="margin-bottom:10px"><button class="period-btn ${exportLang==="es"?"active":""}" onclick="setLang('es')">🇪🇸 Español</button><button class="period-btn ${exportLang==="bg"?"active":""}" onclick="setLang('bg')">🇧🇬 Búlgaro</button></div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:7px">Tipo de reporte</div>
+    <div class="period-btns" style="margin-bottom:12px"><button class="period-btn ${exportType==="detail"?"active":""}" onclick="setType('detail')">Detallado</button><button class="period-btn ${exportType==="summary"?"active":""}" onclick="setType('summary')">Resumen</button></div>
+    <button class="btn-copy" onclick="generateReport()">📋 Generar y Copiar</button>
+    <button class="btn-blue" onclick="prepareEmail()" style="margin-top:8px">📧 Enviar por Email</button>
+    <div id="export-output" class="export-output" style="display:none"></div>
+    <button id="copy-again-btn" class="btn-copy" style="display:none;background:var(--bg3);color:var(--gold);border:1px solid var(--border)" onclick="copyText()">📋 Copiar de nuevo</button>
+  </div>`;
+}
+function setPeriod(p){exportPeriod=p;renderExport();}
+function setLang(l){exportLang=l;renderExport();}
+function setType(t){exportType=t;renderExport();}
+
+function getFilteredDays(){
+  let from,to;const now=today();
+  if(exportPeriod==="week"){from=getMonday();to=now;}
+  else if(exportPeriod==="month"){from=getMonthStart();to=now;}
+  else{from=document.getElementById("exp-from")?.value||getMonthStart();to=document.getElementById("exp-to")?.value||now;}
+  return{from,to,days:cDays().filter(d=>d.date>=from&&d.date<=to)};
+}
+function generateReport(){const{from,to,days}=getFilteredDays();if(days.length===0){alert("No hay días en ese período.");return;}lastExportText=buildReport(days,from,to,exportLang,exportType);document.getElementById("export-output").textContent=lastExportText;document.getElementById("export-output").style.display="block";document.getElementById("copy-again-btn").style.display="block";copyText();}
+function copyText(){if(!lastExportText)return;navigator.clipboard.writeText(lastExportText).then(()=>{const btn=document.querySelector(".btn-copy");if(btn){const o=btn.textContent;btn.textContent="✅ ¡Copiado!";setTimeout(()=>btn.textContent=o,2000);}}).catch(()=>{const ta=document.createElement("textarea");ta.value=lastExportText;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);});}
+function prepareEmail(){
+  const{from,to,days}=getFilteredDays();
+  if(days.length===0){alert("No hay días en ese período.");return;}
+  pendingEmailFrom=from;pendingEmailTo=to;
+  document.getElementById("email-lang").value=exportLang;
+  document.getElementById("email-type").value=exportType;
+  openModal("email-modal");
+}
+function sendEmail(){
+  const to=document.getElementById("email-to").value.trim();
+  const lang=document.getElementById("email-lang").value;
+  const type=document.getElementById("email-type").value;
+  const{from,to:toDate,days}=getFilteredDays();
+  const text=buildReport(days,from,toDate,lang,type);
+  const c=currentCenter();
+  const subject=encodeURIComponent((lang==="bg"?"Отчет за работа":"Informe de trabajo")+" — Guido — "+c.name+" — "+fmtDate(from)+" / "+fmtDate(toDate));
+  const body=encodeURIComponent(text);
+  const mailto=`mailto:${to}?subject=${subject}&body=${body}`;
+  window.open(mailto,"_blank");
+  closeModal("email-modal");
+}
+
+function buildReport(days,from,to,lang,type){
+  const c=currentCenter();
+  const SEP="━━━━━━━━━━━━━━━━━━━━━━━━━";
+  const tot=days.reduce((a,d)=>({h:a.h+d.workedH,hp:a.hp+d.hourlyPay,cm:a.cm+d.commission,tp:a.tp+(d.tips||0),tt:a.tt+d.dayTotal,ms:a.ms+d.massages.length}),{h:0,hp:0,cm:0,tp:0,tt:0,ms:0});
+  const totalRawAll=days.reduce((s,d)=>s+d.massages.reduce((ss,m)=>ss+m.price,0),0);
+  const afterVatAll=c.hasVat?totalRawAll/(1+c.vatRate/100):totalRawAll;
+  const byType={};days.forEach(d=>d.massages.forEach(m=>{if(!byType[m.id])byType[m.id]={name:m.name,nameBG:m.nameBG,duration:m.duration,durationBG:m.durationBG,count:0,revenue:0,price:m.price};byType[m.id].count++;byType[m.id].revenue+=m.price;}));
+  const bg=lang==="bg";
+  const L=bg?{title:"ОТЧЕТ ЗА РАБОТА",center:c.name,period:"Период",gen:"Генериран на",worker:"Терапевт",salary:"Основна заплата",days:"Работни дни",hours:"Общо часове",hpay:"Заплащане на час",massTitle:"ИЗВЪРШЕНИ МАСАЖИ",billed:"Общо фактурирано",vat:"Приспадане ДДС",afterVat:"След ДДС",comm:"Комисионна",tips:"Бакшиши",totalSec:"ОБЩО ЗА ПОЛУЧАВАНЕ",fromH:"Часове",fromM:"Комисионна",tipsL:"Бакшиши",grand:"ОБЩО",eff:"ефективни",sub:"Сума за деня",note:"Бележка",tip:"Бакшиш",summ:"ОБОБЩЕНИЕ",detail:"ДЕТАЙЛ ПО ДНИ",holiday:"Празник",date:"Дата",dow:"Ден",hours2:"Часове",massages:"Масажи",total:"Общо"}
+    :{title:"INFORME DE TRABAJO",center:c.name,period:"Período",gen:"Generado el",worker:"Terapeuta",salary:"Salario base",days:"Días trabajados",hours:"Horas totales",hpay:"Pago por horas",massTitle:"MASAJES REALIZADOS",billed:"Total facturado",vat:"− IVA "+c.vatRate+"%",afterVat:"Base neta",comm:"Comisión "+c.commRate+"%",tips:"Propinas",totalSec:"TOTAL A COBRAR",fromH:"Por horas",fromM:"Comisión",tipsL:"Propinas",grand:"TOTAL",eff:"efectivas",sub:"Subtotal",note:"Nota",tip:"Propina",summ:"RESUMEN DEL PERÍODO",detail:"DETALLE POR DÍA",holiday:"Feriado",date:"Fecha",dow:"Día",hours2:"Horas",massages:"Masajes",total:"Total"};
+  let o="";
+  o+=SEP+"\n"+L.title+"\n"+L.center+"\n"+L.period+": "+fmtDate(from)+" — "+fmtDate(to)+"\n"+L.gen+": "+fmtDate(today())+"\n"+L.worker+": Guido\n"+SEP+"\n\n";
+  o+=SEP+"\n"+L.summ+"\n"+SEP+"\n";
+  o+=L.days+": "+days.length+"\n"+L.hours+": "+fmtH(tot.h)+"\n";
+  if(c.hasSalary)o+=L.hpay+": "+ef(tot.hp)+"\n";
+  o+="\n"+L.massTitle+":\n";
+  Object.values(byType).forEach(r=>o+="  • "+(bg?r.nameBG:r.name)+" ×"+r.count+" — "+ef(r.revenue)+"\n");
+  o+=L.billed+": "+ef(totalRawAll)+"\n";
+  if(c.hasVat){o+=L.vat+": − "+ef(totalRawAll-afterVatAll)+"\n";o+=L.afterVat+": "+ef(afterVatAll)+"\n";}
+  o+=L.comm+" ("+c.commRate+"%): "+ef(tot.cm)+"\n";
+  if(tot.tp>0)o+=L.tips+": "+ef(tot.tp)+"\n";
+  o+="\n"+SEP+"\n"+L.totalSec+"\n"+SEP+"\n";
+  if(c.hasSalary)o+=L.fromH+": "+ef(tot.hp)+"\n";
+  o+=L.fromM+": "+ef(tot.cm)+"\n";
+  if(tot.tp>0)o+=L.tipsL+": "+ef(tot.tp)+"\n";
+  o+="══════════════════════\n"+L.grand+": "+ef(tot.tt)+"\n"+SEP+"\n\n";
+  if(type==="detail"){
+    o+=SEP+"\n"+L.detail+"\n"+SEP+"\n\n";
+    // Table header
+    o+=L.date.padEnd(12)+L.dow.padEnd(6)+L.hours2.padEnd(8)+(c.hasSalary?L.hpay.padEnd(12):"")+L.massages.padEnd(10)+L.billed.padEnd(12)+L.comm.padEnd(12)+L.total+"\n";
+    o+="─".repeat(75)+"\n";
+    days.forEach(d=>{
+      const dRaw=d.massages.reduce((s,m)=>s+m.price,0);
+      o+=fmtDate(d.date).padEnd(12)+dow(d.date,bg).padEnd(6)+fmtH(d.workedH).padEnd(8)+(c.hasSalary?ef(d.hourlyPay).padEnd(12):"")+String(d.massages.length).padEnd(10)+ef(dRaw).padEnd(12)+ef(d.commission).padEnd(12)+ef(d.dayTotal)+"\n";
+      if(d.massages.length>0)d.massages.forEach(m=>o+="    └ "+(bg?m.nameBG:m.name)+" ("+m.price+" €)\n");
+      if(d.tips>0)o+="    └ "+L.tip+": "+ef(d.tips)+"\n";
+      if(d.notes)o+="    └ "+L.note+": "+d.notes+"\n";
+    });
+    o+="─".repeat(75)+"\n";
+    o+="TOTAL".padEnd(12)+"".padEnd(6)+fmtH(tot.h).padEnd(8)+(c.hasSalary?ef(tot.hp).padEnd(12):"")+String(tot.ms).padEnd(10)+ef(totalRawAll).padEnd(12)+ef(tot.cm).padEnd(12)+ef(tot.tt)+"\n";
+  }
+  return o;
+}
+
+// ═══════════════ PORTFOLIO — MI VALOR PROFESIONAL ═══════════════
+function renderPortfolio(){
+  const el=document.getElementById("portfolio-content"),c=currentCenter(),days=cDays();
+  const now=today(),ms=getMonthStart(),mon=getMonday();
+  // Period selector state
+  const pfPeriod=window._pfPeriod||"month";
+  const pfCustomFrom=window._pfCustomFrom||ms;
+  const pfCustomTo=window._pfCustomTo||now;
+  let from,to;
+  if(pfPeriod==="week"){from=mon;to=now;}
+  else if(pfPeriod==="month"){from=ms;to=now;}
+  else if(pfPeriod==="all"){from=days.length>0?days[0].date:ms;to=now;}
+  else{from=pfCustomFrom;to=pfCustomTo;}
+  const filtered=days.filter(d=>d.date>=from&&d.date<=to);
+  if(days.length===0){el.innerHTML='<div class="empty">Añade días de trabajo para generar tu portafolio profesional.</div>';return;}
+
+  // Stats
+  const totalRevenue=filtered.reduce((s,d)=>s+d.massages.reduce((ss,m)=>ss+m.price,0),0);
+  const totalH=filtered.reduce((s,d)=>s+d.workedH,0);
+  const totalMass=filtered.reduce((s,d)=>s+d.massages.length,0);
+  const totalDays=filtered.length;
+  const avgPerSession=totalMass>0?totalRevenue/totalMass:0;
+  const avgPerDay=totalDays>0?totalRevenue/totalDays:0;
+  const revenuePerH=totalH>0?totalRevenue/totalH:0;
+
+  // By massage type
+  const byType={};filtered.forEach(d=>d.massages.forEach(m=>{if(!byType[m.id])byType[m.id]={name:m.name,nameBG:m.nameBG,count:0,revenue:0,price:m.price};byType[m.id].count++;byType[m.id].revenue+=m.price;}));
+  const ranking=Object.values(byType).sort((a,b)=>b.revenue-a.revenue);
+
+  // Monthly breakdown
+  const monthMap={};filtered.forEach(d=>{const mk=d.date.slice(0,7);if(!monthMap[mk])monthMap[mk]={revenue:0,mass:0,days:0,hours:0};monthMap[mk].revenue+=d.massages.reduce((s,m)=>s+m.price,0);monthMap[mk].mass+=d.massages.length;monthMap[mk].days++;monthMap[mk].hours+=d.workedH;});
+  const monthRows=Object.entries(monthMap).sort((a,b)=>a[0].localeCompare(b[0])).map(([mk,mv])=>{const[y,m]=mk.split("-");return`<div class="pro-row"><div><div style="font-size:13px;color:var(--text)">${monthName(parseInt(m)-1)} ${y}</div><div class="pro-sub">${mv.days} días · ${fmtH(mv.hours)} · ${mv.mass} masajes</div></div><div class="pro-val gold">${ef(mv.revenue)}</div></div>`;}).join("");
+
+  el.innerHTML=`
+  <div class="card">
+    <div class="card-title">🏆 Mi Valor Profesional · ${c.name}</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Estadísticas del servicio que generas — sin datos personales de cobro</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:7px">Período</div>
+    <div class="period-btns">
+      <button class="period-btn ${pfPeriod==="week"?"active":""}" onclick="setPfPeriod('week')">Semana</button>
+      <button class="period-btn ${pfPeriod==="month"?"active":""}" onclick="setPfPeriod('month')">Mes</button>
+      <button class="period-btn ${pfPeriod==="all"?"active":""}" onclick="setPfPeriod('all')">Histórico</button>
+      <button class="period-btn ${pfPeriod==="custom"?"active":""}" onclick="setPfPeriod('custom')">Personalizado</button>
+    </div>
+    ${pfPeriod==="custom"?`<div class="row2" style="margin-bottom:10px"><div><label class="lbl">Desde</label><input type="date" id="pf-from" value="${pfCustomFrom}" onchange="setPfDates()"></div><div><label class="lbl">Hasta</label><input type="date" id="pf-to" value="${pfCustomTo}" onchange="setPfDates()"></div></div>`:`<div style="font-size:12px;color:var(--dim);margin-bottom:10px">${fmtDate(from)} → ${fmtDate(to)}</div>`}
+  </div>
+
+  ${filtered.length===0?`<div class="empty">No hay datos en ese período.</div>`:`
+  <div class="card">
+    <div class="card-title">📊 Producción del Spa</div>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-val gold" style="font-size:16px">${ef(totalRevenue)}</div><div class="stat-lbl">Facturado para el spa</div></div>
+      <div class="stat-box"><div class="stat-val">${totalMass}</div><div class="stat-lbl">Sesiones realizadas</div></div>
+      <div class="stat-box"><div class="stat-val" style="font-size:15px">${fmtH(totalH)}</div><div class="stat-lbl">Horas de servicio</div></div>
+      <div class="stat-box"><div class="stat-val">${totalDays}</div><div class="stat-lbl">Días trabajados</div></div>
+    </div>
+    <div class="pro-row"><span>💆 Ticket promedio por sesión</span><div class="pro-val gold">${ef(avgPerSession)}</div></div>
+    <div class="pro-row"><span>📅 Facturación promedio por día</span><div class="pro-val gold">${ef(avgPerDay)}</div></div>
+    <div class="pro-row"><span>⏱ Facturación por hora de servicio</span><div class="pro-val gold">${ef(revenuePerH)}</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">💆 Servicios Realizados</div>
+    ${ranking.map((r,i)=>`<div class="rank-row"><div class="rank-left"><span class="rank-medal">${MEDAL[i]||"·"}</span><div><div class="rank-name">${r.name}</div><div class="rank-sub">×${r.count} sesiones</div></div></div><div class="rank-right"><div class="rank-earn">${ef(r.revenue)}</div><div class="rank-earn-sub">${((r.revenue/totalRevenue)*100).toFixed(0)}% del total</div></div></div>`).join("")}
+  </div>
+
+  ${Object.keys(monthMap).length>1?`<div class="card"><div class="card-title">📅 Evolución Mensual</div>${monthRows}</div>`:""}
+
+  <div class="card">
+    <div class="card-title">📤 Exportar Portafolio</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Genera un reporte profesional para mostrar a managers o adjuntar a tu currículum</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:7px">Idioma</div>
+    <div class="period-btns" style="margin-bottom:10px">
+      <button class="period-btn ${(window._pfLang||"es")==="es"?"active":""}" onclick="window._pfLang='es';renderPortfolio()">🇪🇸 Español</button>
+      <button class="period-btn ${(window._pfLang||"es")==="bg"?"active":""}" onclick="window._pfLang='bg';renderPortfolio()">🇧🇬 Búlgaro</button>
+    </div>
+    <button class="btn-copy" onclick="exportPortfolio()">📋 Copiar Reporte Profesional</button>
+    <button class="btn-blue" onclick="emailPortfolio()" style="margin-top:8px">📧 Enviar por Email</button>
+  </div>
+  `}`;
+}
+function setPfPeriod(p){window._pfPeriod=p;renderPortfolio();}
+function setPfDates(){window._pfCustomFrom=document.getElementById("pf-from").value;window._pfCustomTo=document.getElementById("pf-to").value;renderPortfolio();}
+
+function buildPortfolioText(lang){
+  const c=currentCenter(),days=cDays();
+  const pfPeriod=window._pfPeriod||"month";
+  const ms=getMonthStart(),mon=getMonday(),now=today();
+  let from,to;
+  if(pfPeriod==="week"){from=mon;to=now;}else if(pfPeriod==="month"){from=ms;to=now;}else if(pfPeriod==="all"){from=days.length>0?days[0].date:ms;to=now;}else{from=window._pfCustomFrom||ms;to=window._pfCustomTo||now;}
+  const filtered=days.filter(d=>d.date>=from&&d.date<=to);
+  const bg=lang==="bg";
+  const SEP="━━━━━━━━━━━━━━━━━━━━━━━━━";
+  const totalRevenue=filtered.reduce((s,d)=>s+d.massages.reduce((ss,m)=>ss+m.price,0),0);
+  const totalH=filtered.reduce((s,d)=>s+d.workedH,0);
+  const totalMass=filtered.reduce((s,d)=>s+d.massages.length,0);
+  const totalDays=filtered.length;
+  const avgPerSession=totalMass>0?totalRevenue/totalMass:0;
+  const avgPerDay=totalDays>0?totalRevenue/totalDays:0;
+  const byType={};filtered.forEach(d=>d.massages.forEach(m=>{if(!byType[m.id])byType[m.id]={name:m.name,nameBG:m.nameBG,count:0,revenue:0};byType[m.id].count++;byType[m.id].revenue+=m.price;}));
+  const ranking=Object.values(byType).sort((a,b)=>b.revenue-a.revenue);
+  const monthMap={};filtered.forEach(d=>{const mk=d.date.slice(0,7);if(!monthMap[mk])monthMap[mk]={revenue:0,mass:0,days:0,hours:0};monthMap[mk].revenue+=d.massages.reduce((s,m)=>s+m.price,0);monthMap[mk].mass+=d.massages.length;monthMap[mk].days++;monthMap[mk].hours+=d.workedH;});
+
+  let o="";
+  if(bg){
+    o+=SEP+"\nПРОФЕСИОНАЛЕН ОТЧЕТ ЗА ДЕЙНОСТ\n"+c.name+"\n";
+    o+="Период: "+fmtDate(from)+" — "+fmtDate(to)+"\nТерапевт: Guido Peluso\nГенериран на: "+fmtDate(now)+"\n"+SEP+"\n\n";
+    o+=SEP+"\nПРОИЗВОДСТВЕНИ ПОКАЗАТЕЛИ\n"+SEP+"\n";
+    o+="Общо фактурирано за спа: "+ef(totalRevenue)+"\n";
+    o+="Извършени сесии: "+totalMass+"\n";
+    o+="Часове на обслужване: "+fmtH(totalH)+"\n";
+    o+="Работни дни: "+totalDays+"\n";
+    o+="Среден билет на сесия: "+ef(avgPerSession)+"\n";
+    o+="Средна фактурация на ден: "+ef(avgPerDay)+"\n\n";
+    o+=SEP+"\nИЗВЪРШЕНИ УСЛУГИ\n"+SEP+"\n";
+    ranking.forEach((r,i)=>o+=(i+1)+". "+r.nameBG+" — "+r.count+" сесии — "+ef(r.revenue)+"\n");
+    if(Object.keys(monthMap).length>1){o+="\n"+SEP+"\nМЕСЕЧНА ЕВОЛЮЦИЯ\n"+SEP+"\n";Object.entries(monthMap).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([mk,mv])=>{const[y,m]=mk.split("-");o+=monthName(parseInt(m)-1)+" "+y+": "+ef(mv.revenue)+" ("+mv.mass+" сесии · "+fmtH(mv.hours)+")\n";});}
+  } else {
+    o+=SEP+"\nINFORME PROFESIONAL DE ACTIVIDAD\n"+c.name+"\n";
+    o+="Período: "+fmtDate(from)+" — "+fmtDate(to)+"\nTerapeuta: Guido Peluso\nGenerado el: "+fmtDate(now)+"\n"+SEP+"\n\n";
+    o+=SEP+"\nINDICADORES DE PRODUCCIÓN\n"+SEP+"\n";
+    o+="Total facturado para el spa: "+ef(totalRevenue)+"\n";
+    o+="Sesiones realizadas: "+totalMass+"\n";
+    o+="Horas de servicio: "+fmtH(totalH)+"\n";
+    o+="Días trabajados: "+totalDays+"\n";
+    o+="Ticket promedio por sesión: "+ef(avgPerSession)+"\n";
+    o+="Facturación promedio por día: "+ef(avgPerDay)+"\n\n";
+    o+=SEP+"\nSERVICIOS REALIZADOS\n"+SEP+"\n";
+    ranking.forEach((r,i)=>o+=(i+1)+". "+r.name+" — "+r.count+" sesiones — "+ef(r.revenue)+"\n");
+    if(Object.keys(monthMap).length>1){o+="\n"+SEP+"\nEVOLUCIÓN MENSUAL\n"+SEP+"\n";Object.entries(monthMap).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([mk,mv])=>{const[y,m]=mk.split("-");o+=monthName(parseInt(m)-1)+" "+y+": "+ef(mv.revenue)+" ("+mv.mass+" sesiones · "+fmtH(mv.hours)+")\n";});}
+  }
+  return o;
+}
+function exportPortfolio(){const text=buildPortfolioText(window._pfLang||"es");navigator.clipboard.writeText(text).then(()=>alert("✅ Reporte copiado")).catch(()=>{const ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);});}
+function emailPortfolio(){
+  const lang=window._pfLang||"es",c=currentCenter();
+  const text=buildPortfolioText(lang);
+  const subject=encodeURIComponent((lang==="bg"?"Професионален отчет":"Informe Profesional")+" — Guido Peluso — "+c.name);
+  window.open("mailto:?subject="+subject+"&body="+encodeURIComponent(text),"_blank");
+}
+
+
+function renderConfig(){
+  const cfg=cCfg(),c=currentCenter();
+  document.getElementById("config-content").innerHTML=`
+  <div class="card"><div class="card-title">⚙️ ${c.name}</div>
+    ${c.hasSalary?`<div class="config-row"><div><div class="config-label">Salario mensual base</div><div class="config-sub">Dividido entre días laborales del mes</div></div><input class="config-input" type="number" id="cfg-salary" value="${c.salary}" step="0.01"></div>`:""}
+    ${c.hasVat?`<div class="config-row"><div><div class="config-label">IVA (%)</div><div class="config-sub">Se deduce antes de la comisión</div></div><input class="config-input" type="number" id="cfg-vat" value="${c.vatRate}" min="0" max="50"></div>`:""}
+    <div class="config-row"><div><div class="config-label">Comisión masajes (%)</div><div class="config-sub">Tu porcentaje sobre ${c.hasVat?"precio sin IVA":"precio bruto"}</div></div><input class="config-input" type="number" id="cfg-comm" value="${c.commRate}" min="0" max="100"></div>
+    <button class="btn-gold" style="margin-top:12px" onclick="saveConfig()">💾 Guardar</button>
+    <div class="modal-err" id="cfg-saved" style="color:var(--green);margin-top:6px"></div>
+  </div>
+  <div class="card"><div class="card-title">🔒 Seguridad y Alertas</div>
+    <div class="config-row"><div><div class="config-label">Bloqueo automático (min)</div><div class="config-sub">0 = desactivado</div></div><input class="config-input" type="number" id="cfg-lock" value="${cfg.lockMinutes}" min="0" max="60"></div>
+    <div class="config-row"><div><div class="config-label">Límite horas semanales</div><div class="config-sub">Para alerta de agotamiento</div></div><input class="config-input" type="number" id="cfg-fatigue" value="${cfg.fatigueHours}" min="20" max="80"></div>
+    <button class="btn-ghost" style="display:block;margin-top:8px" onclick="openModal('pin-modal')">🔐 Cambiar PIN</button>
+  </div>
+  ${c.hasHolidays?`<div class="card"><div class="card-title">📅 Feriados Búlgaros ${new Date().getFullYear()}</div><div style="font-size:12px;color:var(--muted);margin-bottom:9px;line-height:1.6">Aplicados automáticamente con pago doble:</div>${[...BG_FIXED.map(d=>({ds:"2026-"+d,n:HOLIDAY_NAMES[d]||d})),...(BG_SPECIAL["2026"]||[]).map(d=>({ds:d,n:HOLIDAY_NAMES[d]||d}))].sort((a,b)=>a.ds.localeCompare(b.ds)).map(x=>`<span class="holiday-tag">🎉 ${fmtDate(x.ds)} ${x.n}</span>`).join("")}</div>`:""}
+  <div class="card"><div class="card-title">💾 Copia de Seguridad</div>
+    <button class="btn-blue" onclick="exportBackup()">📥 Exportar todos los datos</button>
+    <div style="margin-top:10px"><label class="lbl">Restaurar backup</label><input type="file" id="backup-file" accept=".json" onchange="importBackup(this)" style="font-size:12px;padding:7px"></div>
+  </div>`;
+}
+function saveConfig(){
+  const c=currentCenter();
+  if(c.hasSalary){const s=parseFloat(document.getElementById("cfg-salary").value)||557.31;CENTERS[currentCenterIdx].salary=s;}
+  if(c.hasVat){const v=parseFloat(document.getElementById("cfg-vat").value)||20;CENTERS[currentCenterIdx].vatRate=v;}
+  const cm=parseFloat(document.getElementById("cfg-comm").value)||c.commRate;CENTERS[currentCenterIdx].commRate=cm;
+  const lock=parseInt(document.getElementById("cfg-lock").value)||0;
+  const fat=parseInt(document.getElementById("cfg-fatigue").value)||45;
+  cData().cfg={lockMinutes:lock,fatigueHours:fat};
+  saveData();buildMassageList();
+  const el=document.getElementById("cfg-saved");el.textContent="✅ Guardado.";setTimeout(()=>el.textContent="",2500);
+}
+
+// ═══════════════ BACKUP ═══════════════
+function exportBackup(){const data=JSON.stringify({version:SCHEMA_VERSION,data:allData},null,2);const blob=new Blob([data],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="guidopro_backup_"+today()+".json";a.click();URL.revokeObjectURL(url);}
+function importBackup(input){const file=input.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{try{const d=JSON.parse(e.target.result);if(d.data){allData=d.data;CENTERS.forEach(c=>{if(!allData[c.key])allData[c.key]=initCenterData();allData[c.key].days=(allData[c.key].days||[]).map(dd=>normalizeDay(dd,c));});saveData();updateHeader();alert("✅ Backup restaurado. "+Object.values(allData).reduce((s,d)=>s+(d.days||[]).length,0)+" días en total.");}else alert("❌ Formato inválido.");}catch{alert("❌ Error al leer el archivo.");}};reader.readAsText(file);}
+
+// ═══════════════ UNREGISTERED CHECK ═══════════════
+function checkUnregistered(){
+  const yest=yesterday(),td=today(),days=cDays();
+  const hasYest=days.some(d=>d.date===yest),hasToday=days.some(d=>d.date===td);
+  const el=document.getElementById("notice-unreg");
+  if(!hasYest&&days.length>0&&!hasToday){el.innerHTML=`⚠️ No registraste el ${fmtDate(yest)}. <button onclick="prefillDate('${yest}')" style="background:none;border:none;color:var(--gold);cursor:pointer;font-family:Georgia,serif;font-size:13px;text-decoration:underline">Añadir ahora</button>`;el.style.display="block";}
+  else el.style.display="none";
+}
+function prefillDate(date){document.getElementById("f-date").value=date;onDateChange();document.getElementById("notice-unreg").style.display="none";window.scrollTo(0,0);}
+
+// ═══════════════ PWA ═══════════════
+window.addEventListener("beforeinstallprompt",ev=>{ev.preventDefault();deferredPrompt=ev;document.getElementById("install-banner").classList.add("show");});
+function installApp(){if(!deferredPrompt)return;deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null;document.getElementById("install-banner").classList.remove("show");});}
+window.addEventListener("appinstalled",()=>document.getElementById("install-banner").classList.remove("show"));
+if("serviceWorker"in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{});}
+const mf={name:"Guido PRO",short_name:"Guido PRO",start_url:".",display:"standalone",background_color:"#0d0d0d",theme_color:"#0d0d0d",icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230d0d0d'/><text y='72' x='50' font-size='60' text-anchor='middle' fill='%23c9a84c'>✦</text></svg>",sizes:"192x192",type:"image/svg+xml"}]};
+const mb=new Blob([JSON.stringify(mf)],{type:"application/json"});const ml=document.createElement("link");ml.rel="manifest";ml.href=URL.createObjectURL(mb);document.head.appendChild(ml);
+
+// ═══════════════ INIT ═══════════════
+loadData();
+setInterval(checkLock,30000);
+</script>
+</body>
+</html>
