@@ -376,6 +376,7 @@ textarea { min-height: 60px; font-size: 14px; }
     <div class="drawer-section">Análisis</div>
     <div class="drawer-item" id="nav-4" onclick="showTab(4)"><span class="drawer-icon">📊</span><span class="drawer-label">Análisis PRO</span></div>
     <div class="drawer-item" id="nav-5" onclick="showTab(5)"><span class="drawer-icon">🎯</span><span class="drawer-label">Simulador</span></div>
+    <div class="drawer-item" id="nav-10" onclick="showTab(10)"><span class="drawer-icon">⚖️</span><span class="drawer-label">Comparar Centros</span></div>
     <div class="drawer-section">Gestión</div>
     <div class="drawer-item" id="nav-6" onclick="showTab(6)"><span class="drawer-icon">💰</span><span class="drawer-label">Pagos</span></div>
     <div class="drawer-item" id="nav-7" onclick="showTab(7)"><span class="drawer-icon">📤</span><span class="drawer-label">Exportar</span></div>
@@ -433,9 +434,12 @@ textarea { min-height: 60px; font-size: 14px; }
       <div id="massage-list"></div>
     </div>
     <div class="card" id="tips-card">
-      <div class="card-title">💵 Propinas y Notas</div>
-      <label class="lbl">Propina (€)</label>
-      <input type="number" id="f-tips" min="0" step="0.5" placeholder="0" oninput="updatePreview()">
+      <div class="card-title">💵 Propinas, Clientes y Gastos</div>
+      <div class="row2" style="margin-top:0">
+        <div><label class="lbl">Propina (€)</label><input type="number" id="f-tips" min="0" step="0.5" placeholder="0" oninput="updatePreview()"></div>
+        <div><label class="lbl">Clientes atendidos</label><input type="number" id="f-clients" min="0" step="1" placeholder="0"></div>
+      </div>
+      <div style="margin-top:9px"><label class="lbl">Gasto transporte del día (€)</label><input type="number" id="f-transport" min="0" step="0.5" placeholder="0" oninput="updatePreview()"></div>
       <div style="margin-top:9px"><label class="lbl">Notas del día</label><textarea id="f-notes" placeholder="Observaciones..."></textarea></div>
     </div>
     <div class="card" id="preview-card" style="display:none">
@@ -453,6 +457,7 @@ textarea { min-height: 60px; font-size: 14px; }
   <div class="panel" id="panel-7"><div id="export-content"></div></div>
   <div class="panel" id="panel-8"><div id="portfolio-content"></div></div>
   <div class="panel" id="panel-9"><div id="config-content"></div></div>
+  <div class="panel" id="panel-10"><div id="compare-content"></div></div>
 </div>
 
 <script>
@@ -537,6 +542,9 @@ const CENTERS = [
       {id:2,  name:"Sin Cadenas",                 nameBG:"Без Вериги",                    duration:"60 min", durationBG:"60 мин", price:70,  desc:"Miofascial espalda y cuello — libera restricciones fasciales profundas. Ideal para dolor cervical, mala postura y trabajo prolongado frente al ordenador."},
       {id:3,  name:"Piernas Ligeras",             nameBG:"Леки Крака",                    duration:"30 min", durationBG:"30 мин", price:40,  desc:"Drenaje linfático parcial — reduce edemas, pesadez y retención de líquidos en las piernas."},
       {id:4,  name:"Piernas Esculpidas",          nameBG:"Изваяни Крака",                 duration:"40 min", durationBG:"40 мин", price:50,  desc:"Anticelulítico — estimula la circulación y favorece el modelado y firmeza de la piel."},
+      {id:13, name:"Anticelulítico + Abdomen",    nameBG:"Масаж против целулит + корем",  duration:"50 min", durationBG:"50 мин", price:60,  desc:"Anticelulítico de piernas con tratamiento adicional de la zona abdominal."},
+      {id:14, name:"Anticelulítico + Brazos",     nameBG:"Масаж против целулит + ръце",   duration:"60 min", durationBG:"60 мин", price:70,  desc:"Anticelulítico de piernas con tratamiento adicional de brazos."},
+      {id:15, name:"Anticelulítico + Abdomen + Brazos", nameBG:"Масаж против целулит + корем + ръце", duration:"70 min", durationBG:"70 мин", price:80, desc:"Anticelulítico completo — piernas, abdomen y brazos en una sola sesión."},
       {id:5,  name:"Renovación Profunda",         nameBG:"Дълбоко Обновяване",            duration:"90 min", durationBG:"90 мин", price:90,  desc:"Tejido profundo cuerpo completo — terapia integral para eliminar tensión crónica, bloqueos musculares y fatiga acumulada."},
       {id:6,  name:"Ritual Mar Negro",            nameBG:"Ритуал Черно Море",             duration:"70 min", durationBG:"70 мин", price:80,  desc:"Terapia con aceite de luga del Mar Negro — ritual único con aceite mineralizado para relajación profunda, recuperación y nutrición del cuerpo."},
       {id:7,  name:"Combinado Restaurador",       nameBG:"Комбиниращ Възстановяващ",      duration:"70 min", durationBG:"70 мин", price:85,  desc:"Tejido profundo + Miofascial cuerpo completo — creado para personas con tensión crónica, estrés y largas horas frente al ordenador."},
@@ -568,7 +576,7 @@ const DOW_ES=["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
 const DOW_BG=["Нед","Пон","Вт","Ср","Чет","Пет","Съб"];
 const MEDAL=["🥇","🥈","🥉"];
 const ICONS={good:"✅",warn:"⚠️",dead:"🔴",info:"💡"};
-const PAGE_NAMES=["Dashboard","Añadir día","Historial","Calendario","Análisis PRO","Simulador","Pagos","Exportar","Mi Valor Profesional","Configuración"];
+const PAGE_NAMES=["Dashboard","Añadir día","Historial","Calendario","Análisis PRO","Simulador","Pagos","Exportar","Mi Valor Profesional","Configuración","Comparar Centros"];
 const DEFAULT_CFG={lockMinutes:10,fatigueHours:45};
 
 let allData={};  // { hotel5: {days,payments,goal,cfg}, aleksa: {...}, sanatorium: {...} }
@@ -626,7 +634,7 @@ function normalizeDay(d,center){
   const massages=(d.massages||[]).map(m=>normalizeMassage(m,c));
   const workedH=d.workedH!==undefined?d.workedH:calcH(d.entry||"",d.exit||"");
   const calc=calcDayTotal(workedH,massages,d.tips||0,d.date,c);
-  return{date:d.date,entry:d.entry||"",exit:d.exit||"",massages,workedH,hourlyPay:calc.hourlyPay,commission:calc.commission,tips:d.tips||0,notes:d.notes||"",dayTotal:calc.dayTotal,holiday:calc.holiday||false};
+  return{date:d.date,entry:d.entry||"",exit:d.exit||"",massages,workedH,hourlyPay:calc.hourlyPay,commission:calc.commission,tips:d.tips||0,notes:d.notes||"",dayTotal:calc.dayTotal,holiday:calc.holiday||false,clients:d.clients||0,transport:d.transport||0};
 }
 
 function loadData(){
@@ -724,7 +732,7 @@ function showTab(i){
   document.getElementById("page-name").textContent=PAGE_NAMES[i];
   closeDrawer();
   if(i===0)renderDashboard();if(i===2)renderHistory();if(i===3)renderCalendar();
-  if(i===4)renderPro();if(i===5)renderSim();if(i===6)renderPagos();if(i===7)renderExport();if(i===8)renderPortfolio();if(i===9)renderConfig();
+  if(i===4)renderPro();if(i===5)renderSim();if(i===6)renderPagos();if(i===7)renderExport();if(i===8)renderPortfolio();if(i===9)renderConfig();if(i===10)renderCompare();
 }
 
 // ═══════════════ MASSAGE LIST ═══════════════
@@ -791,10 +799,12 @@ function updatePreview(){
 function saveDay(){
   const ds=document.getElementById("f-date").value,en=document.getElementById("f-entry").value,ex=document.getElementById("f-exit").value;
   const tips=parseFloat(document.getElementById("f-tips").value)||0,notes=document.getElementById("f-notes").value.trim();
+  const clients=parseInt(document.getElementById("f-clients").value)||0;
+  const transport=parseFloat(document.getElementById("f-transport").value)||0;
   if(!ds||!en||!ex)return;
   const c=currentCenter(),massages=getMassages(),workedH=calcH(en,ex);
   const calc=calcDayTotal(workedH,massages,tips,ds,c);
-  const rec={date:ds,entry:en,exit:ex,massages,workedH,hourlyPay:calc.hourlyPay,commission:calc.commission,tips,notes,dayTotal:calc.dayTotal,holiday:calc.holiday};
+  const rec={date:ds,entry:en,exit:ex,massages,workedH,hourlyPay:calc.hourlyPay,commission:calc.commission,tips,notes,dayTotal:calc.dayTotal,holiday:calc.holiday,clients,transport};
   const idx=cDays().findIndex(d=>d.date===ds);
   if(idx>=0)cData().days[idx]=rec;else{cData().days.push(rec);cData().days.sort((a,b)=>a.date.localeCompare(b.date));}
   saveData();updateHeader();
@@ -804,10 +814,10 @@ function saveDay(){
   document.getElementById("notice-edit").style.display="none";document.getElementById("cancel-edit-btn").style.display="none";
   setTimeout(()=>showTab(4),1500);
 }
-function resetForm(){["f-date","f-entry","f-exit"].forEach(id=>document.getElementById(id).value="");document.getElementById("f-tips").value="";document.getElementById("f-notes").value="";qty={};currentCenter().massages.forEach(m=>{const el=document.getElementById("qty-"+m.id);if(el)el.textContent="0";});document.getElementById("preview-card").style.display="none";document.getElementById("hours-preview").style.display="none";document.getElementById("notice-holiday").style.display="none";document.getElementById("save-btn").disabled=true;}
+function resetForm(){["f-date","f-entry","f-exit"].forEach(id=>document.getElementById(id).value="");document.getElementById("f-tips").value="";document.getElementById("f-notes").value="";document.getElementById("f-clients").value="";document.getElementById("f-transport").value="";qty={};currentCenter().massages.forEach(m=>{const el=document.getElementById("qty-"+m.id);if(el)el.textContent="0";});document.getElementById("preview-card").style.display="none";document.getElementById("hours-preview").style.display="none";document.getElementById("notice-holiday").style.display="none";document.getElementById("save-btn").disabled=true;}
 function showNotice(id,msg){const el=document.getElementById(id);if(!el)return;el.textContent=msg;el.style.display="block";setTimeout(()=>el.style.display="none",3000);}
 
-function editDay(ds){const day=cDays().find(d=>d.date===ds);if(!day)return;editingDate=ds;document.getElementById("f-date").value=day.date;document.getElementById("f-entry").value=day.entry;document.getElementById("f-exit").value=day.exit;document.getElementById("f-tips").value=day.tips||"";document.getElementById("f-notes").value=day.notes||"";qty={};day.massages.forEach(m=>{qty[m.id]=(qty[m.id]||0)+1;});currentCenter().massages.forEach(m=>{const el=document.getElementById("qty-"+m.id);if(el)el.textContent=qty[m.id]||0;});onDateChange();document.getElementById("save-btn").textContent="💾 Actualizar Día";document.getElementById("notice-edit").style.display="block";document.getElementById("cancel-edit-btn").style.display="block";showTab(1);window.scrollTo(0,0);}
+function editDay(ds){const day=cDays().find(d=>d.date===ds);if(!day)return;editingDate=ds;document.getElementById("f-date").value=day.date;document.getElementById("f-entry").value=day.entry;document.getElementById("f-exit").value=day.exit;document.getElementById("f-tips").value=day.tips||"";document.getElementById("f-notes").value=day.notes||"";document.getElementById("f-clients").value=day.clients||"";document.getElementById("f-transport").value=day.transport||"";qty={};day.massages.forEach(m=>{qty[m.id]=(qty[m.id]||0)+1;});currentCenter().massages.forEach(m=>{const el=document.getElementById("qty-"+m.id);if(el)el.textContent=qty[m.id]||0;});onDateChange();document.getElementById("save-btn").textContent="💾 Actualizar Día";document.getElementById("notice-edit").style.display="block";document.getElementById("cancel-edit-btn").style.display="block";showTab(1);window.scrollTo(0,0);}
 function cancelEdit(){editingDate=null;resetForm();document.getElementById("save-btn").textContent="💾 Guardar Día";document.getElementById("notice-edit").style.display="none";document.getElementById("cancel-edit-btn").style.display="none";}
 function deleteDay(ds){cData().days=cDays().filter(d=>d.date!==ds);saveData();updateHeader();renderHistory();}
 
@@ -947,6 +957,14 @@ function renderPro(){
   const weeks=[];for(let w=5;w>=0;w--){const wd=new Date();wd.setDate(wd.getDate()-w*7);const ws2=new Date(wd);ws2.setDate(wd.getDate()-wd.getDay()+(wd.getDay()===0?-6:1));const we=new Date(ws2);we.setDate(ws2.getDate()+6);const wsS=ws2.toISOString().split("T")[0],weS=we.toISOString().split("T")[0];const wt=days.filter(d=>d.date>=wsS&&d.date<=weS).reduce((s,d)=>s+d.dayTotal,0);weeks.push({label:wsS.slice(5),val:wt});}
   const maxW=Math.max(...weeks.map(w=>w.val),1);
   const chartHTML=`<div class="chart-wrap"><div class="chart-bars">${weeks.map(w=>`<div class="chart-bar-wrap"><div class="chart-bar-val">${w.val>0?Math.round(w.val)+"€":""}</div><div class="chart-bar" style="height:${Math.max((w.val/maxW)*80,w.val>0?4:2)}px;background:linear-gradient(180deg,var(--gold),var(--gold2))"></div><div class="chart-bar-lbl">${w.label}</div></div>`).join("")}</div></div>`;
+  // Annual chart (12 months of current year)
+  const yr=new Date().getFullYear();
+  const months12=[];for(let m=0;m<12;m++){const mk=yr+"-"+String(m+1).padStart(2,"0");const mt=days.filter(d=>d.date.startsWith(mk)).reduce((s,d)=>s+d.dayTotal,0);months12.push({label:["E","F","M","A","M","J","J","A","S","O","N","D"][m],val:mt});}
+  const maxM=Math.max(...months12.map(m=>m.val),1);
+  const annualHTML=`<div class="chart-wrap"><div class="chart-bars">${months12.map(m=>`<div class="chart-bar-wrap"><div class="chart-bar-val">${m.val>0?Math.round(m.val):""}</div><div class="chart-bar" style="height:${Math.max((m.val/maxM)*80,m.val>0?4:2)}px;background:linear-gradient(180deg,#4a8fbf,#2a5a8f)"></div><div class="chart-bar-lbl">${m.label}</div></div>`).join("")}</div></div>`;
+  // Transport totals
+  const totTransport=days.reduce((s,d)=>s+(d.transport||0),0);
+  const totClients=days.reduce((s,d)=>s+(d.clients||0),0);
 
   // Records
   const bestDay=days.reduce((b,d)=>d.dayTotal>b.dayTotal?d:b,days[0]);
@@ -979,6 +997,7 @@ function renderPro(){
   ${goalHTML}
   <div class="card"><div class="card-title">🎯 Meta mensual</div><div style="display:flex;gap:9px;align-items:flex-end"><div style="flex:1"><label class="lbl">Meta en €</label><input type="number" id="goal-input" value="${goal||""}" placeholder="Ej: 500" min="0"></div><button onclick="saveGoal()" style="background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:9px;color:#0d0d0d;padding:10px 13px;font-size:13px;font-weight:700;cursor:pointer;font-family:Georgia,serif;flex-shrink:0">Guardar</button></div></div>
   <div class="card"><div class="card-title">📈 Ingresos por Semana</div>${chartHTML}</div>
+  <div class="card"><div class="card-title">📆 Año ${new Date().getFullYear()} — mes a mes</div>${annualHTML}${totTransport>0?`<div class="pro-row" style="margin-top:8px"><span>🚌 Gasto transporte acumulado</span><div class="pro-val" style="color:var(--red)">− ${ef(totTransport)}</div></div><div class="pro-row"><span>💰 Ganancia neta (− transporte)</span><div class="pro-val gold">${ef(tot.tt-totTransport)}</div></div>`:""}${totClients>0?`<div class="pro-row"><span>👥 Clientes atendidos (total)</span><div class="pro-val">${totClients}</div></div><div class="pro-row"><span>👥 Promedio clientes/día</span><div class="pro-val">${(totClients/days.length).toFixed(1)}</div></div>`:""}</div>
   <div class="card"><div class="card-title">⭐ Récords · ${c.name}</div><div class="record-box"><div><div class="record-label">💰 Mejor día</div><div class="record-date">${fmtDate(bestDay.date)}</div></div><div class="record-val">${ef(bestDay.dayTotal)}</div></div><div class="record-box"><div><div class="record-label">📅 Mejor semana</div><div class="record-date">${bestWeekEntry?fmtDate(bestWeekEntry[0]):"-"}</div></div><div class="record-val">${bestWeekEntry?ef(bestWeekEntry[1]):"-"}</div></div><div class="record-box"><div><div class="record-label">💆 Más masajes en un día</div><div class="record-date">${fmtDate(bestMassDay.date)}</div></div><div class="record-val">${bestMassDay.massages.length}</div></div><div class="record-box"><div><div class="record-label">🔥 Racha actual</div></div><div class="record-val">${streak} día${streak!==1?"s":""}</div></div><div class="record-box"><div><div class="record-label">⏱ Horas esta semana</div></div><div class="record-val" style="color:${weekH>=cCfg().fatigueHours?"var(--red)":"var(--gold)"}">${fmtH(weekH)}</div></div></div>
   ${ins.length?`<div class="card"><div class="card-title">🧠 Inteligencia Operativa</div>${ins.map(i=>`<div class="insight ${i.c}"><span>${ICONS[i.c]}</span><span>${i.t}</span></div>`).join("")}</div>`:""}
   ${ranking.length?`<div class="card"><div class="card-title">🏆 Ranking de Masajes</div>${ranking.map((r,i)=>`<div class="rank-row"><div class="rank-left"><span class="rank-medal">${MEDAL[i]||"·"}</span><div><div class="rank-name">${r.name}</div><div class="rank-sub">×${r.count} · ${ef(r.revenue)} facturado</div></div></div><div class="rank-right"><div class="rank-earn">${ef(r.commission)}</div><div class="rank-earn-sub">comisión</div></div></div>`).join("")}</div>`:""}
@@ -1239,6 +1258,8 @@ function renderPortfolio(){
     </div>
     <button class="btn-copy" onclick="exportPortfolio()">📋 Copiar Reporte Profesional</button>
     <button class="btn-blue" onclick="emailPortfolio()" style="margin-top:8px">📧 Enviar por Email</button>
+    <button class="btn-gold" onclick="printPortfolioPDF()" style="margin-top:8px">📄 Descargar PDF con diseño</button>
+    <div style="font-size:11px;color:var(--dim);margin-top:6px">El PDF se abre en una pestaña nueva — en el diálogo de impresión elige "Guardar como PDF".</div>
   </div>
   `}`;
 }
@@ -1302,6 +1323,117 @@ function emailPortfolio(){
   window.open("mailto:?subject="+subject+"&body="+encodeURIComponent(text),"_blank");
 }
 
+// ═══════════════ PDF PORTAFOLIO ═══════════════
+function printPortfolioPDF(){
+  const c=currentCenter(),days=cDays();
+  const pfPeriod=window._pfPeriod||"month";
+  const ms=getMonthStart(),mon=getMonday(),now=today();
+  let from,to;
+  if(pfPeriod==="week"){from=mon;to=now;}else if(pfPeriod==="month"){from=ms;to=now;}else if(pfPeriod==="all"){from=days.length>0?days[0].date:ms;to=now;}else{from=window._pfCustomFrom||ms;to=window._pfCustomTo||now;}
+  const filtered=days.filter(d=>d.date>=from&&d.date<=to);
+  if(filtered.length===0){alert("No hay datos en ese período.");return;}
+  const lang=window._pfLang||"es",bg=lang==="bg";
+  const totalRevenue=filtered.reduce((s,d)=>s+d.massages.reduce((ss,m)=>ss+m.price,0),0);
+  const totalH=filtered.reduce((s,d)=>s+d.workedH,0);
+  const totalMass=filtered.reduce((s,d)=>s+d.massages.length,0);
+  const totalDays=filtered.length;
+  const avgPerSession=totalMass>0?totalRevenue/totalMass:0;
+  const avgPerDay=totalDays>0?totalRevenue/totalDays:0;
+  const revenuePerH=totalH>0?totalRevenue/totalH:0;
+  const byType={};filtered.forEach(d=>d.massages.forEach(m=>{if(!byType[m.id])byType[m.id]={name:m.name,nameBG:m.nameBG,count:0,revenue:0};byType[m.id].count++;byType[m.id].revenue+=m.price;}));
+  const ranking=Object.values(byType).sort((a,b)=>b.revenue-a.revenue);
+  const monthMap={};filtered.forEach(d=>{const mk=d.date.slice(0,7);if(!monthMap[mk])monthMap[mk]={revenue:0,mass:0,days:0,hours:0};monthMap[mk].revenue+=d.massages.reduce((s,m)=>s+m.price,0);monthMap[mk].mass+=d.massages.length;monthMap[mk].days++;monthMap[mk].hours+=d.workedH;});
+  const T=bg?{title:"ПРОФЕСИОНАЛЕН ОТЧЕТ ЗА ДЕЙНОСТ",therapist:"Терапевт",period:"Период",gen:"Генериран на",kpis:"Производствени показатели",rev:"Общо фактурирано за спа",sess:"Извършени сесии",hrs:"Часове на обслужване",dys:"Работни дни",avgS:"Среден билет на сесия",avgD:"Средна фактурация на ден",revH:"Фактурация на час",services:"Извършени услуги",evol:"Месечна еволюция",count:"сесии"}
+    :{title:"INFORME PROFESIONAL DE ACTIVIDAD",therapist:"Terapeuta",period:"Período",gen:"Generado el",kpis:"Indicadores de producción",rev:"Total facturado para el spa",sess:"Sesiones realizadas",hrs:"Horas de servicio",dys:"Días trabajados",avgS:"Ticket promedio por sesión",avgD:"Facturación promedio por día",revH:"Facturación por hora",services:"Servicios realizados",evol:"Evolución mensual",count:"sesiones"};
+  const w=window.open("","_blank");
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${T.title}</title><style>
+  body{font-family:Georgia,serif;color:#222;margin:36px;line-height:1.5}
+  h1{font-size:21px;color:#8a6a1c;border-bottom:3px solid #c9a84c;padding-bottom:8px;margin-bottom:4px}
+  .sub{font-size:13px;color:#666;margin-bottom:24px}
+  h2{font-size:15px;color:#8a6a1c;margin:22px 0 8px;border-bottom:1px solid #ddd;padding-bottom:4px}
+  .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+  .kpi{border:1px solid #e0d5b8;border-radius:8px;padding:12px;text-align:center;background:#faf7ef}
+  .kpi-val{font-size:20px;font-weight:700;color:#8a6a1c}
+  .kpi-lbl{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-top:3px}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  th{text-align:left;color:#8a6a1c;border-bottom:2px solid #c9a84c;padding:6px 4px;font-size:12px}
+  td{border-bottom:1px solid #eee;padding:6px 4px}
+  td.r{text-align:right}
+  .foot{margin-top:30px;font-size:11px;color:#999;border-top:1px solid #ddd;padding-top:8px}
+  @media print{body{margin:16px}}
+  </style></head><body>
+  <h1>✦ ${T.title}</h1>
+  <div class="sub">${c.name} · ${c.location}<br>${T.therapist}: <strong>Guido Peluso</strong> · ${T.period}: ${fmtDate(from)} — ${fmtDate(to)} · ${T.gen}: ${fmtDate(now)}</div>
+  <h2>${T.kpis}</h2>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-val">${ef(totalRevenue)}</div><div class="kpi-lbl">${T.rev}</div></div>
+    <div class="kpi"><div class="kpi-val">${totalMass}</div><div class="kpi-lbl">${T.sess}</div></div>
+    <div class="kpi"><div class="kpi-val">${fmtH(totalH)}</div><div class="kpi-lbl">${T.hrs}</div></div>
+    <div class="kpi"><div class="kpi-val">${totalDays}</div><div class="kpi-lbl">${T.dys}</div></div>
+  </div>
+  <table>
+    <tr><td>${T.avgS}</td><td class="r"><strong>${ef(avgPerSession)}</strong></td></tr>
+    <tr><td>${T.avgD}</td><td class="r"><strong>${ef(avgPerDay)}</strong></td></tr>
+    <tr><td>${T.revH}</td><td class="r"><strong>${ef(revenuePerH)}</strong></td></tr>
+  </table>
+  <h2>${T.services}</h2>
+  <table><tr><th>#</th><th>${bg?"Услуга":"Servicio"}</th><th style="text-align:right">${T.count}</th><th style="text-align:right">€</th><th style="text-align:right">%</th></tr>
+  ${ranking.map((r,i)=>`<tr><td>${i+1}</td><td>${bg?r.nameBG:r.name}</td><td class="r">${r.count}</td><td class="r">${ef(r.revenue)}</td><td class="r">${((r.revenue/totalRevenue)*100).toFixed(0)}%</td></tr>`).join("")}
+  </table>
+  ${Object.keys(monthMap).length>1?`<h2>${T.evol}</h2><table><tr><th>${bg?"Месец":"Mes"}</th><th style="text-align:right">${T.dys}</th><th style="text-align:right">${T.sess}</th><th style="text-align:right">€</th></tr>${Object.entries(monthMap).sort((a,b)=>a[0].localeCompare(b[0])).map(([mk,mv])=>{const[y,m]=mk.split("-");return`<tr><td>${monthName(parseInt(m)-1)} ${y}</td><td class="r">${mv.days}</td><td class="r">${mv.mass}</td><td class="r">${ef(mv.revenue)}</td></tr>`;}).join("")}</table>`:""}
+  <div class="foot">Guido PRO · ${fmtDate(now)}</div>
+  <script>setTimeout(()=>window.print(),400);<\/script>
+  </body></html>`);
+  w.document.close();
+}
+
+// ═══════════════ COMPARAR CENTROS ═══════════════
+function renderCompare(){
+  const el=document.getElementById("compare-content");
+  const cmpPeriod=window._cmpPeriod||"month";
+  const now=today(),ms=getMonthStart(),mon=getMonday();
+  let from;
+  if(cmpPeriod==="week")from=mon;else if(cmpPeriod==="month")from=ms;else from="0000-01-01";
+  const rows=CENTERS.map(ct=>{
+    const d=allData[ct.key];if(!d)return null;
+    const days=d.days.filter(x=>x.date>=from&&x.date<=now);
+    if(days.length===0)return null;
+    const total=days.reduce((s,x)=>s+x.dayTotal,0);
+    const hours=days.reduce((s,x)=>s+x.workedH,0);
+    const mass=days.reduce((s,x)=>s+x.massages.length,0);
+    const transport=days.reduce((s,x)=>s+(x.transport||0),0);
+    const net=total-transport;
+    const eph=hours>0?total/hours:0;
+    const ephNet=hours>0?net/hours:0;
+    const perDay=days.length>0?total/days.length:0;
+    return{ct,daysN:days.length,total,hours,mass,transport,net,eph,ephNet,perDay};
+  }).filter(Boolean).sort((a,b)=>b.ephNet-a.ephNet);
+  const periodLabel=cmpPeriod==="week"?"esta semana":cmpPeriod==="month"?"este mes":"histórico completo";
+  el.innerHTML=`
+  <div class="card">
+    <div class="card-title">⚖️ Comparar Centros</div>
+    <div class="period-btns">
+      <button class="period-btn ${cmpPeriod==="week"?"active":""}" onclick="window._cmpPeriod='week';renderCompare()">Semana</button>
+      <button class="period-btn ${cmpPeriod==="month"?"active":""}" onclick="window._cmpPeriod='month';renderCompare()">Mes</button>
+      <button class="period-btn ${cmpPeriod==="all"?"active":""}" onclick="window._cmpPeriod='all';renderCompare()">Histórico</button>
+    </div>
+    <div style="font-size:12px;color:var(--dim);margin-bottom:4px">Ordenado por €/hora neta (descontando transporte) · ${periodLabel}</div>
+  </div>
+  ${rows.length===0?`<div class="empty">Sin datos en este período.</div>`:rows.map((r,i)=>`
+  <div class="card" style="border-color:${r.ct.color}44">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px">
+      <div style="font-size:15px;font-weight:700;color:${r.ct.color}">${MEDAL[i]||"·"} ${r.ct.icon} ${r.ct.name}</div>
+      <div style="font-size:17px;font-weight:700;color:${r.ct.color}">${r.ephNet.toFixed(2)} €/h</div>
+    </div>
+    <div class="pro-row"><span>Total generado</span><div class="pro-val gold">${ef(r.total)}</div></div>
+    <div class="pro-row"><span>Gasto transporte</span><div class="pro-val" style="color:${r.transport>0?"var(--red)":"var(--dim)"}">${r.transport>0?"− "+ef(r.transport):"—"}</div></div>
+    <div class="pro-row"><span>Ganancia neta</span><div class="pro-val gold">${ef(r.net)}</div></div>
+    <div class="pro-row"><span>€/hora bruta</span><div class="pro-val">${r.eph.toFixed(2)} €/h</div></div>
+    <div class="pro-row"><span>Promedio por día</span><div class="pro-val">${ef(r.perDay)}</div></div>
+    <div class="pro-row"><span>Actividad</span><div class="pro-val"><span class="pro-sub">${r.daysN} días · ${fmtH(r.hours)} · ${r.mass} masajes</span></div></div>
+  </div>`).join("")}
+  ${rows.length>1?`<div class="card"><div class="card-title">💡 Conclusión</div><div class="insight good"><span>✅</span><span>Tu centro más rentable por hora neta ${periodLabel} es <strong style="color:${rows[0].ct.color}">${rows[0].ct.name}</strong> con ${rows[0].ephNet.toFixed(2)} €/h.</span></div>${rows[rows.length-1].ephNet<rows[0].ephNet*0.6?`<div class="insight warn"><span>⚠️</span><span>${rows[rows.length-1].ct.name} rinde ${((1-rows[rows.length-1].ephNet/rows[0].ephNet)*100).toFixed(0)}% menos por hora que ${rows[0].ct.name}.</span></div>`:""}</div>`:""}`;
+}
 
 function renderConfig(){
   const cfg=cCfg(),c=currentCenter();
@@ -1338,7 +1470,45 @@ function saveConfig(){
 
 // ═══════════════ BACKUP ═══════════════
 function exportBackup(){const data=JSON.stringify({version:SCHEMA_VERSION,data:allData},null,2);const blob=new Blob([data],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="guidopro_backup_"+today()+".json";a.click();URL.revokeObjectURL(url);}
-function importBackup(input){const file=input.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{try{const d=JSON.parse(e.target.result);if(d.data){allData=d.data;CENTERS.forEach(c=>{if(!allData[c.key])allData[c.key]=initCenterData();allData[c.key].days=(allData[c.key].days||[]).map(dd=>normalizeDay(dd,c));});saveData();updateHeader();alert("✅ Backup restaurado. "+Object.values(allData).reduce((s,d)=>s+(d.days||[]).length,0)+" días en total.");}else alert("❌ Formato inválido.");}catch{alert("❌ Error al leer el archivo.");}};reader.readAsText(file);}
+function importBackup(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      // Support both formats: new multi-center {data:{...}} and old hotel5-only {days:[...]}
+      let incoming=null;
+      if(d.data){incoming=d.data;}
+      else if(d.days||Array.isArray(d)){incoming={hotel5:{days:d.days||d,payments:d.payments||[],goal:d.goal||0,cfg:d.cfg||{}}};}
+      if(!incoming){alert("❌ Formato inválido.");input.value="";return;}
+      const hasCurrent=Object.values(allData).some(cd=>(cd.days||[]).length>0);
+      let merge=false;
+      if(hasCurrent){merge=confirm("Ya tienes datos en esta app.\n\n✅ ACEPTAR = COMBINAR (añade los días del backup que no existan, conserva lo actual)\n\n❌ CANCELAR = REEMPLAZAR TODO con el backup");}
+      if(merge){
+        let added=0;
+        CENTERS.forEach(c=>{
+          const inc=incoming[c.key];if(!inc)return;
+          if(!allData[c.key])allData[c.key]=initCenterData();
+          const existingDates=new Set(allData[c.key].days.map(x=>x.date));
+          (inc.days||[]).forEach(dd=>{if(!existingDates.has(dd.date)){allData[c.key].days.push(normalizeDay(dd,c));added++;}});
+          allData[c.key].days.sort((a,b)=>a.date.localeCompare(b.date));
+          const existingPayIds=new Set(allData[c.key].payments.map(p=>p.id));
+          (inc.payments||[]).forEach(p=>{if(!existingPayIds.has(p.id))allData[c.key].payments.push(p);});
+          if(!allData[c.key].goal&&inc.goal)allData[c.key].goal=inc.goal;
+        });
+        saveData();updateHeader();
+        alert("✅ Combinado: "+added+" días añadidos del backup. Total: "+Object.values(allData).reduce((s,cd)=>s+(cd.days||[]).length,0)+" días.");
+      }else{
+        allData=incoming;
+        CENTERS.forEach(c=>{if(!allData[c.key])allData[c.key]=initCenterData();allData[c.key].days=(allData[c.key].days||[]).map(dd=>normalizeDay(dd,c));if(!allData[c.key].payments)allData[c.key].payments=[];});
+        saveData();updateHeader();
+        alert("✅ Backup restaurado. "+Object.values(allData).reduce((s,cd)=>s+(cd.days||[]).length,0)+" días en total.");
+      }
+    }catch{alert("❌ Error al leer el archivo.");}
+    input.value="";
+  };
+  reader.readAsText(file);
+}
 
 // ═══════════════ UNREGISTERED CHECK ═══════════════
 function checkUnregistered(){
