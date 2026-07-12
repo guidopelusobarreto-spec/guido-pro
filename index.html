@@ -437,6 +437,7 @@ textarea { min-height: 60px; font-size: 14px; }
       <div class="card-title">🕐 Hora y Cliente por Masaje</div>
       <div style="font-size:11px;color:var(--dim);margin-bottom:6px;line-height:1.5">Opcional: hora de inicio y cliente nuevo/habitual. El 🔔 crea el evento con 4 alertas para tu calendario (Fossify) — la hora de fin se calcula sola.</div>
       <div id="instances-list"></div>
+      <button class="btn-gold" style="margin-top:10px" onclick="scheduleAll()">🔔 Todos al calendario (un solo archivo)</button>
     </div>
     <div class="card" id="tips-card">
       <div class="card-title">💵 Propinas, Clientes y Gastos</div>
@@ -780,12 +781,8 @@ function renderInstances(){
 function setInsTime(i,v){if(instances[i])instances[i].t=v;}
 function toggleNC(i){if(!instances[i])return;const cur=instances[i].nc;instances[i].nc=cur===null?true:cur===true?false:null;renderInstances();}
 
-// Genera evento .ics con 4 alarmas (Fossify u otro calendario lo importa)
-function scheduleMassage(i){
-  const ins=instances[i];if(!ins)return;
-  const ds=document.getElementById("f-date").value;
-  if(!ds){alert("Selecciona primero la fecha del día.");return;}
-  if(!ins.t){alert("Pon la hora de inicio de este masaje.");return;}
+// Genera eventos .ics con 4 alarmas (Fossify u otro calendario los importa)
+function buildEventBlock(ins,ds){
   const c=currentCenter(),m=c.massages.find(x=>x.id===ins.mid);
   const durMin=parseInt(m.duration)||60;
   const [y,mo,d]=ds.split("-"),[hh,mm]=ins.t.split(":");
@@ -794,16 +791,35 @@ function scheduleMassage(i){
   const f=dt=>dt.getFullYear()+String(dt.getMonth()+1).padStart(2,"0")+String(dt.getDate()).padStart(2,"0")+"T"+String(dt.getHours()).padStart(2,"0")+String(dt.getMinutes()).padStart(2,"0")+"00";
   const title="💆 "+(m.nameBG||m.name)+" ("+m.duration+") · "+c.nameShort;
   const alarm=(trig,desc)=>"BEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:"+desc+"\r\nTRIGGER"+trig+"\r\nEND:VALARM\r\n";
-  const ics="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//GuidoPRO//ES\r\nBEGIN:VEVENT\r\nUID:gp-"+Date.now()+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(start)+"\r\nDTEND:"+f(end)+"\r\nSUMMARY:"+title+"\r\n"
+  return "BEGIN:VEVENT\r\nUID:gp-"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(start)+"\r\nDTEND:"+f(end)+"\r\nSUMMARY:"+title+"\r\n"
     +alarm(":-PT10M","⏰ Masaje en 10 minutos")
     +alarm(":PT0M","▶️ Comienza el masaje")
     +alarm(";RELATED=END:-PT10M","⏳ Quedan 10 minutos")
     +alarm(";RELATED=END:PT0M","✅ Fin del masaje")
-    +"END:VEVENT\r\nEND:VCALENDAR\r\n";
+    +"END:VEVENT\r\n";
+}
+function downloadICS(body,name){
+  const ics="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//GuidoPRO//ES\r\n"+body+"END:VCALENDAR\r\n";
   const blob=new Blob([ics],{type:"text/calendar"});
   const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");a.href=url;a.download="masaje_"+ds+"_"+ins.t.replace(":","")+".ics";a.click();
+  const a=document.createElement("a");a.href=url;a.download=name;a.click();
   setTimeout(()=>URL.revokeObjectURL(url),3000);
+}
+function scheduleMassage(i){
+  const ins=instances[i];if(!ins)return;
+  const ds=document.getElementById("f-date").value;
+  if(!ds){alert("Selecciona primero la fecha del día.");return;}
+  if(!ins.t){alert("Pon la hora de inicio de este masaje.");return;}
+  downloadICS(buildEventBlock(ins,ds),"masaje_"+ds+"_"+ins.t.replace(":","")+".ics");
+}
+function scheduleAll(){
+  const ds=document.getElementById("f-date").value;
+  if(!ds){alert("Selecciona primero la fecha del día.");return;}
+  const withTime=instances.filter(x=>x.t);
+  if(withTime.length===0){alert("Pon la hora de inicio de al menos un masaje.");return;}
+  const body=withTime.map(ins=>buildEventBlock(ins,ds)).join("");
+  downloadICS(body,"masajes_"+ds+".ics");
+  if(withTime.length<instances.length)alert("⚠️ "+(instances.length-withTime.length)+" masaje(s) sin hora quedaron fuera del archivo.");
 }
 
 // ═══════════════ DATE CHANGE ═══════════════
