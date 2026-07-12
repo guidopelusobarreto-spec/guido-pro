@@ -437,7 +437,8 @@ textarea { min-height: 60px; font-size: 14px; }
       <div class="card-title">🕐 Hora y Cliente por Masaje</div>
       <div style="font-size:11px;color:var(--dim);margin-bottom:6px;line-height:1.5">Opcional: hora de inicio y cliente nuevo/habitual. El 🔔 crea el evento con 4 alertas para tu calendario (Fossify) — la hora de fin se calcula sola.</div>
       <div id="instances-list"></div>
-      <button class="btn-gold" style="margin-top:10px" onclick="scheduleAll()">🔔 Todos al calendario (un solo archivo)</button>
+      <button class="btn-gold" style="margin-top:10px" onclick="scheduleAll()">🔔 Todos al calendario (con descansos)</button>
+      <button class="btn-blue" style="margin-top:8px" onclick="autoExit(true)">🚪 Salida automática (último masaje + 20 min)</button>
     </div>
     <div class="card" id="tips-card">
       <div class="card-title">💵 Propinas, Clientes y Gastos</div>
@@ -632,7 +633,7 @@ function initCenterData(){return{days:[],payments:[],goal:0,cfg:{...DEFAULT_CFG}
 
 function normalizeMassage(m,center){
   const ref=(center||currentCenter()).massages.find(r=>r.id===m.id);
-  return{id:m.id,name:m.name||(ref?ref.name:""),nameBG:m.nameBG||(ref?ref.nameBG:""),duration:m.duration||(ref?ref.duration:""),durationBG:m.durationBG||(ref?ref.durationBG:""),price:m.price||(ref?ref.price:0),t:m.t||"",nc:m.nc===true?true:m.nc===false?false:null};
+  return{id:m.id,name:m.name||(ref?ref.name:""),nameBG:m.nameBG||(ref?ref.nameBG:""),duration:m.duration||(ref?ref.duration:""),durationBG:m.durationBG||(ref?ref.durationBG:""),price:m.price||(ref?ref.price:0),t:m.t||"",nc:m.nc===true?true:m.nc===false?false:null,cn:m.cn||""};
 }
 
 function normalizeDay(d,center){
@@ -751,13 +752,13 @@ function buildMassageList(){
   }).join("");
 }
 function adjQty(id,d){
-  if(d>0){instances.push({mid:id,t:"",nc:null});}
+  if(d>0){instances.push({mid:id,t:"",nc:null,cn:""});}
   else{for(let i=instances.length-1;i>=0;i--){if(instances[i].mid===id){instances.splice(i,1);break;}}}
   qty[id]=instances.filter(x=>x.mid===id).length;
   document.getElementById("qty-"+id).textContent=qty[id]||0;
   renderInstances();updatePreview();
 }
-const getMassages=()=>instances.map(ins=>{const m=currentCenter().massages.find(x=>x.id===ins.mid);return{...m,t:ins.t||"",nc:ins.nc};});
+const getMassages=()=>instances.map(ins=>{const m=currentCenter().massages.find(x=>x.id===ins.mid);return{...m,t:ins.t||"",nc:ins.nc,cn:ins.cn||""};});
 
 // ═══════════════ DETALLE POR MASAJE (hora + cliente nuevo) ═══════════════
 function renderInstances(){
@@ -770,15 +771,35 @@ function renderInstances(){
     const m=c.massages.find(x=>x.id===ins.mid);
     return`<div style="padding:9px 0;border-bottom:1px solid var(--bg3)">
       <div style="font-size:13px;color:var(--text);margin-bottom:6px">${i+1}. ${m.nameBG||m.name} <span style="color:var(--dim);font-size:11px">· ${m.duration}</span></div>
+      <input type="text" value="${ins.cn||""}" placeholder="Nombre del cliente (opcional)" onchange="setInsName(${i},this.value)" style="width:100%;padding:8px 10px;font-size:14px;margin-bottom:6px">
       <div style="display:flex;gap:7px;align-items:center">
         <input type="time" value="${ins.t}" onchange="setInsTime(${i},this.value)" style="flex:1;padding:8px 10px;font-size:14px">
+        ${i>0?`<button onclick="chainFrom(${i})" title="Empieza al terminar el anterior" style="flex-shrink:0;width:38px;height:36px;border-radius:8px;border:1px solid #2a4a2a;background:#0a1a0a;color:var(--green);font-size:15px;cursor:pointer">⏭</button>`:""}
         <button onclick="toggleNC(${i})" style="flex-shrink:0;padding:8px 10px;border-radius:8px;font-size:12px;font-family:Georgia,serif;cursor:pointer;border:1px solid ${ins.nc===true?"#4abf7a":ins.nc===false?"#4a8fbf":"#333"};background:${ins.nc===true?"#0a2a10":ins.nc===false?"#0a1a2a":"var(--bg3)"};color:${ins.nc===true?"#4abf7a":ins.nc===false?"#6a9fd0":"var(--muted)"}">${ins.nc===true?"🆕 Nuevo":ins.nc===false?"🔁 Habitual":"👤 Cliente…"}</button>
         <button onclick="scheduleMassage(${i})" title="Añadir a calendario con alertas" style="flex-shrink:0;width:38px;height:36px;border-radius:8px;border:1px solid #5a4a10;background:#1a1400;color:var(--gold);font-size:16px;cursor:pointer">🔔</button>
       </div>
     </div>`;
   }).join("");
 }
-function setInsTime(i,v){if(instances[i])instances[i].t=v;}
+function setInsTime(i,v){if(instances[i])instances[i].t=v;autoExit(false);}
+function setInsName(i,v){if(instances[i])instances[i].cn=v.trim();}
+const insDur=ins=>{const m=currentCenter().massages.find(x=>x.id===ins.mid);return parseInt(m.duration)||60;};
+const t2min=t=>{const[a,b]=t.split(":").map(Number);return a*60+b;};
+const min2t=x=>String(Math.floor(x/60)).padStart(2,"0")+":"+String(x%60).padStart(2,"0");
+function chainFrom(i){
+  const prev=instances[i-1];
+  if(!prev||!prev.t){alert("El masaje anterior no tiene hora.");return;}
+  instances[i].t=min2t(t2min(prev.t)+insDur(prev));
+  renderInstances();autoExit(false);
+}
+function autoExit(force){
+  const timed=instances.filter(x=>x.t);
+  if(timed.length===0){if(force)alert("Ningún masaje tiene hora todavía.");return;}
+  const lastEnd=Math.max(...timed.map(x=>t2min(x.t)+insDur(x)));
+  const exitT=min2t(lastEnd+20);
+  const ex=document.getElementById("f-exit");
+  if(force||!ex.value){ex.value=exitT;updatePreview();}
+}
 function toggleNC(i){if(!instances[i])return;const cur=instances[i].nc;instances[i].nc=cur===null?true:cur===true?false:null;renderInstances();}
 
 // Genera eventos .ics con 4 alarmas (Fossify u otro calendario los importa)
@@ -790,6 +811,12 @@ function buildEventBlock(ins,ds){
   const end=new Date(start.getTime()+durMin*60000);
   const f=dt=>dt.getFullYear()+String(dt.getMonth()+1).padStart(2,"0")+String(dt.getDate()).padStart(2,"0")+"T"+String(dt.getHours()).padStart(2,"0")+String(dt.getMinutes()).padStart(2,"0")+"00";
   const title="💆 "+(m.nameBG||m.name)+" ("+m.duration+") · "+c.nameShort;
+  const esc=s=>String(s).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,");
+  const descParts=[];
+  if(ins.cn)descParts.push("👤 Cliente: "+ins.cn+(ins.nc===true?" (nuevo)":ins.nc===false?" (habitual)":""));
+  descParts.push(m.name+" — "+m.price+" €");
+  const descLine="DESCRIPTION:"+esc(descParts.join("\\n"))+"\r\n";
+  const locLine="LOCATION:"+esc(c.name+" · "+c.location)+"\r\n";
   const alarm=(trig,desc)=>"BEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:"+desc+"\r\nTRIGGER"+trig+"\r\nEND:VALARM\r\n";
   return "BEGIN:VEVENT\r\nUID:gp-"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(start)+"\r\nDTEND:"+f(end)+"\r\nSUMMARY:"+title+"\r\n"
     +alarm(":-PT10M","⏰ Masaje en 10 minutos")
@@ -812,12 +839,24 @@ function scheduleMassage(i){
   if(!ins.t){alert("Pon la hora de inicio de este masaje.");return;}
   downloadICS(buildEventBlock(ins,ds),"masaje_"+ds+"_"+ins.t.replace(":","")+".ics");
 }
+function buildRestBlock(ds,startMin,endMin){
+  const c=currentCenter();
+  const [y,mo,d]=ds.split("-");
+  const mk=x=>{const dt=new Date(+y,mo-1,+d,Math.floor(x/60),x%60);return dt.getFullYear()+String(dt.getMonth()+1).padStart(2,"0")+String(dt.getDate()).padStart(2,"0")+"T"+String(dt.getHours()).padStart(2,"0")+String(dt.getMinutes()).padStart(2,"0")+"00";};
+  return "BEGIN:VEVENT\r\nUID:gp-rest-"+Date.now()+"-"+startMin+"@guidopro\r\nDTSTAMP:"+mk(startMin)+"\r\nDTSTART:"+mk(startMin)+"\r\nDTEND:"+mk(endMin)+"\r\nSUMMARY:☕ Descanso ("+(endMin-startMin)+" min)\r\nCOLOR:gray\r\nTRANSP:TRANSPARENT\r\nEND:VEVENT\r\n";
+}
 function scheduleAll(){
   const ds=document.getElementById("f-date").value;
   if(!ds){alert("Selecciona primero la fecha del día.");return;}
-  const withTime=instances.filter(x=>x.t);
+  const withTime=instances.filter(x=>x.t).sort((a,b)=>t2min(a.t)-t2min(b.t));
   if(withTime.length===0){alert("Pon la hora de inicio de al menos un masaje.");return;}
-  const body=withTime.map(ins=>buildEventBlock(ins,ds)).join("");
+  let body=withTime.map(ins=>buildEventBlock(ins,ds)).join("");
+  // Bloques de descanso entre masajes
+  for(let i=0;i<withTime.length-1;i++){
+    const end=t2min(withTime[i].t)+insDur(withTime[i]);
+    const next=t2min(withTime[i+1].t);
+    if(next>end)body+=buildRestBlock(ds,end,next);
+  }
   downloadICS(body,"masajes_"+ds+".ics");
   if(withTime.length<instances.length)alert("⚠️ "+(instances.length-withTime.length)+" masaje(s) sin hora quedaron fuera del archivo.");
 }
@@ -892,7 +931,7 @@ function saveDay(){
 function resetForm(){["f-date","f-entry","f-exit"].forEach(id=>document.getElementById(id).value="");document.getElementById("f-tips").value="";document.getElementById("f-notes").value="";document.getElementById("f-clients").value="";document.getElementById("f-transport").value="";qty={};instances=[];renderInstances();currentCenter().massages.forEach(m=>{const el=document.getElementById("qty-"+m.id);if(el)el.textContent="0";});document.getElementById("preview-card").style.display="none";document.getElementById("hours-preview").style.display="none";document.getElementById("notice-holiday").style.display="none";document.getElementById("save-btn").disabled=true;}
 function showNotice(id,msg){const el=document.getElementById(id);if(!el)return;el.textContent=msg;el.style.display="block";setTimeout(()=>el.style.display="none",3000);}
 
-function editDay(ds){const day=cDays().find(d=>d.date===ds);if(!day)return;editingDate=ds;document.getElementById("f-date").value=day.date;document.getElementById("f-entry").value=day.entry;document.getElementById("f-exit").value=day.exit;document.getElementById("f-tips").value=day.tips||"";document.getElementById("f-notes").value=day.notes||"";document.getElementById("f-clients").value=day.clients||"";document.getElementById("f-transport").value=day.transport||"";qty={};instances=day.massages.map(m=>({mid:m.id,t:m.t||"",nc:m.nc===true?true:m.nc===false?false:null}));day.massages.forEach(m=>{qty[m.id]=(qty[m.id]||0)+1;});currentCenter().massages.forEach(m=>{const el=document.getElementById("qty-"+m.id);if(el)el.textContent=qty[m.id]||0;});renderInstances();onDateChange();document.getElementById("save-btn").textContent="💾 Actualizar Día";document.getElementById("notice-edit").style.display="block";document.getElementById("cancel-edit-btn").style.display="block";showTab(1);window.scrollTo(0,0);}
+function editDay(ds){const day=cDays().find(d=>d.date===ds);if(!day)return;editingDate=ds;document.getElementById("f-date").value=day.date;document.getElementById("f-entry").value=day.entry;document.getElementById("f-exit").value=day.exit;document.getElementById("f-tips").value=day.tips||"";document.getElementById("f-notes").value=day.notes||"";document.getElementById("f-clients").value=day.clients||"";document.getElementById("f-transport").value=day.transport||"";qty={};instances=day.massages.map(m=>({mid:m.id,t:m.t||"",nc:m.nc===true?true:m.nc===false?false:null,cn:m.cn||""}));day.massages.forEach(m=>{qty[m.id]=(qty[m.id]||0)+1;});currentCenter().massages.forEach(m=>{const el=document.getElementById("qty-"+m.id);if(el)el.textContent=qty[m.id]||0;});renderInstances();onDateChange();document.getElementById("save-btn").textContent="💾 Actualizar Día";document.getElementById("notice-edit").style.display="block";document.getElementById("cancel-edit-btn").style.display="block";showTab(1);window.scrollTo(0,0);}
 function cancelEdit(){editingDate=null;resetForm();document.getElementById("save-btn").textContent="💾 Guardar Día";document.getElementById("notice-edit").style.display="none";document.getElementById("cancel-edit-btn").style.display="none";}
 function deleteDay(ds){cData().days=cDays().filter(d=>d.date!==ds);saveData();updateHeader();renderHistory();}
 
@@ -969,7 +1008,7 @@ function renderHistory(){
   el.innerHTML=[...days].reverse().map(d=>{
     const eph=d.workedH>0?d.dayTotal/d.workedH:0;
     const totalRaw=d.massages.reduce((s,m)=>s+m.price,0);
-    const massDetail=d.massages.length>0?`<div style="margin-top:8px"><div class="pro-sub" style="text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Masajes</div>`+d.massages.map(m=>`<div class="d-row"><span>· ${m.t?m.t+" · ":""}${m.name} (${m.duration})${m.nc===true?" 🆕":""}</span><span>${m.price} €</span></div>`).join("")+(c.hasVat?`<div class="d-row"><span>− IVA ${c.vatRate}% → comisión ${c.commRate}%</span><span>${ef(d.commission)}</span></div>`:`<div class="d-row"><span>Comisión ${c.commRate}%</span><span>${ef(d.commission)}</span></div>`)+"</div>":"";
+    const massDetail=d.massages.length>0?`<div style="margin-top:8px"><div class="pro-sub" style="text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Masajes</div>`+d.massages.map(m=>`<div class="d-row"><span>· ${m.t?m.t+" · ":""}${m.name} (${m.duration})${m.cn?" · "+m.cn:""}${m.nc===true?" 🆕":""}</span><span>${m.price} €</span></div>`).join("")+(c.hasVat?`<div class="d-row"><span>− IVA ${c.vatRate}% → comisión ${c.commRate}%</span><span>${ef(d.commission)}</span></div>`:`<div class="d-row"><span>Comisión ${c.commRate}%</span><span>${ef(d.commission)}</span></div>`)+"</div>":"";
     const tipsH=d.tips>0?`<div class="d-row"><span>💵 Propina</span><span>${ef(d.tips)}</span></div>`:"";
     const notesH=d.notes?`<div style="margin-top:7px;font-size:11px;color:var(--muted)">📝 ${d.notes}</div>`:"";
     return`<div class="day-card${d.holiday?" holiday-day":""}"><div class="day-hdr" onclick="toggleDetail('${d.date}')"><div><div class="day-date-txt">${fmtDate(d.date)} <span class="day-dow">· ${dow(d.date)}${d.holiday?" 🎉":""}</span></div><div class="day-meta-txt">${d.entry}→${d.exit} · ${fmtH(d.workedH)} · ${d.massages.length} masaje${d.massages.length!==1?"s":""}</div></div><div><div class="day-total-txt">${ef(d.dayTotal)}</div><div class="day-eph-txt">${eph.toFixed(2)} €/h ▼</div></div></div><div class="day-detail" id="detail-${d.date}">${c.hasSalary?`<div class="d-row"><span>💶 Por horas${d.holiday?" (×2)":""}</span><span>${ef(d.hourlyPay)}</span></div>`:""}<div class="d-row"><span>💆 Comisión</span><span>${ef(d.commission)}</span></div>${tipsH}<div class="d-row" style="color:var(--gold);font-weight:700"><span>📈 €/hora real</span><span>${eph.toFixed(2)} €/h</span></div>${massDetail}${notesH}<div class="action-btns"><button class="edit-btn" onclick="editDay('${d.date}')">✏️ Editar</button><button class="wa-btn" onclick="shareDay('${d.date}')">📱 Compartir</button><div id="delzone-${d.date}"><button class="del-btn" onclick="showConfirm('${d.date}')">🗑</button></div></div></div></div>`;
