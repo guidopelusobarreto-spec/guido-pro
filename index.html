@@ -818,7 +818,7 @@ function buildEventBlock(ins,ds){
   const descLine="DESCRIPTION:"+esc(descParts.join("\\n"))+"\r\n";
   const locLine="LOCATION:"+esc(c.name+" · "+c.location)+"\r\n";
   const alarm=(trig,desc)=>"BEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:"+desc+"\r\nTRIGGER"+trig+"\r\nEND:VALARM\r\n";
-  return "BEGIN:VEVENT\r\nUID:gp-"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(start)+"\r\nDTEND:"+f(end)+"\r\nSUMMARY:"+title+"\r\n"
+  return "BEGIN:VEVENT\r\nUID:gp-"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(start)+"\r\nDTEND:"+f(end)+"\r\nSUMMARY:"+title+"\r\n"+descLine+locLine
     +alarm(":-PT10M","⏰ Masaje en 10 minutos")
     +alarm(":PT0M","▶️ Comienza el masaje")
     +alarm(";RELATED=END:-PT10M","⏳ Quedan 10 minutos")
