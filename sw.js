@@ -1,4 +1,4 @@
-const CACHE_NAME = 'guidopro-v11';
+const CACHE_NAME = 'guidopro-v12';
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(['/'])));
   self.skipWaiting();
