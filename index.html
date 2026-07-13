@@ -377,6 +377,7 @@ textarea { min-height: 60px; font-size: 14px; }
     <div class="drawer-item" id="nav-4" onclick="showTab(4)"><span class="drawer-icon">📊</span><span class="drawer-label">Análisis PRO</span></div>
     <div class="drawer-item" id="nav-5" onclick="showTab(5)"><span class="drawer-icon">🎯</span><span class="drawer-label">Simulador</span></div>
     <div class="drawer-item" id="nav-10" onclick="showTab(10)"><span class="drawer-icon">⚖️</span><span class="drawer-label">Comparar Centros</span></div>
+    <div class="drawer-item" id="nav-11" onclick="showTab(11)"><span class="drawer-icon">🧠</span><span class="drawer-label">Cerebro PRO</span></div>
     <div class="drawer-section">Gestión</div>
     <div class="drawer-item" id="nav-6" onclick="showTab(6)"><span class="drawer-icon">💰</span><span class="drawer-label">Pagos</span></div>
     <div class="drawer-item" id="nav-7" onclick="showTab(7)"><span class="drawer-icon">📤</span><span class="drawer-label">Exportar</span></div>
@@ -465,6 +466,7 @@ textarea { min-height: 60px; font-size: 14px; }
   <div class="panel" id="panel-8"><div id="portfolio-content"></div></div>
   <div class="panel" id="panel-9"><div id="config-content"></div></div>
   <div class="panel" id="panel-10"><div id="compare-content"></div></div>
+  <div class="panel" id="panel-11"><div id="cerebro-content"></div></div>
 </div>
 
 <script>
@@ -583,7 +585,7 @@ const DOW_ES=["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
 const DOW_BG=["Нед","Пон","Вт","Ср","Чет","Пет","Съб"];
 const MEDAL=["🥇","🥈","🥉"];
 const ICONS={good:"✅",warn:"⚠️",dead:"🔴",info:"💡"};
-const PAGE_NAMES=["Dashboard","Añadir día","Historial","Calendario","Análisis PRO","Simulador","Pagos","Exportar","Mi Valor Profesional","Configuración","Comparar Centros"];
+const PAGE_NAMES=["Dashboard","Añadir día","Historial","Calendario","Análisis PRO","Simulador","Pagos","Exportar","Mi Valor Profesional","Configuración","Comparar Centros","Cerebro PRO"];
 const DEFAULT_CFG={lockMinutes:10,fatigueHours:45};
 
 let allData={};  // { hotel5: {days,payments,goal,cfg}, aleksa: {...}, sanatorium: {...} }
@@ -739,7 +741,7 @@ function showTab(i){
   document.getElementById("page-name").textContent=PAGE_NAMES[i];
   closeDrawer();
   if(i===0)renderDashboard();if(i===2)renderHistory();if(i===3)renderCalendar();
-  if(i===4)renderPro();if(i===5)renderSim();if(i===6)renderPagos();if(i===7)renderExport();if(i===8)renderPortfolio();if(i===9)renderConfig();if(i===10)renderCompare();
+  if(i===4)renderPro();if(i===5)renderSim();if(i===6)renderPagos();if(i===7)renderExport();if(i===8)renderPortfolio();if(i===9)renderConfig();if(i===10)renderCompare();if(i===11)renderCerebro();
 }
 
 // ═══════════════ MASSAGE LIST ═══════════════
@@ -765,6 +767,8 @@ function renderInstances(){
   const box=document.getElementById("instances-card");
   if(!box)return;
   if(instances.length===0){box.style.display="none";return;}
+  // Ordenar por hora (sin hora al final) — así un masaje imprevisto se coloca solo en su lugar
+  instances.sort((a,b)=>{if(a.t&&b.t)return t2min(a.t)-t2min(b.t);if(a.t)return -1;if(b.t)return 1;return 0;});
   box.style.display="block";
   const c=currentCenter();
   document.getElementById("instances-list").innerHTML=instances.map((ins,i)=>{
@@ -774,7 +778,7 @@ function renderInstances(){
       <input type="text" value="${ins.cn||""}" placeholder="Nombre del cliente (opcional)" onchange="setInsName(${i},this.value)" style="width:100%;padding:8px 10px;font-size:14px;margin-bottom:6px">
       <div style="display:flex;gap:7px;align-items:center">
         <input type="time" value="${ins.t}" onchange="setInsTime(${i},this.value)" style="flex:1;padding:8px 10px;font-size:14px">
-        ${i>0?`<button onclick="chainFrom(${i})" title="Empieza al terminar el anterior" style="flex-shrink:0;width:38px;height:36px;border-radius:8px;border:1px solid #2a4a2a;background:#0a1a0a;color:var(--green);font-size:15px;cursor:pointer">⏭</button>`:""}
+        ${i>0?`<button onclick="chainFrom(${i})" title="Empieza al terminar el anterior" style="flex-shrink:0;width:38px;height:36px;border-radius:8px;border:1px solid #2a4a2a;background:#0a1a0a;color:var(--green);font-size:15px;cursor:pointer">⏭</button>`:""}${i<instances.length-1&&ins.t?`<button onclick="pushFrom(${i})" title="Desplazar todos los siguientes en cadena" style="flex-shrink:0;width:38px;height:36px;border-radius:8px;border:1px solid #4a3a10;background:#1a1200;color:#bf8a2a;font-size:15px;cursor:pointer">⇩</button>`:""}
         <button onclick="toggleNC(${i})" style="flex-shrink:0;padding:8px 10px;border-radius:8px;font-size:12px;font-family:Georgia,serif;cursor:pointer;border:1px solid ${ins.nc===true?"#4abf7a":ins.nc===false?"#4a8fbf":"#333"};background:${ins.nc===true?"#0a2a10":ins.nc===false?"#0a1a2a":"var(--bg3)"};color:${ins.nc===true?"#4abf7a":ins.nc===false?"#6a9fd0":"var(--muted)"}">${ins.nc===true?"🆕 Nuevo":ins.nc===false?"🔁 Habitual":"👤 Cliente…"}</button>
         <button onclick="scheduleMassage(${i})" title="Añadir a calendario con alertas" style="flex-shrink:0;width:38px;height:36px;border-radius:8px;border:1px solid #5a4a10;background:#1a1400;color:var(--gold);font-size:16px;cursor:pointer">🔔</button>
       </div>
@@ -791,6 +795,13 @@ function chainFrom(i){
   if(!prev||!prev.t){alert("El masaje anterior no tiene hora.");return;}
   instances[i].t=min2t(t2min(prev.t)+insDur(prev));
   renderInstances();autoExit(false);
+}
+function pushFrom(i){
+  if(!instances[i]||!instances[i].t)return;
+  for(let j=i+1;j<instances.length;j++){
+    instances[j].t=min2t(t2min(instances[j-1].t)+insDur(instances[j-1]));
+  }
+  renderInstances();autoExit(true);
 }
 function autoExit(force){
   const timed=instances.filter(x=>x.t);
@@ -821,8 +832,8 @@ function buildEventBlock(ins,ds){
   return "BEGIN:VEVENT\r\nUID:gp-"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(start)+"\r\nDTEND:"+f(end)+"\r\nSUMMARY:"+title+"\r\n"+descLine+locLine
     +alarm(":-PT10M","⏰ Masaje en 10 minutos")
     +alarm(":PT0M","▶️ Comienza el masaje")
-    +alarm(";RELATED=END:-PT10M","⏳ Quedan 10 minutos")
-    +alarm(";RELATED=END:PT0M","✅ Fin del masaje")
+    +(durMin>10?alarm(":PT"+(durMin-10)+"M","⏳ Quedan 10 minutos"):"")
+    +alarm(":PT"+durMin+"M","✅ Fin del masaje")
     +"END:VEVENT\r\n";
 }
 function downloadICS(body,name){
@@ -839,11 +850,11 @@ function scheduleMassage(i){
   if(!ins.t){alert("Pon la hora de inicio de este masaje.");return;}
   downloadICS(buildEventBlock(ins,ds),"masaje_"+ds+"_"+ins.t.replace(":","")+".ics");
 }
-function buildRestBlock(ds,startMin,endMin){
-  const c=currentCenter();
+function buildAuxBlock(ds,startMin,endMin,title,alarmTxt){
   const [y,mo,d]=ds.split("-");
   const mk=x=>{const dt=new Date(+y,mo-1,+d,Math.floor(x/60),x%60);return dt.getFullYear()+String(dt.getMonth()+1).padStart(2,"0")+String(dt.getDate()).padStart(2,"0")+"T"+String(dt.getHours()).padStart(2,"0")+String(dt.getMinutes()).padStart(2,"0")+"00";};
-  return "BEGIN:VEVENT\r\nUID:gp-rest-"+Date.now()+"-"+startMin+"@guidopro\r\nDTSTAMP:"+mk(startMin)+"\r\nDTSTART:"+mk(startMin)+"\r\nDTEND:"+mk(endMin)+"\r\nSUMMARY:☕ Descanso ("+(endMin-startMin)+" min)\r\nCOLOR:gray\r\nTRANSP:TRANSPARENT\r\nEND:VEVENT\r\n";
+  const al=alarmTxt?"BEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:"+alarmTxt+"\r\nTRIGGER:-PT10M\r\nEND:VALARM\r\n":"";
+  return "BEGIN:VEVENT\r\nUID:gp-aux-"+Date.now()+"-"+startMin+"@guidopro\r\nDTSTAMP:"+mk(startMin)+"\r\nDTSTART:"+mk(startMin)+"\r\nDTEND:"+mk(endMin)+"\r\nSUMMARY:"+title+"\r\nCOLOR:gray\r\nTRANSP:TRANSPARENT\r\n"+al+"END:VEVENT\r\n";
 }
 function scheduleAll(){
   const ds=document.getElementById("f-date").value;
@@ -851,12 +862,18 @@ function scheduleAll(){
   const withTime=instances.filter(x=>x.t).sort((a,b)=>t2min(a.t)-t2min(b.t));
   if(withTime.length===0){alert("Pon la hora de inicio de al menos un masaje.");return;}
   let body=withTime.map(ins=>buildEventBlock(ins,ds)).join("");
-  // Bloques de descanso entre masajes
+  // Preparación 15 min antes del primer masaje
+  const firstStart=t2min(withTime[0].t);
+  body+=buildAuxBlock(ds,firstStart-15,firstStart,"🧴 Preparación (15 min)","⏰ Preparación en 10 minutos");
+  // Bloques de descanso entre masajes (con aviso 10 min antes)
   for(let i=0;i<withTime.length-1;i++){
     const end=t2min(withTime[i].t)+insDur(withTime[i]);
     const next=t2min(withTime[i+1].t);
-    if(next>end)body+=buildRestBlock(ds,end,next);
+    if(next>end)body+=buildAuxBlock(ds,end,next,"☕ Descanso ("+(next-end)+" min)","☕ Descanso en 10 minutos");
   }
+  // Limpieza y cierre 20 min tras el último masaje
+  const lastEnd=Math.max(...withTime.map(x=>t2min(x.t)+insDur(x)));
+  body+=buildAuxBlock(ds,lastEnd,lastEnd+20,"🧹 Limpieza y cierre (20 min)","⏰ Limpieza y cierre en 10 minutos");
   downloadICS(body,"masajes_"+ds+".ics");
   if(withTime.length<instances.length)alert("⚠️ "+(instances.length-withTime.length)+" masaje(s) sin hora quedaron fuera del archivo.");
 }
@@ -976,6 +993,11 @@ function renderDashboard(){
 
   // Alerts
   let alerts="";
+  // Recordatorio informes mensuales (primeros 7 días del mes)
+  {const now=new Date();const prevKey=new Date(now.getFullYear(),now.getMonth()-1,1).toISOString().slice(0,7);
+   if(now.getDate()<=7&&days.length>0&&(localStorage.getItem("gp_rep_cerebro_"+c.key)!==prevKey||localStorage.getItem("gp_rep_fin_"+c.key)!==prevKey)){
+     alerts+=`<div class="notice amber" style="display:block">📋 <b>Proyecto 10K:</b> genera los informes de ${monthName(new Date(now.getFullYear(),now.getMonth()-1,1).getMonth())} (Cerebro + Financiero) y súbelos a Claude. <button onclick="showTab(11)" style="background:none;border:none;color:var(--gold);cursor:pointer;font-family:Georgia,serif;font-size:13px;text-decoration:underline">Ir al Cerebro</button></div>`;
+   }}
   // Days without massages alert
   const lastNoMassage=days.filter(d=>d.massages.length===0);
   if(lastNoMassage.length>0){const last=lastNoMassage[lastNoMassage.length-1];alerts+=`<div class="notice amber" style="display:block">💆 El ${fmtDate(last.date)} trabajaste sin registrar masajes.</div>`;}
@@ -1548,6 +1570,185 @@ function renderCompare(){
     <div class="pro-row"><span>Actividad</span><div class="pro-val"><span class="pro-sub">${r.daysN} días · ${fmtH(r.hours)} · ${r.mass} masajes</span></div></div>
   </div>`).join("")}
   ${rows.length>1?`<div class="card"><div class="card-title">💡 Conclusión</div><div class="insight good"><span>✅</span><span>Tu centro más rentable por hora neta ${periodLabel} es <strong style="color:${rows[0].ct.color}">${rows[0].ct.name}</strong> con ${rows[0].ephNet.toFixed(2)} €/h.</span></div>${rows[rows.length-1].ephNet<rows[0].ephNet*0.6?`<div class="insight warn"><span>⚠️</span><span>${rows[rows.length-1].ct.name} rinde ${((1-rows[rows.length-1].ephNet/rows[0].ephNet)*100).toFixed(0)}% menos por hora que ${rows[0].ct.name}.</span></div>`:""}</div>`:""}`;
+}
+
+
+// ═══════════════ CEREBRO PRO — AGENTES ═══════════════
+function renderCerebro(){
+  const el=document.getElementById("cerebro-content"),c=currentCenter(),days=cDays();
+  if(days.length<3){el.innerHTML='<div class="empty">El Cerebro necesita al menos 3 días de registros en '+c.name+' para trabajar.</div>';return;}
+  const td=today(),ws=getMonday(),ms=getMonthStart();
+  const allMass=days.flatMap(d=>d.massages.map(m=>({...m,date:d.date})));
+  const firstDate=days[0].date;
+  const spanDays=Math.max(1,Math.round((new Date(td)-new Date(firstDate))/86400000));
+
+  // ── AGENTE CLIENTES ──
+  const ncAll=allMass.filter(m=>m.nc===true);
+  const newToday=ncAll.filter(m=>m.date===td).length;
+  const newWeek=ncAll.filter(m=>m.date>=ws).length;
+  const newMonth=ncAll.filter(m=>m.date>=ms).length;
+  const trackedNC=allMass.filter(m=>m.nc!==null&&m.nc!==undefined).length;
+  const pctNew=trackedNC>0?(ncAll.length/trackedNC*100):0;
+
+  // ── AGENTE VENTAS ──
+  const byType={};
+  c.massages.forEach(m=>{byType[m.id]={name:m.name,nameBG:m.nameBG,price:m.price,duration:m.duration,count:0,revenue:0,last:null};});
+  allMass.forEach(m=>{if(!byType[m.id])byType[m.id]={name:m.name,nameBG:m.nameBG,price:m.price,duration:m.duration,count:0,revenue:0,last:null};byType[m.id].count++;byType[m.id].revenue+=m.price;if(!byType[m.id].last||m.date>byType[m.id].last)byType[m.id].last=m.date;});
+  const sold=Object.values(byType).filter(x=>x.count>0).sort((a,b)=>b.count-a.count);
+  const top=sold[0],bottom=sold.length>1?sold[sold.length-1]:null;
+  const unsold30=Object.values(byType).filter(x=>{
+    if(spanDays<30)return false;
+    if(!x.last)return true;
+    return (new Date(td)-new Date(x.last))/86400000>=30;
+  });
+
+  // ── AGENTE TIEMPO ──
+  const byDow={};days.forEach(d=>{const dw=dow(d.date);if(!byDow[dw])byDow[dw]={total:0,n:0};byDow[dw].total+=d.dayTotal;byDow[dw].n++;});
+  const dowSorted=Object.entries(byDow).map(([k,v])=>({dow:k,avg:v.total/v.n,n:v.n})).sort((a,b)=>b.avg-a.avg);
+  const bestDow=dowSorted[0],worstDow=dowSorted[dowSorted.length-1];
+  let mornRev=0,aftRev=0;
+  allMass.forEach(m=>{const hr=m.t?parseInt(m.t):null;if(hr===null)return;if(hr<14)mornRev+=m.price;else aftRev+=m.price;});
+  if(mornRev===0&&aftRev===0){days.forEach(d=>{const hr=parseInt(d.entry)||12;if(hr<12)mornRev+=d.dayTotal;else aftRev+=d.dayTotal;});}
+  const bestSlot=mornRev>=aftRev?"mañanas":"tardes";
+  const ncGoal=cData().ncGoal||0;
+  const ppmList=c.massages.map(m=>({name:m.name,duration:m.duration,price:m.price,ppm:m.price/(parseInt(m.duration)||60)})).sort((a,b)=>b.ppm-a.ppm);
+
+  // ── CEREBRO: recomendaciones cruzadas ──
+  const recs=[];
+  unsold30.forEach(u=>{
+    const mini=Math.round(u.price*0.65);
+    const miniDur=Math.round((parseInt(u.duration)||60)*0.6);
+    let r="«"+u.name+"» "+(u.count===0?"nunca se ha vendido":"lleva 30+ días sin venderse")+". Opciones concretas: ";
+    const opts=[];
+    opts.push("versión mini de "+miniDur+" min a "+mini+" € para que lo prueben");
+    if(top&&top.name!==u.name)opts.push("paquete con tu estrella «"+top.name+"» con 10-15% de descuento");
+    if(bestDow)opts.push("proponerlo en recepción los "+bestDow.dow+" (tu mejor día)");
+    opts.push("ofrecerlo como extensión de +"+Math.round(u.price*0.5)+" € al terminar otro masaje");
+    recs.push({t:r+opts.join("; ")+".",c:"warn",a:"💊 Ventas+Precios"});
+  });
+  if(top)recs.push({t:"Tu producto estrella es «"+top.name+"» ("+top.count+" ventas, "+ef(top.revenue)+"). Pide a recepción que lo ofrezca primero a clientes nuevos: es tu mejor carta de fidelización.",c:"good",a:"📈 Ventas"});
+  if(bestDow&&worstDow&&bestDow.dow!==worstDow.dow&&bestDow.avg>worstDow.avg*1.5)recs.push({t:"Los "+bestDow.dow+" rindes "+ef(bestDow.avg)+"/día de media vs "+ef(worstDow.avg)+" los "+worstDow.dow+" — un "+Math.round((bestDow.avg/worstDow.avg-1)*100)+"% más. Prioriza pedir turnos de "+bestDow.dow+".",c:"info",a:"📅 Tiempo"});
+  recs.push({t:"Trabajas mejor por las "+bestSlot+" ("+ef(bestSlot==="mañanas"?mornRev:aftRev)+" vs "+ef(bestSlot==="mañanas"?aftRev:mornRev)+"). Al negociar horarios, defiende ese bloque.",c:"info",a:"📅 Tiempo"});
+  if(trackedNC>=5){
+    if(pctNew<20)recs.push({t:"Solo el "+pctNew.toFixed(0)+"% de tus masajes son de clientes nuevos: tu base es fiel pero necesitas captación. Acciones: perfil de Google Business activo, tarjeta \"5º masaje −50%\", pedir a los habituales que te recomienden (el boca a boca es tu canal #1).",c:"warn",a:"👥 Clientes"});
+    else if(pctNew>60)recs.push({t:"El "+pctNew.toFixed(0)+"% de tus masajes son clientes nuevos pero pocos repiten. Refuerza la retención: al terminar, agenda directamente la próxima sesión y explica el plan de tratamiento (\"con 4 sesiones más resolvemos esta contractura\").",c:"warn",a:"👥 Clientes"});
+    else recs.push({t:"Buen equilibrio: "+pctNew.toFixed(0)+"% clientes nuevos, "+(100-pctNew).toFixed(0)+"% habituales. Mantén las dos palancas activas.",c:"good",a:"👥 Clientes"});
+  } else recs.push({t:"Marca 🆕/🔁 en cada masaje que registres — con esos datos el agente de clientes podrá darte análisis de captación y retención precisos.",c:"info",a:"👥 Clientes"});
+  if(top&&bottom&&top.name!==bottom.name&&bestDow)recs.push({t:"Jugada combinada del Cerebro: los "+bestDow.dow+" (máximo tráfico) ofrece el paquete «"+top.name+" + "+bottom.name+"» — usas tu día fuerte y tu producto fuerte para arrastrar al débil.",c:"good",a:"🧠 Cerebro"});
+
+  el.innerHTML=`
+  <div class="card"><div class="card-title">🧠 Cerebro PRO · ${c.name}</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.6">Cuatro agentes analizan tus datos y cruzan conclusiones: <b style="color:var(--gold)">Clientes</b>, <b style="color:var(--gold)">Ventas</b>, <b style="color:var(--gold)">Tiempo</b> y <b style="color:var(--gold)">Precios</b>. Cuantos más días, horas y 🆕 registres, más preciso es.</div>
+  </div>
+  <div class="card"><div class="card-title">👥 Agente Clientes</div>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-val green">${newToday}</div><div class="stat-lbl">Nuevos hoy</div></div>
+      <div class="stat-box"><div class="stat-val green">${newWeek}</div><div class="stat-lbl">Nuevos semana</div></div>
+      <div class="stat-box"><div class="stat-val green">${newMonth}</div><div class="stat-lbl">Nuevos mes</div></div>
+      <div class="stat-box"><div class="stat-val">${trackedNC>0?pctNew.toFixed(0)+"%":"—"}</div><div class="stat-lbl">% nuevos</div></div>
+    </div>
+    <div style="margin-top:4px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:3px"><span>🎯 Meta semanal de captación</span><span>${ncGoal>0?newWeek+" / "+ncGoal+" nuevos":"sin meta"}</span></div>
+      ${ncGoal>0?`<div class="goal-bar-wrap"><div class="goal-bar" style="width:${Math.min(100,newWeek/ncGoal*100)}%;background:linear-gradient(90deg,#2a8f5a,#4abf7a)"></div></div>`:""}
+      <div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px">
+        <div style="flex:1"><label class="lbl">Clientes nuevos por semana</label><input type="number" id="nc-goal-input" value="${ncGoal||""}" placeholder="Ej: 5" min="0"></div>
+        <button onclick="saveNcGoal()" style="background:linear-gradient(135deg,#4abf7a,#2a8f5a);border:none;border-radius:9px;color:#0d0d0d;padding:10px 13px;font-size:13px;font-weight:700;cursor:pointer;font-family:Georgia,serif;flex-shrink:0">Guardar</button>
+      </div>
+    </div>
+  </div>
+  <div class="card"><div class="card-title">💶 Precio por Minuto del Catálogo</div>
+    <div style="font-size:11px;color:var(--dim);margin-bottom:6px">Qué masaje paga mejor tu tiempo (precio ÷ duración)</div>
+    ${ppmList.map((p,i)=>`<div class="pro-row"><span>${i===0?"🥇 ":i===ppmList.length-1?"🐢 ":""}${p.name}<div class="pro-sub">${p.duration} · ${p.price} €</div></span><div class="pro-val ${i===0?"gold":""}">${p.ppm.toFixed(2)} €/min</div></div>`).join("")}
+  </div>
+  <div class="card"><div class="card-title">📈 Agente Ventas</div>
+    ${top?`<div class="pro-row"><span>🥇 Más vendido</span><div class="pro-val gold">${top.name}<div class="pro-sub">×${top.count} · ${ef(top.revenue)}</div></div></div>`:""}
+    ${bottom?`<div class="pro-row"><span>🐢 Menos vendido</span><div class="pro-val">${bottom.name}<div class="pro-sub">×${bottom.count} · ${ef(bottom.revenue)}</div></div></div>`:""}
+    ${unsold30.length?`<div class="pro-row"><span>🚨 Sin ventas 30+ días</span><div class="pro-val" style="color:var(--red)">${unsold30.length} masaje${unsold30.length>1?"s":""}</div></div>`:`<div class="pro-row"><span>✅ Catálogo activo</span><div class="pro-val green">todo se vende</div></div>`}
+  </div>
+  <div class="card"><div class="card-title">📅 Agente Tiempo</div>
+    ${bestDow?`<div class="pro-row"><span>Mejor día</span><div class="pro-val gold">${bestDow.dow} · ${ef(bestDow.avg)}/día</div></div>`:""}
+    ${worstDow&&worstDow.dow!==bestDow.dow?`<div class="pro-row"><span>Peor día</span><div class="pro-val">${worstDow.dow} · ${ef(worstDow.avg)}/día</div></div>`:""}
+    <div class="pro-row"><span>Mañanas vs Tardes</span><div class="pro-val">${ef(mornRev)} / ${ef(aftRev)}</div></div>
+  </div>
+  <div class="card"><div class="card-title">🧠 Recomendaciones del Cerebro</div>
+    ${recs.map(r=>`<div class="insight ${r.c}"><span>${ICONS[r.c]}</span><span><b style="color:var(--gold);font-size:11px">${r.a}</b><br>${r.t}</span></div>`).join("")}
+  </div>
+  <div class="card"><div class="card-title">📤 Informes Mensuales · Proyecto 10K</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:9px;line-height:1.5">Genera los dos informes a inicio de cada mes y súbelos a tu Proyecto en Claude para el análisis estratégico mensual.</div>
+    <div class="period-btns"><button class="period-btn ${(window._repMonth||"prev")==="prev"?"active":""}" onclick="window._repMonth='prev';renderCerebro()">Mes anterior</button><button class="period-btn ${(window._repMonth||"prev")==="cur"?"active":""}" onclick="window._repMonth='cur';renderCerebro()">Mes actual</button></div>
+    <button class="btn-gold" onclick="exportCerebroReport()">🧠 Informe del Cerebro — copiar</button>
+    <button class="btn-blue" onclick="exportFinReport()" style="margin-top:8px">💰 Informe Financiero — copiar</button>
+  </div>`;
+}
+
+function saveNcGoal(){cData().ncGoal=parseInt(document.getElementById("nc-goal-input").value)||0;saveData();renderCerebro();}
+
+function repMonthRange(){
+  const now=new Date();
+  if((window._repMonth||"prev")==="prev"){const p=new Date(now.getFullYear(),now.getMonth()-1,1);return{from:p.toISOString().split("T")[0].slice(0,8)+"01",to:new Date(now.getFullYear(),now.getMonth(),0).toISOString().split("T")[0],label:monthName(p.getMonth())+" "+p.getFullYear()};}
+  return{from:getMonthStart(),to:today(),label:monthName(now.getMonth())+" "+now.getFullYear()};
+}
+function copyReport(text){navigator.clipboard.writeText(text).then(()=>alert("✅ Informe copiado — pégalo en tu Proyecto de Claude")).catch(()=>{const ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);});}
+
+function exportCerebroReport(){
+  const c=currentCenter(),{from,to,label}=repMonthRange();
+  const days=cDays().filter(d=>d.date>=from&&d.date<=to);
+  if(days.length===0){alert("No hay datos en "+label+".");return;}
+  const allM=days.flatMap(d=>d.massages.map(m=>({...m,date:d.date})));
+  const nc=allM.filter(m=>m.nc===true).length,tracked=allM.filter(m=>m.nc!==null&&m.nc!==undefined).length;
+  const byT={};allM.forEach(m=>{if(!byT[m.id])byT[m.id]={name:m.name,count:0,rev:0};byT[m.id].count++;byT[m.id].rev+=m.price;});
+  const sold=Object.values(byT).sort((a,b)=>b.count-a.count);
+  const soldIds=new Set(allM.map(m=>m.id));
+  const unsold=c.massages.filter(m=>!soldIds.has(m.id));
+  const byDw={};days.forEach(d=>{const w=dow(d.date);if(!byDw[w])byDw[w]={t:0,n:0};byDw[w].t+=d.dayTotal;byDw[w].n++;});
+  const dws=Object.entries(byDw).map(([k,v])=>k+": "+ef(v.t/v.n)+"/día ("+v.n+" días)").join("\n  ");
+  let mR=0,aR=0;allM.forEach(m=>{if(!m.t)return;if(parseInt(m.t)<14)mR+=m.price;else aR+=m.price;});
+  const ppm=c.massages.map(m=>({n:m.name,p:m.price/(parseInt(m.duration)||60)})).sort((a,b)=>b.p-a.p);
+  const S="━━━━━━━━━━━━━━━━━━━━━━━━━";
+  let o=S+"\n🧠 INFORME DEL CEREBRO — "+label.toUpperCase()+"\n"+c.name+" · Guido Peluso\nGenerado: "+fmtDate(today())+"\n"+S+"\n\n";
+  o+="CLIENTES\n  Masajes del mes: "+allM.length+" en "+days.length+" días\n  Clientes nuevos: "+nc+(tracked>0?" ("+(nc/tracked*100).toFixed(0)+"% de "+tracked+" marcados)":"")+"\n  Meta semanal captación: "+(cData().ncGoal||"sin definir")+"\n\n";
+  o+="VENTAS POR MASAJE\n";sold.forEach((s,i)=>o+="  "+(i+1)+". "+s.name+" ×"+s.count+" — "+ef(s.rev)+"\n");
+  if(unsold.length){o+="  SIN VENTAS este mes: "+unsold.map(u=>u.name).join("; ")+"\n";}
+  o+="\nDÍAS DE LA SEMANA (promedio)\n  "+dws+"\n\n";
+  o+="MAÑANAS vs TARDES: "+ef(mR)+" / "+ef(aR)+"\n\n";
+  o+="PRECIO POR MINUTO (mejor → peor)\n";ppm.forEach(x=>o+="  "+x.n+": "+x.p.toFixed(2)+" €/min\n");
+  o+="\n"+S+"\nPara Claude: analiza este mes contra el plan del Proyecto 10K, detecta cuellos de botella y dame las 3 acciones de mayor impacto para el próximo mes.\n"+S;
+  copyReport(o);
+  localStorage.setItem("gp_rep_cerebro_"+c.key,from.slice(0,7));
+}
+
+function exportFinReport(){
+  const c=currentCenter(),{from,to,label}=repMonthRange();
+  const days=cDays().filter(d=>d.date>=from&&d.date<=to);
+  if(days.length===0){alert("No hay datos en "+label+".");return;}
+  const t=days.reduce((a,d)=>({h:a.h+d.workedH,hp:a.hp+d.hourlyPay,cm:a.cm+d.commission,tp:a.tp+(d.tips||0),tt:a.tt+d.dayTotal,ms:a.ms+d.massages.length,tr:a.tr+(d.transport||0)}),{h:0,hp:0,cm:0,tp:0,tt:0,ms:0,tr:0});
+  const billed=days.reduce((s,d)=>s+d.massages.reduce((x,m)=>x+m.price,0),0);
+  // mes previo al informado
+  const pf=new Date(from+"T12:00:00");pf.setMonth(pf.getMonth()-1);
+  const pFrom=pf.toISOString().split("T")[0].slice(0,8)+"01";
+  const pTo=new Date(pf.getFullYear(),pf.getMonth()+1,0).toISOString().split("T")[0];
+  const prev=cDays().filter(d=>d.date>=pFrom&&d.date<=pTo).reduce((s,d)=>s+d.dayTotal,0);
+  const paysM=cPayments().filter(p=>p.date>=from&&p.date<=to).reduce((s,p)=>s+p.amount,0);
+  const totalEarned=cDays().reduce((s,d)=>s+d.dayTotal,0),totalPaid=cPayments().reduce((s,p)=>s+p.amount,0);
+  const pending=Math.max(0,totalEarned-totalPaid);
+  const S="━━━━━━━━━━━━━━━━━━━━━━━━━";
+  let o=S+"\n💰 INFORME FINANCIERO — "+label.toUpperCase()+"\n"+c.name+" · Guido Peluso\nGenerado: "+fmtDate(today())+"\n"+S+"\n\n";
+  o+="Días trabajados: "+days.length+"\nHoras: "+fmtH(t.h)+"\nMasajes: "+t.ms+"\n\n";
+  o+="Facturado para el spa: "+ef(billed)+"\n";
+  if(c.hasSalary)o+="Pago por horas: "+ef(t.hp)+"\n";
+  o+="Comisiones: "+ef(t.cm)+"\nPropinas: "+ef(t.tp)+"\nGasto transporte: − "+ef(t.tr)+"\n";
+  o+=S+"\nINGRESO DEL MES: "+ef(t.tt)+"\nNETO (− transporte): "+ef(t.tt-t.tr)+"\n€/hora real: "+(t.h>0?(t.tt/t.h).toFixed(2):"0")+" €/h\n"+S+"\n\n";
+  o+="⚠️ ALARMAS\n";
+  const alarms=[];
+  if(prev>0){const diff=(t.tt-prev)/prev*100;alarms.push((diff>=0?"📈 Subida":"📉 CAÍDA")+" del "+Math.abs(diff).toFixed(0)+"% vs mes anterior ("+ef(prev)+")");}
+  if(pending>0)alarms.push("⏳ Pendiente de cobro acumulado: "+ef(pending));
+  if(t.h>0&&t.tt/t.h<15)alarms.push("🔻 €/hora bajo (menos de 15 €/h) — revisar mix de masajes o precios");
+  if(t.tr>t.tt*0.15)alarms.push("🚌 El transporte se come el "+(t.tr/t.tt*100).toFixed(0)+"% del ingreso");
+  if(alarms.length===0)alarms.push("✅ Sin alarmas este mes");
+  alarms.forEach(a=>o+="  "+a+"\n");
+  o+="\nCobrado en el mes: "+ef(paysM)+"\n\n"+S+"\nPara Claude: evalúa la salud financiera del mes dentro del Proyecto 10K y proyecta si el ritmo actual alcanza la meta de la fase.\n"+S;
+  copyReport(o);
+  localStorage.setItem("gp_rep_fin_"+c.key,from.slice(0,7));
 }
 
 function renderConfig(){
