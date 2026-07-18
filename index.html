@@ -610,9 +610,10 @@ const fmtDate=d=>{const[y,m,day]=d.split("-");return day+"/"+m+"/"+y;};
 const dow=(d,bg=false)=>(bg?DOW_BG:DOW_ES)[new Date(d+"T12:00:00").getDay()];
 const toMin=t=>{const[h,m]=t.split(":").map(Number);return h*60+m;};
 function calcH(en,ex){if(!en||!ex)return 0;let s=toMin(en),e2=toMin(ex);if(e2<=s)return 0;let m=e2-s;const os=Math.max(s,720),oe=Math.min(e2,780);if(oe>os)m-=(oe-os);return Math.max(0,m/60);}
-const today=()=>new Date().toISOString().split("T")[0];
-const yesterday=()=>{const d=new Date();d.setDate(d.getDate()-1);return d.toISOString().split("T")[0];};
-const getMonday=()=>{const d=new Date(),day=d.getDay(),diff=d.getDate()-day+(day===0?-6:1);d.setDate(diff);return d.toISOString().split("T")[0];};
+const localISO=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const today=()=>localISO(new Date());
+const yesterday=()=>{const d=new Date();d.setDate(d.getDate()-1);return localISO(d);};
+const getMonday=()=>{const d=new Date(),day=d.getDay(),diff=d.getDate()-day+(day===0?-6:1);d.setDate(diff);return localISO(d);};
 const getMonthStart=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-01";};
 const monthName=(m)=>["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"][m];
 
@@ -1004,7 +1005,7 @@ function renderDashboard(){
   // Alerts
   let alerts="";
   // Recordatorio informes mensuales (primeros 7 días del mes)
-  {const now=new Date();const prevKey=new Date(now.getFullYear(),now.getMonth()-1,1).toISOString().slice(0,7);
+  {const now=new Date();const prevKey=localISO(new Date(now.getFullYear(),now.getMonth()-1,1)).slice(0,7);
    if(now.getDate()<=7&&days.length>0&&(localStorage.getItem("gp_rep_cerebro_"+c.key)!==prevKey||localStorage.getItem("gp_rep_fin_"+c.key)!==prevKey)){
      alerts+=`<div class="notice amber" style="display:block">📋 <b>Proyecto 10K:</b> genera los informes de ${monthName(new Date(now.getFullYear(),now.getMonth()-1,1).getMonth())} (Cerebro + Financiero) y súbelos a Claude. <button onclick="showTab(11)" style="background:none;border:none;color:var(--gold);cursor:pointer;font-family:Georgia,serif;font-size:13px;text-decoration:underline">Ir al Cerebro</button></div>`;
    }}
@@ -1092,7 +1093,7 @@ function renderPro(){
 
   // Prev month comparison
   const pm=new Date();pm.setDate(1);pm.setMonth(pm.getMonth()-1);
-  const pmS=pm.toISOString().split("T")[0],pmE=new Date(pm.getFullYear(),pm.getMonth()+1,0).toISOString().split("T")[0];
+  const pmS=localISO(new Date(pm.getFullYear(),pm.getMonth(),1)),pmE=localISO(new Date(pm.getFullYear(),pm.getMonth()+1,0));
   const prevTotal=days.filter(d=>d.date>=pmS&&d.date<=pmE).reduce((s,d)=>s+d.dayTotal,0);
 
   // Best hour analysis
@@ -1100,7 +1101,7 @@ function renderPro(){
   const bestHour=hourBuckets.morning>hourBuckets.afternoon?"mañana":"tarde";
 
   // Week history chart
-  const weeks=[];for(let w=5;w>=0;w--){const wd=new Date();wd.setDate(wd.getDate()-w*7);const ws2=new Date(wd);ws2.setDate(wd.getDate()-wd.getDay()+(wd.getDay()===0?-6:1));const we=new Date(ws2);we.setDate(ws2.getDate()+6);const wsS=ws2.toISOString().split("T")[0],weS=we.toISOString().split("T")[0];const wt=days.filter(d=>d.date>=wsS&&d.date<=weS).reduce((s,d)=>s+d.dayTotal,0);weeks.push({label:wsS.slice(5),val:wt});}
+  const weeks=[];for(let w=5;w>=0;w--){const wd=new Date();wd.setDate(wd.getDate()-w*7);const ws2=new Date(wd);ws2.setDate(wd.getDate()-wd.getDay()+(wd.getDay()===0?-6:1));const we=new Date(ws2);we.setDate(ws2.getDate()+6);const wsS=localISO(ws2),weS=localISO(we);const wt=days.filter(d=>d.date>=wsS&&d.date<=weS).reduce((s,d)=>s+d.dayTotal,0);weeks.push({label:wsS.slice(5),val:wt});}
   const maxW=Math.max(...weeks.map(w=>w.val),1);
   const chartHTML=`<div class="chart-wrap"><div class="chart-bars">${weeks.map(w=>`<div class="chart-bar-wrap"><div class="chart-bar-val">${w.val>0?Math.round(w.val)+"€":""}</div><div class="chart-bar" style="height:${Math.max((w.val/maxW)*80,w.val>0?4:2)}px;background:linear-gradient(180deg,var(--gold),var(--gold2))"></div><div class="chart-bar-lbl">${w.label}</div></div>`).join("")}</div></div>`;
   // Annual chart (12 months of current year)
@@ -1118,7 +1119,7 @@ function renderPro(){
   const bestMassDay=days.reduce((b,d)=>d.massages.length>b.massages.length?d:b,days[0]);
   const weekH=days.filter(d=>d.date>=ws&&d.date<=td).reduce((s,d)=>s+d.workedH,0);
   // Best week
-  const weekTotals={};days.forEach(d=>{const wd=new Date(d.date+"T12:00:00"),diff=wd.getDay()===0?6:wd.getDay()-1;const wstart=new Date(wd);wstart.setDate(wd.getDate()-diff);const wk=wstart.toISOString().split("T")[0];weekTotals[wk]=(weekTotals[wk]||0)+d.dayTotal;});
+  const weekTotals={};days.forEach(d=>{const wd=new Date(d.date+"T12:00:00"),diff=wd.getDay()===0?6:wd.getDay()-1;const wstart=new Date(wd);wstart.setDate(wd.getDate()-diff);const wk=localISO(wstart);weekTotals[wk]=(weekTotals[wk]||0)+d.dayTotal;});
   const bestWeekEntry=Object.entries(weekTotals).sort((a,b)=>b[1]-a[1])[0];
   let streak=0;const sd=[...days].map(d=>d.date).sort((a,b)=>b.localeCompare(a));for(let i=0;i<sd.length;i++){const d=new Date(sd[i]+"T12:00:00"),exp=new Date();exp.setDate(exp.getDate()-i);if(d.toDateString()===exp.toDateString())streak++;else break;}
 
@@ -1614,6 +1615,13 @@ function renderCerebro(){
   const allMass=days.flatMap(d=>d.massages.map(m=>({...m,date:d.date})));
   const firstDate=days[0].date;
   const spanDays=Math.max(1,Math.round((new Date(td)-new Date(firstDate))/86400000));
+  // Período de análisis de los agentes
+  const per=window._cerPeriod||"mes";
+  let sFrom="0000-01-01",sTo=td,scopeLabel="histórico completo";
+  if(per==="mes"){sFrom=ms;scopeLabel="este mes";}
+  else if(per==="prev"){const n2=new Date();sFrom=localISO(new Date(n2.getFullYear(),n2.getMonth()-1,1));sTo=localISO(new Date(n2.getFullYear(),n2.getMonth(),0));scopeLabel="mes anterior";}
+  const sDays=days.filter(d=>d.date>=sFrom&&d.date<=sTo);
+  const sMass=sDays.flatMap(d=>d.massages.map(m=>({...m,date:d.date})));
 
   // ── AGENTE CLIENTES ──
   const ncAll=allMass.filter(m=>m.nc===true);
@@ -1626,31 +1634,33 @@ function renderCerebro(){
   // ── AGENTE VENTAS ──
   const byType={};
   c.massages.forEach(m=>{byType[m.id]={name:m.name,nameBG:m.nameBG,price:m.price,duration:m.duration,count:0,revenue:0,last:null};});
-  allMass.forEach(m=>{if(!byType[m.id])byType[m.id]={name:m.name,nameBG:m.nameBG,price:m.price,duration:m.duration,count:0,revenue:0,last:null};byType[m.id].count++;byType[m.id].revenue+=m.price;if(!byType[m.id].last||m.date>byType[m.id].last)byType[m.id].last=m.date;});
+  sMass.forEach(m=>{if(!byType[m.id])byType[m.id]={name:m.name,nameBG:m.nameBG,price:m.price,duration:m.duration,count:0,revenue:0,last:null};byType[m.id].count++;byType[m.id].revenue+=m.price;});
+  const lastSold={};allMass.forEach(m=>{if(!lastSold[m.id]||m.date>lastSold[m.id])lastSold[m.id]=m.date;});
   const sold=Object.values(byType).filter(x=>x.count>0).sort((a,b)=>b.count-a.count);
   const top=sold[0],bottom=sold.length>1?sold[sold.length-1]:null;
-  const unsold30=Object.values(byType).filter(x=>{
+  const unsold30=c.massages.filter(m=>{
     if(spanDays<30)return false;
-    if(!x.last)return true;
-    return (new Date(td)-new Date(x.last))/86400000>=30;
+    const l=lastSold[m.id];
+    if(!l)return true;
+    return (new Date(td)-new Date(l))/86400000>=30;
   });
 
   // ── AGENTE TIEMPO ──
-  const byDow={};days.forEach(d=>{const dw=dow(d.date);if(!byDow[dw])byDow[dw]={total:0,n:0};byDow[dw].total+=d.dayTotal;byDow[dw].n++;});
+  const byDow={};sDays.forEach(d=>{const dw=dow(d.date);if(!byDow[dw])byDow[dw]={total:0,n:0};byDow[dw].total+=d.dayTotal;byDow[dw].n++;});
   const dowSorted=Object.entries(byDow).map(([k,v])=>({dow:k,avg:v.total/v.n,n:v.n})).sort((a,b)=>b.avg-a.avg);
   const bestDow=dowSorted[0],worstDow=dowSorted[dowSorted.length-1];
   let mornRev=0,aftRev=0;
-  allMass.forEach(m=>{const hr=m.t?parseInt(m.t):null;if(hr===null)return;if(hr<14)mornRev+=m.price;else aftRev+=m.price;});
-  if(mornRev===0&&aftRev===0){days.forEach(d=>{const hr=parseInt(d.entry)||12;if(hr<12)mornRev+=d.dayTotal;else aftRev+=d.dayTotal;});}
+  sMass.forEach(m=>{const hr=m.t?parseInt(m.t):null;if(hr===null)return;if(hr<14)mornRev+=m.price;else aftRev+=m.price;});
+  if(mornRev===0&&aftRev===0){sDays.forEach(d=>{const hr=parseInt(d.entry)||12;if(hr<12)mornRev+=d.dayTotal;else aftRev+=d.dayTotal;});}
   const bestSlot=mornRev>=aftRev?"mañanas":"tardes";
   const ncGoal=cData().ncGoal||0;
   // Ocupación: minutos masajeando / minutos trabajados
-  const massMin=allMass.reduce((s,m)=>s+(parseInt(m.duration)||60),0);
-  const workMin=days.reduce((s,d)=>s+d.workedH,0)*60;
+  const massMin=sMass.reduce((s,m)=>s+(parseInt(m.duration)||60),0);
+  const workMin=sDays.reduce((s,d)=>s+d.workedH,0)*60;
   const occ=workMin>0?massMin/workMin*100:0;
   // Orígenes de clientes nuevos
   const SRC_LABELS={google:"Google/Maps",recepcion:"Recepción",recomendado:"Recomendado",redes:"Redes",otro:"Otro"};
-  const srcCounts={};ncAll.forEach(m=>{const k=m.src||"sin marcar";srcCounts[k]=(srcCounts[k]||0)+1;});
+  const srcCounts={};sMass.filter(m=>m.nc===true).forEach(m=>{const k=m.src||"sin marcar";srcCounts[k]=(srcCounts[k]||0)+1;});
   // Retención: nuevos con nombre que volvieron después
   const namedNew={};allMass.forEach(m=>{if(m.nc===true&&m.cn)namedNew[m.cn.toLowerCase()]=namedNew[m.cn.toLowerCase()]||m.date;});
   let returned=0;const newNames=Object.keys(namedNew);
@@ -1683,7 +1693,13 @@ function renderCerebro(){
 
   el.innerHTML=`
   <div class="card"><div class="card-title">🧠 Cerebro PRO · ${c.name}</div>
-    <div style="font-size:12px;color:var(--muted);line-height:1.6">Cuatro agentes analizan tus datos y cruzan conclusiones: <b style="color:var(--gold)">Clientes</b>, <b style="color:var(--gold)">Ventas</b>, <b style="color:var(--gold)">Tiempo</b> y <b style="color:var(--gold)">Precios</b>. Cuantos más días, horas y 🆕 registres, más preciso es.</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:9px">Cuatro agentes analizan tus datos y cruzan conclusiones. Cuantos más días, horas y 🆕 registres, más preciso es.</div>
+    <div class="period-btns" style="margin-bottom:4px">
+      <button class="period-btn ${per==="mes"?"active":""}" onclick="window._cerPeriod='mes';renderCerebro()">Este mes</button>
+      <button class="period-btn ${per==="prev"?"active":""}" onclick="window._cerPeriod='prev';renderCerebro()">Mes anterior</button>
+      <button class="period-btn ${per==="all"?"active":""}" onclick="window._cerPeriod='all';renderCerebro()">Histórico</button>
+    </div>
+    ${sDays.length===0?`<div style="font-size:12px;color:#bf8a2a">⚠️ Sin registros en ${scopeLabel}.</div>`:`<div style="font-size:11px;color:var(--dim)">Agentes de Ventas, Tiempo y Orígenes analizando: <b style="color:var(--gold)">${scopeLabel}</b> (${sDays.length} días)</div>`}
   </div>
   <div class="card"><div class="card-title">👥 Agente Clientes</div>
     <div class="stat-grid">
@@ -1707,12 +1723,12 @@ function renderCerebro(){
     <div style="font-size:11px;color:var(--dim);margin-bottom:6px">Qué masaje paga mejor tu tiempo (precio ÷ duración)</div>
     ${ppmList.map((p,i)=>`<div class="pro-row"><span>${i===0?"🥇 ":i===ppmList.length-1?"🐢 ":""}${p.name}<div class="pro-sub">${p.duration} · ${p.price} €</div></span><div class="pro-val ${i===0?"gold":""}">${p.ppm.toFixed(2)} €/min</div></div>`).join("")}
   </div>
-  <div class="card"><div class="card-title">📈 Agente Ventas</div>
+  <div class="card"><div class="card-title">📈 Agente Ventas · ${scopeLabel}</div>
     ${top?`<div class="pro-row"><span>🥇 Más vendido</span><div class="pro-val gold">${top.name}<div class="pro-sub">×${top.count} · ${ef(top.revenue)}</div></div></div>`:""}
     ${bottom?`<div class="pro-row"><span>🐢 Menos vendido</span><div class="pro-val">${bottom.name}<div class="pro-sub">×${bottom.count} · ${ef(bottom.revenue)}</div></div></div>`:""}
     ${unsold30.length?`<div class="pro-row"><span>🚨 Sin ventas 30+ días</span><div class="pro-val" style="color:var(--red)">${unsold30.length} masaje${unsold30.length>1?"s":""}</div></div>`:`<div class="pro-row"><span>✅ Catálogo activo</span><div class="pro-val green">todo se vende</div></div>`}
   </div>
-  <div class="card"><div class="card-title">📅 Agente Tiempo</div>
+  <div class="card"><div class="card-title">📅 Agente Tiempo · ${scopeLabel}</div>
     ${bestDow?`<div class="pro-row"><span>Mejor día</span><div class="pro-val gold">${bestDow.dow} · ${ef(bestDow.avg)}/día</div></div>`:""}
     ${worstDow&&worstDow.dow!==bestDow.dow?`<div class="pro-row"><span>Peor día</span><div class="pro-val">${worstDow.dow} · ${ef(worstDow.avg)}/día</div></div>`:""}
     <div class="pro-row"><span>Mañanas vs Tardes</span><div class="pro-val">${ef(mornRev)} / ${ef(aftRev)}</div></div>
@@ -1733,7 +1749,7 @@ function saveNcGoal(){cData().ncGoal=parseInt(document.getElementById("nc-goal-i
 
 function repMonthRange(){
   const now=new Date();
-  if((window._repMonth||"prev")==="prev"){const p=new Date(now.getFullYear(),now.getMonth()-1,1);return{from:p.toISOString().split("T")[0].slice(0,8)+"01",to:new Date(now.getFullYear(),now.getMonth(),0).toISOString().split("T")[0],label:monthName(p.getMonth())+" "+p.getFullYear()};}
+  if((window._repMonth||"prev")==="prev"){const p=new Date(now.getFullYear(),now.getMonth()-1,1);return{from:localISO(p),to:localISO(new Date(now.getFullYear(),now.getMonth(),0)),label:monthName(p.getMonth())+" "+p.getFullYear()};}
   return{from:getMonthStart(),to:today(),label:monthName(now.getMonth())+" "+now.getFullYear()};
 }
 function copyReport(text){navigator.clipboard.writeText(text).then(()=>alert("✅ Informe copiado — pégalo en tu Proyecto de Claude")).catch(()=>{const ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);});}
@@ -1783,8 +1799,8 @@ function exportFinReport(){
   const billed=days.reduce((s,d)=>s+d.massages.reduce((x,m)=>x+m.price,0),0);
   // mes previo al informado
   const pf=new Date(from+"T12:00:00");pf.setMonth(pf.getMonth()-1);
-  const pFrom=pf.toISOString().split("T")[0].slice(0,8)+"01";
-  const pTo=new Date(pf.getFullYear(),pf.getMonth()+1,0).toISOString().split("T")[0];
+  const pFrom=localISO(new Date(pf.getFullYear(),pf.getMonth(),1));
+  const pTo=localISO(new Date(pf.getFullYear(),pf.getMonth()+1,0));
   const prev=cDays().filter(d=>d.date>=pFrom&&d.date<=pTo).reduce((s,d)=>s+d.dayTotal,0);
   const paysM=cPayments().filter(p=>p.date>=from&&p.date<=to).reduce((s,p)=>s+p.amount,0);
   const totalEarned=cDays().reduce((s,d)=>s+d.dayTotal,0),totalPaid=cPayments().reduce((s,p)=>s+p.amount,0);
