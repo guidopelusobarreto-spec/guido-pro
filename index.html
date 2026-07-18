@@ -1624,12 +1624,12 @@ function renderCerebro(){
   const sMass=sDays.flatMap(d=>d.massages.map(m=>({...m,date:d.date})));
 
   // ── AGENTE CLIENTES ──
-  const ncAll=allMass.filter(m=>m.nc===true);
-  const newToday=ncAll.filter(m=>m.date===td).length;
-  const newWeek=ncAll.filter(m=>m.date>=ws).length;
-  const newMonth=ncAll.filter(m=>m.date>=ms).length;
-  const trackedNC=allMass.filter(m=>m.nc!==null&&m.nc!==undefined).length;
-  const pctNew=trackedNC>0?(ncAll.length/trackedNC*100):0;
+  const ncS=sMass.filter(m=>m.nc===true);
+  const newToday=ncS.filter(m=>m.date===td).length;
+  const newWeek=ncS.filter(m=>m.date>=ws).length;
+  const newPeriod=ncS.length;
+  const trackedNC=sMass.filter(m=>m.nc!==null&&m.nc!==undefined).length;
+  const pctNew=trackedNC>0?(ncS.length/trackedNC*100):0;
 
   // ── AGENTE VENTAS ──
   const byType={};
@@ -1662,7 +1662,7 @@ function renderCerebro(){
   const SRC_LABELS={google:"Google/Maps",recepcion:"Recepción",recomendado:"Recomendado",redes:"Redes",otro:"Otro"};
   const srcCounts={};sMass.filter(m=>m.nc===true).forEach(m=>{const k=m.src||"sin marcar";srcCounts[k]=(srcCounts[k]||0)+1;});
   // Retención: nuevos con nombre que volvieron después
-  const namedNew={};allMass.forEach(m=>{if(m.nc===true&&m.cn)namedNew[m.cn.toLowerCase()]=namedNew[m.cn.toLowerCase()]||m.date;});
+  const namedNew={};sMass.forEach(m=>{if(m.nc===true&&m.cn)namedNew[m.cn.toLowerCase()]=namedNew[m.cn.toLowerCase()]||m.date;});
   let returned=0;const newNames=Object.keys(namedNew);
   newNames.forEach(n=>{if(allMass.some(m=>m.cn&&m.cn.toLowerCase()===n&&m.date>namedNew[n]))returned++;});
   const retPct=newNames.length>0?returned/newNames.length*100:null;
@@ -1699,23 +1699,23 @@ function renderCerebro(){
       <button class="period-btn ${per==="prev"?"active":""}" onclick="window._cerPeriod='prev';renderCerebro()">Mes anterior</button>
       <button class="period-btn ${per==="all"?"active":""}" onclick="window._cerPeriod='all';renderCerebro()">Histórico</button>
     </div>
-    ${sDays.length===0?`<div style="font-size:12px;color:#bf8a2a">⚠️ Sin registros en ${scopeLabel}.</div>`:`<div style="font-size:11px;color:var(--dim)">Agentes de Ventas, Tiempo y Orígenes analizando: <b style="color:var(--gold)">${scopeLabel}</b> (${sDays.length} días)</div>`}
+    ${sDays.length===0?`<div style="font-size:12px;color:#bf8a2a">⚠️ Sin registros en ${scopeLabel}.</div>`:`<div style="font-size:11px;color:var(--dim)">Los 4 agentes analizando: <b style="color:var(--gold)">${scopeLabel}</b> (${sDays.length} días)</div>`}
   </div>
-  <div class="card"><div class="card-title">👥 Agente Clientes</div>
+  <div class="card"><div class="card-title">👥 Agente Clientes · ${scopeLabel}</div>
     <div class="stat-grid">
-      <div class="stat-box"><div class="stat-val green">${newToday}</div><div class="stat-lbl">Nuevos hoy</div></div>
-      <div class="stat-box"><div class="stat-val green">${newWeek}</div><div class="stat-lbl">Nuevos semana</div></div>
-      <div class="stat-box"><div class="stat-val green">${newMonth}</div><div class="stat-lbl">Nuevos mes</div></div>
+      <div class="stat-box"><div class="stat-val green">${per==="mes"?newToday:"—"}</div><div class="stat-lbl">Nuevos hoy</div></div>
+      <div class="stat-box"><div class="stat-val green">${per==="mes"?newWeek:"—"}</div><div class="stat-lbl">Nuevos semana</div></div>
+      <div class="stat-box"><div class="stat-val green">${newPeriod}</div><div class="stat-lbl">Nuevos ${per==="prev"?"mes ant.":per==="all"?"total":"mes"}</div></div>
       <div class="stat-box"><div class="stat-val">${trackedNC>0?pctNew.toFixed(0)+"%":"—"}</div><div class="stat-lbl">% nuevos</div></div>
     </div>
-    <div style="margin-top:4px">
+    ${per==="mes"?`<div style="margin-top:4px">
       <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:3px"><span>🎯 Meta semanal de captación</span><span>${ncGoal>0?newWeek+" / "+ncGoal+" nuevos":"sin meta"}</span></div>
       ${ncGoal>0?`<div class="goal-bar-wrap"><div class="goal-bar" style="width:${Math.min(100,newWeek/ncGoal*100)}%;background:linear-gradient(90deg,#2a8f5a,#4abf7a)"></div></div>`:""}
       <div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px">
         <div style="flex:1"><label class="lbl">Clientes nuevos por semana</label><input type="number" id="nc-goal-input" value="${ncGoal||""}" placeholder="Ej: 5" min="0"></div>
         <button onclick="saveNcGoal()" style="background:linear-gradient(135deg,#4abf7a,#2a8f5a);border:none;border-radius:9px;color:#0d0d0d;padding:10px 13px;font-size:13px;font-weight:700;cursor:pointer;font-family:Georgia,serif;flex-shrink:0">Guardar</button>
       </div>
-    </div>
+    </div>`:""}
     ${Object.keys(srcCounts).length?`<div style="margin-top:10px"><div class="pro-sub" style="text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">📣 Origen de los nuevos</div>${Object.entries(srcCounts).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="pro-row"><span>${SRC_LABELS[k]||k}</span><div class="pro-val">${v}</div></div>`).join("")}</div>`:""}
     ${retPct!==null?`<div class="pro-row"><span>🔁 Retención de nuevos (con nombre)</span><div class="pro-val ${retPct>=40?"gold":""}">${returned} de ${newNames.length} (${retPct.toFixed(0)}%)</div></div>`:""}
   </div>
