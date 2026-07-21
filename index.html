@@ -827,14 +827,13 @@ function removeIns(i){
   renderInstances();updatePreview();autoExit(false);
 }
 
-// Avisos por CUARTOS usando las reglas reales de Fossify: máx 3
-// recordatorios por evento, todos "antes del inicio" (los posteriores al
-// inicio se ignoran, y los tipos de evento ocultos NO suenan — por eso
-// los avisos deben quedar VISIBLES). Truco: UN solo mini-evento anclado
-// en el punto ¾ lleva 3 recordatorios antes-de-inicio que suenan en ¼,
-// ½ y ¾. El "fin" lo da el bloque de descanso/limpieza siguiente (con
-// recordatorio "al inicio") en el día completo; en masajes individuales
-// (individual=true) se añade un mini-evento de fin con quedan-10 + fin.
+// Avisos por CUARTOS como TAREAS de Fossify (VTODO en el .ics): las
+// tareas admiten hasta 3 recordatorios a hora exacta del día y no ocupan
+// bloque en la línea de tiempo como los eventos. Anclaje en el punto ¾
+// con recordatorios antes-de-inicio que suenan en ¼, ½ y ¾ (misma
+// matemática validada). El "fin" lo da el bloque de descanso/limpieza
+// siguiente en el día completo; en individuales (individual=true) se
+// añade una tarea de fin con quedan-10 + fin.
 function buildEventBlock(ins,ds,individual){
   const c=currentCenter(),m=c.massages.find(x=>x.id===ins.mid);
   const durMin=parseInt(m.duration)||60;
@@ -850,11 +849,11 @@ function buildEventBlock(ins,ds,individual){
   const descLine="DESCRIPTION:"+esc(descParts.join("\\n"))+"\r\n";
   const locLine="LOCATION:"+esc(c.name+" · "+c.location)+"\r\n";
   const alarm=(trig,desc)=>"BEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:"+desc+"\r\nTRIGGER"+trig+"\r\nEND:VALARM\r\n";
-  // Mini-evento de 1 min con hasta 3 recordatorios antes-de-inicio.
-  const mini=(min,txt,offsets)=>{
-    const t0=new Date(start.getTime()+min*60000),t1=new Date(start.getTime()+(min+1)*60000);
+  // Tarea (VTODO) con hasta 3 recordatorios antes-de-inicio.
+  const task=(min,txt,offsets)=>{
+    const t0=new Date(start.getTime()+min*60000);
     let a="";for(const [off,lab] of offsets)a+=alarm(":-PT"+off+"M",lab);
-    return "BEGIN:VEVENT\r\nUID:gp-chk-"+Date.now()+"-"+min+"-"+Math.random().toString(36).slice(2,8)+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(t0)+"\r\nDTEND:"+f(t1)+"\r\nSUMMARY:"+txt+"\r\nCOLOR:gray\r\nTRANSP:TRANSPARENT\r\n"+a+"END:VEVENT\r\n";
+    return "BEGIN:VTODO\r\nUID:gp-task-"+Date.now()+"-"+min+"-"+Math.random().toString(36).slice(2,8)+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(t0)+"\r\nSUMMARY:"+txt+"\r\nSTATUS:NEEDS-ACTION\r\n"+a+"END:VTODO\r\n";
   };
   // Cuartos redondeados y sin duplicados (Set "seen").
   const seen=new Set([0,durMin]);
@@ -866,16 +865,16 @@ function buildEventBlock(ins,ds,individual){
   let chk="";
   if(qmins.length){
     const anchor=qmins[qmins.length-1]; // el ¾ (o el mayor disponible)
-    chk+=mini(anchor,"◔◑◕ Cuartos ("+qmins.join("·")+" de "+durMin+" min)",
+    chk+=task(anchor,"◔◑◕ Cuartos ("+qmins.join("·")+" de "+durMin+" min)",
       qmins.map(q=>[anchor-q,"cuarto en el minuto "+q]));
   }
   if(individual){
-    // Sin bloques auxiliares: mini-evento de fin con quedan-10 (si no
-    // colisiona con un cuarto ya emitido) + fin, en un solo evento.
+    // Sin bloques auxiliares: tarea de fin con quedan-10 (si no colisiona
+    // con un cuarto ya emitido) + fin.
     const fal=[];
     if(durMin>10 && !seen.has(durMin-10)){seen.add(durMin-10);fal.push([10,"⏳ Quedan 10 minutos"]);}
     fal.push([0,"✅ Fin del masaje"]);
-    chk+=mini(durMin,"✅ Fin del masaje",fal);
+    chk+=task(durMin,"✅ Fin del masaje",fal);
   }
   // Evento principal: solo alarmas ANTES/AL inicio (las que Fossify respeta).
   const ev="BEGIN:VEVENT\r\nUID:gp-"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(start)+"\r\nDTEND:"+f(end)+"\r\nSUMMARY:"+title+"\r\n"+descLine+locLine
