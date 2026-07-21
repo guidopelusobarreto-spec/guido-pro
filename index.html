@@ -926,12 +926,11 @@ function scheduleMassage(i){
   const ds=document.getElementById("f-date").value;
   if(!ds){alert("Selecciona primero la fecha del día.");return;}
   if(!ins.t){alert("Pon la hora de inicio de este masaje.");return;}
+  // UN solo archivo: los avisos llevan CATEGORIES:Avisos y Fossify los
+  // asigna automáticamente a ese tipo de evento al importar (los demás
+  // toman el tipo elegido en el diálogo de importación).
   const b=buildEventBlock(ins,ds,true);
-  const suf=ds+"_"+ins.t.replace(":","");
-  downloadICS(b.ev,"masaje_"+suf+".ics");
-  // Segundo archivo con retraso para no chocar con la primera descarga
-  // (Chrome pedirá una vez "permitir varias descargas" — aceptar).
-  setTimeout(()=>downloadICS(b.chk,"avisos_"+suf+".ics"),700);
+  downloadICS(b.ev+b.chk,"masaje_"+ds+"_"+ins.t.replace(":","")+".ics");
 }
 function buildAuxBlock(ds,startMin,endMin,title,alarmTxt){
   const [y,mo,d]=ds.split("-");
@@ -958,8 +957,9 @@ function scheduleAll(){
   // Limpieza y cierre 20 min tras el último masaje
   const lastEnd=Math.max(...withTime.map(x=>t2min(x.t)+insDur(x)));
   body+=buildAuxBlock(ds,lastEnd,lastEnd+20,"🧹 Limpieza y cierre (20 min)","⏰ Limpieza y cierre en 10 minutos");
-  downloadICS(body,"masajes_"+ds+".ics");
-  setTimeout(()=>downloadICS(avisos,"avisos_"+ds+".ics"),700);
+  // UN solo archivo: los avisos (CATEGORIES:Avisos) van al final y Fossify
+  // los asigna a su tipo automáticamente al importar.
+  downloadICS(body+avisos,"masajes_"+ds+".ics");
   if(withTime.length<instances.length)alert("⚠️ "+(instances.length-withTime.length)+" masaje(s) sin hora quedaron fuera del archivo.");
 }
 
