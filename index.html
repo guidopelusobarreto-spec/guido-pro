@@ -827,9 +827,12 @@ function removeIns(i){
   renderInstances();updatePreview();autoExit(false);
 }
 
-// Genera eventos .ics con alarmas por CUARTOS adaptadas a la duración
-// (Fossify u otro calendario los importa). withFinal10=true añade además
-// "⏳ Quedan 10 minutos" (solo masajes individuales, sin bloques auxiliares).
+// Genera eventos .ics con avisos por CUARTOS adaptados a la duración.
+// IMPORTANTE: Fossify/Google Calendar ignoran alarmas VALARM con trigger
+// positivo (después del inicio), así que los avisos de dentro del masaje
+// (cuartos, quedan-10, fin) se emiten como mini-eventos transparentes de
+// 1 min con alarma "0 min antes" — eso sí suena en cualquier calendario.
+// withFinal10=true añade "⏳ Quedan 10 minutos" (solo masajes individuales).
 function buildEventBlock(ins,ds,withFinal10){
   const c=currentCenter(),m=c.massages.find(x=>x.id===ins.mid);
   const durMin=parseInt(m.duration)||60;
@@ -845,36 +848,51 @@ function buildEventBlock(ins,ds,withFinal10){
   const descLine="DESCRIPTION:"+esc(descParts.join("\\n"))+"\r\n";
   const locLine="LOCATION:"+esc(c.name+" · "+c.location)+"\r\n";
   const alarm=(trig,desc)=>"BEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:"+desc+"\r\nTRIGGER"+trig+"\r\nEND:VALARM\r\n";
-  // Alarmas por cuartos (25/50/75%), robustas para cualquier duración:
-  // el Set "seen" evita duplicados si dos cuartos redondean al mismo minuto.
+  // Mini-evento "checkpoint": 1 min, transparente, con alarma al empezar.
+  const chk=(min,txt)=>{
+    const t0=new Date(start.getTime()+min*60000),t1=new Date(start.getTime()+(min+1)*60000);
+    return "BEGIN:VEVENT\r\nUID:gp-chk-"+Date.now()+"-"+min+"-"+Math.random().toString(36).slice(2,8)+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(t0)+"\r\nDTEND:"+f(t1)+"\r\nSUMMARY:"+txt+"\r\nCOLOR:gray\r\nTRANSP:TRANSPARENT\r\n"+alarm(":-PT0M",txt)+"END:VEVENT\r\n";
+  };
+  // Cuartos (25/50/75%), robustos para cualquier duración: el Set "seen"
+  // evita duplicados si dos cuartos redondean al mismo minuto.
   const qs=[[0.25,"◔ ¼ del masaje"],[0.5,"◑ ½ del masaje"],[0.75,"◕ ¾ — recta final"]];
   const seen=new Set([0,durMin]);
-  let quarterAlarms="";
-  for(const [f,label] of qs){
-    const t=Math.round(durMin*f);
+  let checkpoints="";
+  for(const [fr,label] of qs){
+    const t=Math.round(durMin*fr);
     if(t>0 && t<durMin && !seen.has(t)){
       seen.add(t);
-      quarterAlarms+=alarm(":PT"+t+"M",label+" ("+t+" de "+durMin+" min)");
+      checkpoints+=chk(t,label+" ("+t+" de "+durMin+" min)");
     }
   }
   // "Quedan 10 minutos": solo como respaldo en masajes individuales
   // (en "Todos al calendario" ese aviso ya lo dan los bloques de
   // descanso/limpieza) y solo si no colisiona con un cuarto ya emitido.
-  let final10="";
   if(withFinal10 && durMin>10 && !seen.has(durMin-10)){
     seen.add(durMin-10);
-    final10=alarm(":PT"+(durMin-10)+"M","⏳ Quedan 10 minutos");
+    checkpoints+=chk(durMin-10,"⏳ Quedan 10 minutos");
   }
+  checkpoints+=chk(durMin,"✅ Fin del masaje");
+  // Evento principal: solo alarmas ANTES/AL inicio (soportadas por todos).
   return "BEGIN:VEVENT\r\nUID:gp-"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(start)+"\r\nDTEND:"+f(end)+"\r\nSUMMARY:"+title+"\r\n"+descLine+locLine
     +alarm(":-PT10M","⏰ Masaje en 10 minutos")
     +alarm(":PT0M","▶️ Comienza el masaje")
-    +quarterAlarms
-    +final10
-    +alarm(":PT"+durMin+"M","✅ Fin del masaje")
-    +"END:VEVENT\r\n";
+    +"END:VEVENT\r\n"
+    +checkpoints;
 }
-function downloadICS(body,name){
+// Compartir el .ics por la hoja de Android (abre directo en el calendario);
+// si el navegador no soporta compartir archivos, descarga clásica.
+async function downloadICS(body,name){
   const ics="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//GuidoPRO//ES\r\n"+body+"END:VCALENDAR\r\n";
+  try{
+    const file=new File([ics],name,{type:"text/calendar"});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:name});
+      return;
+    }
+  }catch(e){
+    if(e && e.name==="AbortError")return; // usuario cerró la hoja de compartir
+  }
   const blob=new Blob([ics],{type:"text/calendar"});
   const url=URL.createObjectURL(blob);
   const a=document.createElement("a");a.href=url;a.download=name;a.click();
