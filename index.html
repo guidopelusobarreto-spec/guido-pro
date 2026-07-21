@@ -828,11 +828,14 @@ function removeIns(i){
 }
 
 // Genera eventos .ics con avisos por CUARTOS adaptados a la duración.
-// IMPORTANTE: Fossify/Google Calendar ignoran alarmas VALARM con trigger
-// positivo (después del inicio), así que los avisos de dentro del masaje
-// (cuartos, quedan-10, fin) se emiten como mini-eventos transparentes de
-// 1 min con alarma "0 min antes" — eso sí suena en cualquier calendario.
-// withFinal10=true añade "⏳ Quedan 10 minutos" (solo masajes individuales).
+// Fossify ignora alarmas VALARM posteriores al inicio y limita a 3
+// recordatorios por evento, así que los avisos internos (cuartos,
+// quedan-10, fin) son mini-eventos de 1 min con alarma "0 min antes".
+// Devuelve {ev, chk} POR SEPARADO: los checkpoints van a un .ics propio
+// ("avisos_...") que se importa en Fossify con el tipo de evento "Avisos";
+// al desmarcar "Avisos" en el filtro inferior de Fossify quedan ocultos
+// del calendario PERO sus recordatorios siguen sonando (el filtro es solo
+// visual). withFinal10=true añade "⏳ Quedan 10 minutos" (individuales).
 function buildEventBlock(ins,ds,withFinal10){
   const c=currentCenter(),m=c.massages.find(x=>x.id===ins.mid);
   const durMin=parseInt(m.duration)||60;
@@ -848,15 +851,17 @@ function buildEventBlock(ins,ds,withFinal10){
   const descLine="DESCRIPTION:"+esc(descParts.join("\\n"))+"\r\n";
   const locLine="LOCATION:"+esc(c.name+" · "+c.location)+"\r\n";
   const alarm=(trig,desc)=>"BEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:"+desc+"\r\nTRIGGER"+trig+"\r\nEND:VALARM\r\n";
-  // Mini-evento "checkpoint": 1 min, transparente, con alarma al empezar.
+  // Mini-evento "checkpoint": 1 min, con alarma al empezar y categoría
+  // "Avisos" (por si Fossify la mapea automáticamente al importar).
   const chk=(min,txt)=>{
     const t0=new Date(start.getTime()+min*60000),t1=new Date(start.getTime()+(min+1)*60000);
-    return "BEGIN:VEVENT\r\nUID:gp-chk-"+Date.now()+"-"+min+"-"+Math.random().toString(36).slice(2,8)+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(t0)+"\r\nDTEND:"+f(t1)+"\r\nSUMMARY:"+txt+"\r\nCOLOR:gray\r\nTRANSP:TRANSPARENT\r\n"+alarm(":-PT0M",txt)+"END:VEVENT\r\n";
+    return "BEGIN:VEVENT\r\nUID:gp-chk-"+Date.now()+"-"+min+"-"+Math.random().toString(36).slice(2,8)+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(t0)+"\r\nDTEND:"+f(t1)+"\r\nSUMMARY:"+txt+"\r\nCATEGORIES:Avisos\r\nCOLOR:gray\r\nTRANSP:TRANSPARENT\r\n"+alarm(":-PT0M",txt)+"END:VEVENT\r\n";
   };
   // Cuartos (25/50/75%), robustos para cualquier duración: el Set "seen"
   // evita duplicados si dos cuartos redondean al mismo minuto.
   const qs=[[0.25,"◔ ¼ del masaje"],[0.5,"◑ ½ del masaje"],[0.75,"◕ ¾ — recta final"]];
   const seen=new Set([0,durMin]);
+  const short=(m.nameBG||m.name).split(" ").slice(0,2).join(" ");
   let checkpoints="";
   for(const [fr,label] of qs){
     const t=Math.round(durMin*fr);
@@ -872,13 +877,13 @@ function buildEventBlock(ins,ds,withFinal10){
     seen.add(durMin-10);
     checkpoints+=chk(durMin-10,"⏳ Quedan 10 minutos");
   }
-  checkpoints+=chk(durMin,"✅ Fin del masaje");
-  // Evento principal: solo alarmas ANTES/AL inicio (soportadas por todos).
-  return "BEGIN:VEVENT\r\nUID:gp-"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(start)+"\r\nDTEND:"+f(end)+"\r\nSUMMARY:"+title+"\r\n"+descLine+locLine
+  checkpoints+=chk(durMin,"✅ Fin — "+short);
+  // Evento principal: solo alarmas ANTES/AL inicio (las que Fossify respeta).
+  const ev="BEGIN:VEVENT\r\nUID:gp-"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(start)+"\r\nDTEND:"+f(end)+"\r\nSUMMARY:"+title+"\r\n"+descLine+locLine
     +alarm(":-PT10M","⏰ Masaje en 10 minutos")
     +alarm(":PT0M","▶️ Comienza el masaje")
-    +"END:VEVENT\r\n"
-    +checkpoints;
+    +"END:VEVENT\r\n";
+  return {ev:ev,chk:checkpoints};
 }
 // Entrega del .ics: Chrome en Android NO permite compartir archivos .ics
 // por la hoja de Android (lista blanca de tipos: imágenes, pdf, txt...),
@@ -921,7 +926,12 @@ function scheduleMassage(i){
   const ds=document.getElementById("f-date").value;
   if(!ds){alert("Selecciona primero la fecha del día.");return;}
   if(!ins.t){alert("Pon la hora de inicio de este masaje.");return;}
-  downloadICS(buildEventBlock(ins,ds,true),"masaje_"+ds+"_"+ins.t.replace(":","")+".ics");
+  const b=buildEventBlock(ins,ds,true);
+  const suf=ds+"_"+ins.t.replace(":","");
+  downloadICS(b.ev,"masaje_"+suf+".ics");
+  // Segundo archivo con retraso para no chocar con la primera descarga
+  // (Chrome pedirá una vez "permitir varias descargas" — aceptar).
+  setTimeout(()=>downloadICS(b.chk,"avisos_"+suf+".ics"),700);
 }
 function buildAuxBlock(ds,startMin,endMin,title,alarmTxt){
   const [y,mo,d]=ds.split("-");
@@ -934,7 +944,8 @@ function scheduleAll(){
   if(!ds){alert("Selecciona primero la fecha del día.");return;}
   const withTime=instances.filter(x=>x.t).sort((a,b)=>t2min(a.t)-t2min(b.t));
   if(withTime.length===0){alert("Pon la hora de inicio de al menos un masaje.");return;}
-  let body=withTime.map(ins=>buildEventBlock(ins,ds,false)).join("");
+  let body="",avisos="";
+  for(const ins of withTime){const b=buildEventBlock(ins,ds,false);body+=b.ev;avisos+=b.chk;}
   // Preparación 15 min antes del primer masaje
   const firstStart=t2min(withTime[0].t);
   body+=buildAuxBlock(ds,firstStart-15,firstStart,"🧴 Preparación (15 min)","⏰ Preparación en 10 minutos");
@@ -948,6 +959,7 @@ function scheduleAll(){
   const lastEnd=Math.max(...withTime.map(x=>t2min(x.t)+insDur(x)));
   body+=buildAuxBlock(ds,lastEnd,lastEnd+20,"🧹 Limpieza y cierre (20 min)","⏰ Limpieza y cierre en 10 minutos");
   downloadICS(body,"masajes_"+ds+".ics");
+  setTimeout(()=>downloadICS(avisos,"avisos_"+ds+".ics"),700);
   if(withTime.length<instances.length)alert("⚠️ "+(instances.length-withTime.length)+" masaje(s) sin hora quedaron fuera del archivo.");
 }
 
