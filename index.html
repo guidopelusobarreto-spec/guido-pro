@@ -592,7 +592,7 @@ const ICONS={good:"✅",warn:"⚠️",dead:"🔴",info:"💡"};
 const PAGE_NAMES=["Dashboard","Añadir día","Historial","Calendario","Análisis PRO","Simulador","Pagos","Exportar","Mi Valor Profesional","Configuración","Comparar Centros","Cerebro PRO"];
 const DEFAULT_CFG={lockMinutes:10,fatigueHours:45};
 // Versión visible de la app — mantener sincronizada con CACHE_NAME de sw.js
-const APP_VERSION="v35";
+const APP_VERSION="v38";
 document.addEventListener("DOMContentLoaded",()=>{const v=document.getElementById("gp-version");if(v)v.textContent="Guido PRO · "+APP_VERSION;});
 
 let allData={};  // { hotel5: {days,payments,goal,cfg}, aleksa: {...}, sanatorium: {...} }
@@ -853,18 +853,22 @@ function buildEventBlock(ins,ds,individual){
   descParts.push(m.name+" — "+m.price+" €");
   const descLine="DESCRIPTION:"+esc(descParts.join("\\n"))+"\r\n";
   const locLine="LOCATION:"+esc(c.name+" · "+c.location)+"\r\n";
-  const alarm=(trig,desc)=>"BEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:"+desc+"\r\nTRIGGER"+trig+"\r\nEND:VALARM\r\n";
+  const alarm=(trig,desc)=>"BEGIN:VALARM\r\nDESCRIPTION:"+desc+"\r\nACTION:DISPLAY\r\nTRIGGER"+trig+"\r\nEND:VALARM\r\n";
+  const hexUID=()=>{let h="";for(let i=0;i<32;i++)h+="0123456789abcdef"[Math.floor(Math.random()*16)];return h+Date.now();};
   // Minuto del día en que empieza el masaje y formateador HH:MM
   const S=(+hh)*60+(+mm);
   const hm=min=>String(Math.floor(min/60)).padStart(2,"0")+":"+String(min%60).padStart(2,"0");
-  // Tarea de TODO EL DÍA con recordatorios a minutos absolutos del día
-  // (trigger positivo desde medianoche). Se descartan por seguridad los
-  // que caigan fuera del día (≥ 24 h).
+  // Tarea de TODO EL DÍA con recordatorios a hora absoluta del día.
+  // Trigger en formato horas+minutos desde medianoche (PT14H18M = 14:18),
+  // no en minutos totales, para que Fossify lo interprete correctamente.
   const dayTask=(txt,absMins)=>{
     let a="";
-    for(const [abs,lab] of absMins)if(abs>=0&&abs<1440)a+=alarm(":PT"+abs+"M",lab);
+    for(const [abs,lab] of absMins)if(abs>=0&&abs<1440){
+      const H=Math.floor(abs/60),M=abs%60;
+      a+=alarm(":P0DT"+H+"H"+M+"M0S",lab);
+    }
     if(!a)return "";
-    return "BEGIN:VTODO\r\nUID:gp-task-"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART;VALUE=DATE:"+y+mo+d+"\r\nSUMMARY:"+txt+"\r\nSTATUS:NEEDS-ACTION\r\n"+a+"END:VTODO\r\n";
+    const now=f(new Date())+"Z";return "BEGIN:VTODO\r\nSUMMARY:"+txt+"\r\nUID:"+hexUID()+"\r\nX-FOSSIFY-CATEGORY-COLOR:-24081\r\nCATEGORIES:AVISOS\r\nLAST-MODIFIED:"+now+"\r\nDTSTART;VALUE=DATE:"+y+mo+d+"\r\nDTSTAMP:"+now+"\r\n"+a+"END:VTODO\r\n";
   };
   // Cuartos redondeados y sin duplicados (Set "seen").
   const seen=new Set([0,durMin]);
@@ -889,8 +893,8 @@ function buildEventBlock(ins,ds,individual){
   }
   // Evento principal: solo alarmas ANTES/AL inicio (las que Fossify respeta).
   const ev="BEGIN:VEVENT\r\nUID:gp-"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(start)+"\r\nDTEND:"+f(end)+"\r\nSUMMARY:"+title+"\r\n"+descLine+locLine
-    +alarm(":-PT10M","⏰ Masaje en 10 minutos")
-    +alarm(":PT0M","▶️ Comienza el masaje")
+    +alarm(":-P0DT0H10M0S","⏰ Masaje en 10 minutos")
+    +alarm(":-P0DT0H0M0S","▶️ Comienza el masaje")
     +"END:VEVENT\r\n";
   return {ev:ev,chk:chk};
 }
@@ -944,10 +948,10 @@ function scheduleMassage(i){
 function buildAuxBlock(ds,startMin,endMin,title,alarmTxt,alarm0Txt){
   const [y,mo,d]=ds.split("-");
   const mk=x=>{const dt=new Date(+y,mo-1,+d,Math.floor(x/60),x%60);return dt.getFullYear()+String(dt.getMonth()+1).padStart(2,"0")+String(dt.getDate()).padStart(2,"0")+"T"+String(dt.getHours()).padStart(2,"0")+String(dt.getMinutes()).padStart(2,"0")+"00";};
-  let al=alarmTxt?"BEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:"+alarmTxt+"\r\nTRIGGER:-PT10M\r\nEND:VALARM\r\n":"";
+  let al=alarmTxt?"BEGIN:VALARM\r\nDESCRIPTION:"+alarmTxt+"\r\nACTION:DISPLAY\r\nTRIGGER:-P0DT0H10M0S\r\nEND:VALARM\r\n":"";
   // Recordatorio "al inicio" del bloque = suena justo al FIN del masaje
   // anterior (los bloques empiezan cuando termina el masaje).
-  if(alarm0Txt)al+="BEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:"+alarm0Txt+"\r\nTRIGGER:-PT0M\r\nEND:VALARM\r\n";
+  if(alarm0Txt)al+="BEGIN:VALARM\r\nDESCRIPTION:"+alarm0Txt+"\r\nACTION:DISPLAY\r\nTRIGGER:-P0DT0H0M0S\r\nEND:VALARM\r\n";
   return "BEGIN:VEVENT\r\nUID:gp-aux-"+Date.now()+"-"+startMin+"@guidopro\r\nDTSTAMP:"+mk(startMin)+"\r\nDTSTART:"+mk(startMin)+"\r\nDTEND:"+mk(endMin)+"\r\nSUMMARY:"+title+"\r\nCOLOR:gray\r\nTRANSP:TRANSPARENT\r\n"+al+"END:VEVENT\r\n";
 }
 function scheduleAll(){
@@ -2002,7 +2006,7 @@ function prefillDate(date){document.getElementById("f-date").value=date;onDateCh
 window.addEventListener("beforeinstallprompt",ev=>{ev.preventDefault();deferredPrompt=ev;document.getElementById("install-banner").classList.add("show");});
 function installApp(){if(!deferredPrompt)return;deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null;document.getElementById("install-banner").classList.remove("show");});}
 window.addEventListener("appinstalled",()=>document.getElementById("install-banner").classList.remove("show"));
-if("serviceWorker"in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{});}
+if("serviceWorker"in navigator){navigator.serviceWorker.register('/sw.js').then(reg=>{reg.update().catch(()=>{});}).catch(()=>{});}
 const mf={name:"Guido PRO",short_name:"Guido PRO",start_url:".",display:"standalone",background_color:"#0d0d0d",theme_color:"#0d0d0d",icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230d0d0d'/><text y='72' x='50' font-size='60' text-anchor='middle' fill='%23c9a84c'>✦</text></svg>",sizes:"192x192",type:"image/svg+xml"}]};
 const mb=new Blob([JSON.stringify(mf)],{type:"application/json"});const ml=document.createElement("link");ml.rel="manifest";ml.href=URL.createObjectURL(mb);document.head.appendChild(ml);
 
