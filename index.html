@@ -880,8 +880,21 @@ function buildEventBlock(ins,ds,withFinal10){
     +"END:VEVENT\r\n"
     +checkpoints;
 }
-// Compartir el .ics por la hoja de Android (abre directo en el calendario);
-// si el navegador no soporta compartir archivos, descarga clásica.
+// Entrega del .ics: Chrome en Android NO permite compartir archivos .ics
+// por la hoja de Android (lista blanca de tipos: imágenes, pdf, txt...),
+// así que normalmente cae a descarga. Se intenta compartir igualmente por
+// si el navegador lo permite (Samsung Internet u otros). En la descarga:
+// nombre único por exportación → Android muestra SIEMPRE la notificación
+// "Descarga completada" con el botón Abrir (con nombres repetidos la
+// colapsa y parece que "solo descarga").
+function gpToast(msg){
+  let t=document.getElementById("gp-toast");
+  if(!t){t=document.createElement("div");t.id="gp-toast";
+    t.style.cssText="position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#1a1400;color:var(--gold,#d4af37);border:1px solid #5a4a10;border-radius:10px;padding:10px 16px;font-size:14px;z-index:9999;max-width:90%;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.6)";
+    document.body.appendChild(t);}
+  t.textContent=msg;t.style.display="block";
+  clearTimeout(t._h);t._h=setTimeout(()=>{t.style.display="none";},6000);
+}
 async function downloadICS(body,name){
   const ics="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//GuidoPRO//ES\r\n"+body+"END:VCALENDAR\r\n";
   try{
@@ -893,10 +906,15 @@ async function downloadICS(body,name){
   }catch(e){
     if(e && e.name==="AbortError")return; // usuario cerró la hoja de compartir
   }
+  // Nombre único (hora actual) para forzar notificación nueva cada vez
+  const now=new Date();
+  const stamp=String(now.getHours()).padStart(2,"0")+String(now.getMinutes()).padStart(2,"0")+String(now.getSeconds()).padStart(2,"0");
+  const uname=name.replace(/\.ics$/,"")+"_"+stamp+".ics";
   const blob=new Blob([ics],{type:"text/calendar"});
   const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");a.href=url;a.download=name;a.click();
+  const a=document.createElement("a");a.href=url;a.download=uname;a.click();
   setTimeout(()=>URL.revokeObjectURL(url),3000);
+  gpToast("📥 "+uname+" descargado — abre la notificación de descarga y elige tu calendario");
 }
 function scheduleMassage(i){
   const ins=instances[i];if(!ins)return;
