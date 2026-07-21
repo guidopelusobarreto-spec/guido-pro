@@ -592,7 +592,7 @@ const ICONS={good:"✅",warn:"⚠️",dead:"🔴",info:"💡"};
 const PAGE_NAMES=["Dashboard","Añadir día","Historial","Calendario","Análisis PRO","Simulador","Pagos","Exportar","Mi Valor Profesional","Configuración","Comparar Centros","Cerebro PRO"];
 const DEFAULT_CFG={lockMinutes:10,fatigueHours:45};
 // Versión visible de la app — mantener sincronizada con CACHE_NAME de sw.js
-const APP_VERSION="v38";
+const APP_VERSION="v39";
 document.addEventListener("DOMContentLoaded",()=>{const v=document.getElementById("gp-version");if(v)v.textContent="Guido PRO · "+APP_VERSION;});
 
 let allData={};  // { hotel5: {days,payments,goal,cfg}, aleksa: {...}, sanatorium: {...} }
@@ -892,7 +892,7 @@ function buildEventBlock(ins,ds,individual){
     chk+=dayTask("✅ "+hm(S+durMin)+" — fin "+short+" ("+ins.t+")",fal);
   }
   // Evento principal: solo alarmas ANTES/AL inicio (las que Fossify respeta).
-  const ev="BEGIN:VEVENT\r\nUID:gp-"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(start)+"\r\nDTEND:"+f(end)+"\r\nSUMMARY:"+title+"\r\n"+descLine+locLine
+  const ev="BEGIN:VEVENT\r\nUID:gp-"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(start)+"\r\nDTEND:"+f(end)+"\r\nSUMMARY:"+title+"\r\nX-FOSSIFY-CATEGORY-COLOR:-8715009\r\nCATEGORIES:MASAJES\r\n"+descLine+locLine
     +alarm(":-P0DT0H10M0S","⏰ Masaje en 10 minutos")
     +alarm(":-P0DT0H0M0S","▶️ Comienza el masaje")
     +"END:VEVENT\r\n";
@@ -952,7 +952,7 @@ function buildAuxBlock(ds,startMin,endMin,title,alarmTxt,alarm0Txt){
   // Recordatorio "al inicio" del bloque = suena justo al FIN del masaje
   // anterior (los bloques empiezan cuando termina el masaje).
   if(alarm0Txt)al+="BEGIN:VALARM\r\nDESCRIPTION:"+alarm0Txt+"\r\nACTION:DISPLAY\r\nTRIGGER:-P0DT0H0M0S\r\nEND:VALARM\r\n";
-  return "BEGIN:VEVENT\r\nUID:gp-aux-"+Date.now()+"-"+startMin+"@guidopro\r\nDTSTAMP:"+mk(startMin)+"\r\nDTSTART:"+mk(startMin)+"\r\nDTEND:"+mk(endMin)+"\r\nSUMMARY:"+title+"\r\nCOLOR:gray\r\nTRANSP:TRANSPARENT\r\n"+al+"END:VEVENT\r\n";
+  return "BEGIN:VEVENT\r\nUID:gp-aux-"+Date.now()+"-"+startMin+"@guidopro\r\nDTSTAMP:"+mk(startMin)+"\r\nDTSTART:"+mk(startMin)+"\r\nDTEND:"+mk(endMin)+"\r\nSUMMARY:"+title+"\r\nX-FOSSIFY-CATEGORY-COLOR:-24081\r\nCATEGORIES:AVISOS\r\nCOLOR:gray\r\nTRANSP:TRANSPARENT\r\n"+al+"END:VEVENT\r\n";
 }
 function scheduleAll(){
   const ds=document.getElementById("f-date").value;
