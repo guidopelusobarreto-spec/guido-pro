@@ -555,15 +555,15 @@ const CENTERS = [
       {id:14, name:"Piernas Esculpidas + Brazos", nameBG:"Изваяни Крака + ръце",  duration:"60 min", durationBG:"60 мин", price:70,  desc:"Anticelulítico de piernas con tratamiento adicional de brazos."},
       {id:15, name:"Piernas Esculpidas + Abdomen + Brazos", nameBG:"Изваяни Крака + корем + ръце", duration:"70 min", durationBG:"70 мин", price:80, desc:"Anticelulítico completo — piernas, abdomen y brazos en una sola sesión."},
       {id:5,  name:"Renovación Profunda",         nameBG:"Дълбоко Обновяване",            duration:"90 min", durationBG:"90 мин", price:90,  desc:"Tejido profundo cuerpo completo — terapia integral para eliminar tensión crónica, bloqueos musculares y fatiga acumulada."},
-      {id:6,  name:"Ritual Mar Negro",            nameBG:"Ритуал Черно Море",             duration:"50 min", durationBG:"50 мин", price:65,  desc:"Terapia con aceite de luga del Mar Negro, cuerpo completo — ritual único con aceite mineralizado para relajación profunda, recuperación y nutrición de todo el cuerpo."},
+      {id:6,  name:"Ritual Mar Negro",            nameBG:"Ритуал „Черно Море“",       duration:"50 min", durationBG:"50 мин", price:65,  desc:"Terapia con aceite de luga del Mar Negro, cuerpo completo — ritual único con aceite mineralizado para relajación profunda, recuperación y nutrición de todo el cuerpo."},
       {id:7,  name:"Combinado Restaurador",       nameBG:"Комбиниращ Възстановяващ",      duration:"70 min", durationBG:"70 мин", price:85,  desc:"Tejido profundo + Miofascial cuerpo completo — creado para personas con tensión crónica, estrés y largas horas frente al ordenador."},
       {id:8,  name:"Detox y Ligereza",            nameBG:"Детокс и Лекота",               duration:"70 min", durationBG:"70 мин", price:80,  desc:"Drenaje linfático manual cuerpo completo — indicado para piernas pesadas, edemas y retención de líquidos. La sensación de ligereza aparece desde la primera sesión."},
       {id:9,  name:"Reinicio Total",              nameBG:"Пълен Рестарт",                 duration:"150 min",durationBG:"150 мин",price:150, desc:"Linfático + Tejido profundo + Miofascial — sesión completa que combina las tres técnicas. Detoxifica, elimina tensión y restaura el movimiento natural del cuerpo."},
       {id:10, name:"Mandíbula en Reposo",         nameBG:"Челюст в Покой",                duration:"45 min", durationBG:"45 мин", price:65,  desc:"Terapia para bruxismo — indicada para tensión en mandíbula, cefaleas y contractura de la musculatura facial."},
       {id:11, name:"Plantas sin Dolor",           nameBG:"Стъпала Без Болка",             duration:"40 min", durationBG:"40 мин", price:60,  desc:"Terapia para fascitis plantar — alivia el dolor al caminar y la tensión crónica en la planta del pie."},
-      {id:16, name:"SOS Espalda",                 nameBG:"СОС Гръб",                      duration:"20 min", durationBG:"20 мин", price:30,  desc:"Tejido profundo focal, SOLO 1 zona a elección (lumbar, entre escápulas o espalda alta) — rescate puntual donde más duele."},
+      {id:16, name:"SOS Espalda",                 nameBG:"SOS Гръб",                      duration:"20 min", durationBG:"20 мин", price:30,  desc:"Tejido profundo focal, SOLO 1 zona a elección (lumbar, entre escápulas o espalda alta) — rescate puntual donde más duele."},
       {id:17, name:"SOS Cuello y Hombros",        nameBG:"SOS Врат и Рамене",             duration:"25 min", durationBG:"25 мин", price:35,  desc:"Terapia focalizada en cuello, trapecios y hombros — donde el ordenador deja huella."},
-      {id:18, name:"Ritual Mar Negro Mini",       nameBG:"Ритуал Черно Море Мини",        duration:"30 min", durationBG:"30 мин", price:40,  desc:"Espalda, cuello y hombros con aceite de luga — la fuerza del ritual concentrada donde vive la tensión."},
+      {id:18, name:"Ritual Mar Negro Mini",       nameBG:"Ритуал „Черно Море“ Мини",        duration:"30 min", durationBG:"30 мин", price:40,  desc:"Espalda, cuello y hombros con aceite de luga — la fuerza del ritual concentrada donde vive la tensión."},
       {id:12, name:"La Gran Recuperación",        nameBG:"Голямото Възстановяване",       duration:"120 min",durationBG:"120 мин",price:110, desc:"Protocolo clínico para dolor crónico, cuerpo completo — terapia intensiva para estados dolorosos de larga evolución y tensión muscular acumulada durante meses."},
     ]
   }
@@ -827,8 +827,10 @@ function removeIns(i){
   renderInstances();updatePreview();autoExit(false);
 }
 
-// Genera eventos .ics con 4 alarmas (Fossify u otro calendario los importa)
-function buildEventBlock(ins,ds){
+// Genera eventos .ics con alarmas por CUARTOS adaptadas a la duración
+// (Fossify u otro calendario los importa). withFinal10=true añade además
+// "⏳ Quedan 10 minutos" (solo masajes individuales, sin bloques auxiliares).
+function buildEventBlock(ins,ds,withFinal10){
   const c=currentCenter(),m=c.massages.find(x=>x.id===ins.mid);
   const durMin=parseInt(m.duration)||60;
   const [y,mo,d]=ds.split("-"),[hh,mm]=ins.t.split(":");
@@ -843,10 +845,31 @@ function buildEventBlock(ins,ds){
   const descLine="DESCRIPTION:"+esc(descParts.join("\\n"))+"\r\n";
   const locLine="LOCATION:"+esc(c.name+" · "+c.location)+"\r\n";
   const alarm=(trig,desc)=>"BEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:"+desc+"\r\nTRIGGER"+trig+"\r\nEND:VALARM\r\n";
+  // Alarmas por cuartos (25/50/75%), robustas para cualquier duración:
+  // el Set "seen" evita duplicados si dos cuartos redondean al mismo minuto.
+  const qs=[[0.25,"◔ ¼ del masaje"],[0.5,"◑ ½ del masaje"],[0.75,"◕ ¾ — recta final"]];
+  const seen=new Set([0,durMin]);
+  let quarterAlarms="";
+  for(const [f,label] of qs){
+    const t=Math.round(durMin*f);
+    if(t>0 && t<durMin && !seen.has(t)){
+      seen.add(t);
+      quarterAlarms+=alarm(":PT"+t+"M",label+" ("+t+" de "+durMin+" min)");
+    }
+  }
+  // "Quedan 10 minutos": solo como respaldo en masajes individuales
+  // (en "Todos al calendario" ese aviso ya lo dan los bloques de
+  // descanso/limpieza) y solo si no colisiona con un cuarto ya emitido.
+  let final10="";
+  if(withFinal10 && durMin>10 && !seen.has(durMin-10)){
+    seen.add(durMin-10);
+    final10=alarm(":PT"+(durMin-10)+"M","⏳ Quedan 10 minutos");
+  }
   return "BEGIN:VEVENT\r\nUID:gp-"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(start)+"\r\nDTEND:"+f(end)+"\r\nSUMMARY:"+title+"\r\n"+descLine+locLine
     +alarm(":-PT10M","⏰ Masaje en 10 minutos")
     +alarm(":PT0M","▶️ Comienza el masaje")
-    +(durMin>10?alarm(":PT"+(durMin-10)+"M","⏳ Quedan 10 minutos"):"")
+    +quarterAlarms
+    +final10
     +alarm(":PT"+durMin+"M","✅ Fin del masaje")
     +"END:VEVENT\r\n";
 }
@@ -862,7 +885,7 @@ function scheduleMassage(i){
   const ds=document.getElementById("f-date").value;
   if(!ds){alert("Selecciona primero la fecha del día.");return;}
   if(!ins.t){alert("Pon la hora de inicio de este masaje.");return;}
-  downloadICS(buildEventBlock(ins,ds),"masaje_"+ds+"_"+ins.t.replace(":","")+".ics");
+  downloadICS(buildEventBlock(ins,ds,true),"masaje_"+ds+"_"+ins.t.replace(":","")+".ics");
 }
 function buildAuxBlock(ds,startMin,endMin,title,alarmTxt){
   const [y,mo,d]=ds.split("-");
@@ -875,7 +898,7 @@ function scheduleAll(){
   if(!ds){alert("Selecciona primero la fecha del día.");return;}
   const withTime=instances.filter(x=>x.t).sort((a,b)=>t2min(a.t)-t2min(b.t));
   if(withTime.length===0){alert("Pon la hora de inicio de al menos un masaje.");return;}
-  let body=withTime.map(ins=>buildEventBlock(ins,ds)).join("");
+  let body=withTime.map(ins=>buildEventBlock(ins,ds,false)).join("");
   // Preparación 15 min antes del primer masaje
   const firstStart=t2min(withTime[0].t);
   body+=buildAuxBlock(ds,firstStart-15,firstStart,"🧴 Preparación (15 min)","⏰ Preparación en 10 minutos");
