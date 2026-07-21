@@ -827,16 +827,15 @@ function removeIns(i){
   renderInstances();updatePreview();autoExit(false);
 }
 
-// Genera eventos .ics con avisos por CUARTOS adaptados a la duración.
-// Fossify ignora alarmas VALARM posteriores al inicio y limita a 3
-// recordatorios por evento, así que los avisos internos (cuartos,
-// quedan-10, fin) son mini-eventos de 1 min con alarma "0 min antes".
-// Devuelve {ev, chk} POR SEPARADO: los checkpoints van a un .ics propio
-// ("avisos_...") que se importa en Fossify con el tipo de evento "Avisos";
-// al desmarcar "Avisos" en el filtro inferior de Fossify quedan ocultos
-// del calendario PERO sus recordatorios siguen sonando (el filtro es solo
-// visual). withFinal10=true añade "⏳ Quedan 10 minutos" (individuales).
-function buildEventBlock(ins,ds,withFinal10){
+// Avisos por CUARTOS usando las reglas reales de Fossify: máx 3
+// recordatorios por evento, todos "antes del inicio" (los posteriores al
+// inicio se ignoran, y los tipos de evento ocultos NO suenan — por eso
+// los avisos deben quedar VISIBLES). Truco: UN solo mini-evento anclado
+// en el punto ¾ lleva 3 recordatorios antes-de-inicio que suenan en ¼,
+// ½ y ¾. El "fin" lo da el bloque de descanso/limpieza siguiente (con
+// recordatorio "al inicio") en el día completo; en masajes individuales
+// (individual=true) se añade un mini-evento de fin con quedan-10 + fin.
+function buildEventBlock(ins,ds,individual){
   const c=currentCenter(),m=c.massages.find(x=>x.id===ins.mid);
   const durMin=parseInt(m.duration)||60;
   const [y,mo,d]=ds.split("-"),[hh,mm]=ins.t.split(":");
@@ -851,39 +850,39 @@ function buildEventBlock(ins,ds,withFinal10){
   const descLine="DESCRIPTION:"+esc(descParts.join("\\n"))+"\r\n";
   const locLine="LOCATION:"+esc(c.name+" · "+c.location)+"\r\n";
   const alarm=(trig,desc)=>"BEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:"+desc+"\r\nTRIGGER"+trig+"\r\nEND:VALARM\r\n";
-  // Mini-evento "checkpoint": 1 min, con alarma al empezar y categoría
-  // "Avisos" (por si Fossify la mapea automáticamente al importar).
-  const chk=(min,txt)=>{
+  // Mini-evento de 1 min con hasta 3 recordatorios antes-de-inicio.
+  const mini=(min,txt,offsets)=>{
     const t0=new Date(start.getTime()+min*60000),t1=new Date(start.getTime()+(min+1)*60000);
-    return "BEGIN:VEVENT\r\nUID:gp-chk-"+Date.now()+"-"+min+"-"+Math.random().toString(36).slice(2,8)+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(t0)+"\r\nDTEND:"+f(t1)+"\r\nSUMMARY:"+txt+"\r\nCATEGORIES:Avisos\r\nCOLOR:gray\r\nTRANSP:TRANSPARENT\r\n"+alarm(":-PT0M",txt)+"END:VEVENT\r\n";
+    let a="";for(const [off,lab] of offsets)a+=alarm(":-PT"+off+"M",lab);
+    return "BEGIN:VEVENT\r\nUID:gp-chk-"+Date.now()+"-"+min+"-"+Math.random().toString(36).slice(2,8)+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(t0)+"\r\nDTEND:"+f(t1)+"\r\nSUMMARY:"+txt+"\r\nCOLOR:gray\r\nTRANSP:TRANSPARENT\r\n"+a+"END:VEVENT\r\n";
   };
-  // Cuartos (25/50/75%), robustos para cualquier duración: el Set "seen"
-  // evita duplicados si dos cuartos redondean al mismo minuto.
-  const qs=[[0.25,"◔ ¼ del masaje"],[0.5,"◑ ½ del masaje"],[0.75,"◕ ¾ — recta final"]];
+  // Cuartos redondeados y sin duplicados (Set "seen").
   const seen=new Set([0,durMin]);
-  const short=(m.nameBG||m.name).split(" ").slice(0,2).join(" ");
-  let checkpoints="";
-  for(const [fr,label] of qs){
+  const qmins=[];
+  for(const fr of [0.25,0.5,0.75]){
     const t=Math.round(durMin*fr);
-    if(t>0 && t<durMin && !seen.has(t)){
-      seen.add(t);
-      checkpoints+=chk(t,label+" ("+t+" de "+durMin+" min)");
-    }
+    if(t>0 && t<durMin && !seen.has(t)){seen.add(t);qmins.push(t);}
   }
-  // "Quedan 10 minutos": solo como respaldo en masajes individuales
-  // (en "Todos al calendario" ese aviso ya lo dan los bloques de
-  // descanso/limpieza) y solo si no colisiona con un cuarto ya emitido.
-  if(withFinal10 && durMin>10 && !seen.has(durMin-10)){
-    seen.add(durMin-10);
-    checkpoints+=chk(durMin-10,"⏳ Quedan 10 minutos");
+  let chk="";
+  if(qmins.length){
+    const anchor=qmins[qmins.length-1]; // el ¾ (o el mayor disponible)
+    chk+=mini(anchor,"◔◑◕ Cuartos ("+qmins.join("·")+" de "+durMin+" min)",
+      qmins.map(q=>[anchor-q,"cuarto en el minuto "+q]));
   }
-  checkpoints+=chk(durMin,"✅ Fin — "+short);
+  if(individual){
+    // Sin bloques auxiliares: mini-evento de fin con quedan-10 (si no
+    // colisiona con un cuarto ya emitido) + fin, en un solo evento.
+    const fal=[];
+    if(durMin>10 && !seen.has(durMin-10)){seen.add(durMin-10);fal.push([10,"⏳ Quedan 10 minutos"]);}
+    fal.push([0,"✅ Fin del masaje"]);
+    chk+=mini(durMin,"✅ Fin del masaje",fal);
+  }
   // Evento principal: solo alarmas ANTES/AL inicio (las que Fossify respeta).
   const ev="BEGIN:VEVENT\r\nUID:gp-"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(start)+"\r\nDTEND:"+f(end)+"\r\nSUMMARY:"+title+"\r\n"+descLine+locLine
     +alarm(":-PT10M","⏰ Masaje en 10 minutos")
     +alarm(":PT0M","▶️ Comienza el masaje")
     +"END:VEVENT\r\n";
-  return {ev:ev,chk:checkpoints};
+  return {ev:ev,chk:chk};
 }
 // Entrega del .ics: Chrome en Android NO permite compartir archivos .ics
 // por la hoja de Android (lista blanca de tipos: imágenes, pdf, txt...),
@@ -932,10 +931,13 @@ function scheduleMassage(i){
   const b=buildEventBlock(ins,ds,true);
   downloadICS(b.ev+b.chk,"masaje_"+ds+"_"+ins.t.replace(":","")+".ics");
 }
-function buildAuxBlock(ds,startMin,endMin,title,alarmTxt){
+function buildAuxBlock(ds,startMin,endMin,title,alarmTxt,alarm0Txt){
   const [y,mo,d]=ds.split("-");
   const mk=x=>{const dt=new Date(+y,mo-1,+d,Math.floor(x/60),x%60);return dt.getFullYear()+String(dt.getMonth()+1).padStart(2,"0")+String(dt.getDate()).padStart(2,"0")+"T"+String(dt.getHours()).padStart(2,"0")+String(dt.getMinutes()).padStart(2,"0")+"00";};
-  const al=alarmTxt?"BEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:"+alarmTxt+"\r\nTRIGGER:-PT10M\r\nEND:VALARM\r\n":"";
+  let al=alarmTxt?"BEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:"+alarmTxt+"\r\nTRIGGER:-PT10M\r\nEND:VALARM\r\n":"";
+  // Recordatorio "al inicio" del bloque = suena justo al FIN del masaje
+  // anterior (los bloques empiezan cuando termina el masaje).
+  if(alarm0Txt)al+="BEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:"+alarm0Txt+"\r\nTRIGGER:-PT0M\r\nEND:VALARM\r\n";
   return "BEGIN:VEVENT\r\nUID:gp-aux-"+Date.now()+"-"+startMin+"@guidopro\r\nDTSTAMP:"+mk(startMin)+"\r\nDTSTART:"+mk(startMin)+"\r\nDTEND:"+mk(endMin)+"\r\nSUMMARY:"+title+"\r\nCOLOR:gray\r\nTRANSP:TRANSPARENT\r\n"+al+"END:VEVENT\r\n";
 }
 function scheduleAll(){
@@ -948,15 +950,17 @@ function scheduleAll(){
   // Preparación 15 min antes del primer masaje
   const firstStart=t2min(withTime[0].t);
   body+=buildAuxBlock(ds,firstStart-15,firstStart,"🧴 Preparación (15 min)","⏰ Preparación en 10 minutos");
-  // Bloques de descanso entre masajes (con aviso 10 min antes)
+  // Bloques de descanso entre masajes: aviso 10 min antes + aviso al
+  // inicio (= fin exacto del masaje anterior)
   for(let i=0;i<withTime.length-1;i++){
     const end=t2min(withTime[i].t)+insDur(withTime[i]);
     const next=t2min(withTime[i+1].t);
-    if(next>end)body+=buildAuxBlock(ds,end,next,"☕ Descanso ("+(next-end)+" min)","☕ Descanso en 10 minutos");
+    if(next>end)body+=buildAuxBlock(ds,end,next,"☕ Descanso ("+(next-end)+" min)","☕ Descanso en 10 minutos","✅ Fin del masaje — comienza el descanso");
   }
-  // Limpieza y cierre 20 min tras el último masaje
+  // Limpieza y cierre 20 min tras el último masaje (su aviso al inicio
+  // marca el fin del último masaje)
   const lastEnd=Math.max(...withTime.map(x=>t2min(x.t)+insDur(x)));
-  body+=buildAuxBlock(ds,lastEnd,lastEnd+20,"🧹 Limpieza y cierre (20 min)","⏰ Limpieza y cierre en 10 minutos");
+  body+=buildAuxBlock(ds,lastEnd,lastEnd+20,"🧹 Limpieza y cierre (20 min)","⏰ Limpieza y cierre en 10 minutos","✅ Fin del último masaje — limpieza");
   // UN solo archivo: los avisos (CATEGORIES:Avisos) van al final y Fossify
   // los asigna a su tipo automáticamente al importar.
   downloadICS(body+avisos,"masajes_"+ds+".ics");
