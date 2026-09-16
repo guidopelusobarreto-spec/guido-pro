@@ -154,6 +154,9 @@ textarea { min-height: 60px; font-size: 14px; }
 .massage-row:last-child { border-bottom: none; }
 .m-name { font-size: 13px; color: var(--text); line-height: 1.35; }
 .m-meta { font-size: 11px; color: var(--dim); margin-top: 2px; }
+.m-es { color: var(--gold); }
+.m-zone { font-size: 11.5px; color: #b8ac94; margin-top: 3px; line-height: 1.4; }
+.m-tec { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
 .counter { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .cnt-btn { width: 30px; height: 30px; background: var(--bg3); border: 1px solid #333; border-radius: 6px; color: var(--gold); font-size: 19px; cursor: pointer; display: flex; align-items: center; justify-content: center; user-select: none; }
 .cnt-num { font-size: 15px; font-weight: 700; color: var(--gold); min-width: 20px; text-align: center; }
@@ -437,7 +440,7 @@ textarea { min-height: 60px; font-size: 14px; }
     </div>
     <div class="card" id="instances-card" style="display:none">
       <div class="card-title">🕐 Hora y Cliente por Masaje</div>
-      <div style="font-size:11px;color:var(--dim);margin-bottom:6px;line-height:1.5">La lista se ordena sola por hora. ⏭ empieza al terminar el anterior · ⇩ desplaza en cadena todos los siguientes · ✕ quita ese masaje · 🔔 evento con 4 alertas para Fossify (fin calculado solo).</div>
+      <div style="font-size:11px;color:var(--dim);margin-bottom:6px;line-height:1.5">La lista se ordena sola por hora. ⏭ empieza al terminar el anterior · ⇩ desplaza en cadena todos los siguientes · ✕ quita ese masaje · 🔔 solo este masaje al calendario (avisos ¼ ½ ¾, o cambio de zona cada 10 min en anticelulíticos). Reexportar actualiza los eventos: no duplica.</div>
       <div id="instances-list"></div>
       <button class="btn-gold" style="margin-top:10px" onclick="scheduleAll()">🔔 Todos al calendario (con descansos)</button>
       <button class="btn-blue" style="margin-top:8px" onclick="autoExit(true)">🚪 Salida automática (último masaje + 20 min)</button>
@@ -547,25 +550,27 @@ const CENTERS = [
     commRate: 50,
     hasHolidays: false,
     paymentCycle: "daily",
+    syncNames: true,
+    lunch: false, // VEDA: no se descuenta pausa de almuerzo (decisión de Guido, v41) // nombres de registros antiguos = nombres actuales del menú (precio/duración históricos se conservan)
     massages: [
-      {id:1,  name:"Express Alivio Espalda",      nameBG:"Експрес Облекчение Гръб",       duration:"40 min", durationBG:"40 мин", price:60,  desc:"Tejido profundo parcial — libera tensión en espalda, hombros y zona lumbar. Ideal para contracturas, fatiga y estrés acumulado."},
-      {id:2,  name:"Sin Cadenas",                 nameBG:"Без Вериги",                    duration:"60 min", durationBG:"60 мин", price:70,  desc:"Miofascial espalda y cuello — libera restricciones fasciales profundas. Ideal para dolor cervical, mala postura y trabajo prolongado frente al ordenador."},
-      {id:3,  name:"Piernas Ligeras",             nameBG:"Леки Крака",                    duration:"30 min", durationBG:"30 мин", price:40,  desc:"Drenaje linfático parcial — reduce edemas, pesadez y retención de líquidos en las piernas."},
-      {id:4,  name:"Piernas Esculpidas",          nameBG:"Изваяни Крака",                 duration:"40 min", durationBG:"40 мин", price:50,  desc:"Anticelulítico — estimula la circulación y favorece el modelado y firmeza de la piel."},
-      {id:13, name:"Piernas Esculpidas + Abdomen", nameBG:"Изваяни Крака + корем",  duration:"50 min", durationBG:"50 мин", price:60,  desc:"Anticelulítico de piernas con tratamiento adicional de la zona abdominal."},
-      {id:14, name:"Piernas Esculpidas + Brazos", nameBG:"Изваяни Крака + ръце",  duration:"60 min", durationBG:"60 мин", price:70,  desc:"Anticelulítico de piernas con tratamiento adicional de brazos."},
-      {id:15, name:"Piernas Esculpidas + Abdomen + Brazos", nameBG:"Изваяни Крака + корем + ръце", duration:"70 min", durationBG:"70 мин", price:80, desc:"Anticelulítico completo — piernas, abdomen y brazos en una sola sesión."},
-      {id:5,  name:"Renovación Profunda",         nameBG:"Дълбоко Обновяване",            duration:"90 min", durationBG:"90 мин", price:90,  desc:"Tejido profundo cuerpo completo — terapia integral para eliminar tensión crónica, bloqueos musculares y fatiga acumulada."},
-      {id:6,  name:"Ritual Mar Negro",            nameBG:"Ритуал „Черно Море“",       duration:"50 min", durationBG:"50 мин", price:65,  desc:"Terapia con aceite de luga del Mar Negro, cuerpo completo — ritual único con aceite mineralizado para relajación profunda, recuperación y nutrición de todo el cuerpo."},
-      {id:7,  name:"Combinado Restaurador",       nameBG:"Комбиниращ Възстановяващ",      duration:"70 min", durationBG:"70 мин", price:85,  desc:"Tejido profundo + Miofascial cuerpo completo — creado para personas con tensión crónica, estrés y largas horas frente al ordenador."},
-      {id:8,  name:"Detox y Ligereza",            nameBG:"Детокс и Лекота",               duration:"70 min", durationBG:"70 мин", price:80,  desc:"Drenaje linfático manual cuerpo completo — indicado para piernas pesadas, edemas y retención de líquidos. La sensación de ligereza aparece desde la primera sesión."},
-      {id:9,  name:"Reinicio Total",              nameBG:"Пълен Рестарт",                 duration:"150 min",durationBG:"150 мин",price:150, desc:"Linfático + Tejido profundo + Miofascial — sesión completa que combina las tres técnicas. Detoxifica, elimina tensión y restaura el movimiento natural del cuerpo."},
-      {id:10, name:"Mandíbula en Reposo",         nameBG:"Челюст в Покой",                duration:"45 min", durationBG:"45 мин", price:65,  desc:"Terapia para bruxismo — indicada para tensión en mandíbula, cefaleas y contractura de la musculatura facial."},
-      {id:11, name:"Plantas sin Dolor",           nameBG:"Стъпала Без Болка",             duration:"40 min", durationBG:"40 мин", price:60,  desc:"Terapia para fascitis plantar — alivia el dolor al caminar y la tensión crónica en la planta del pie."},
-      {id:16, name:"SOS Espalda",                 nameBG:"SOS Гръб",                      duration:"20 min", durationBG:"20 мин", price:30,  desc:"Tejido profundo focal, SOLO 1 zona a elección (lumbar, entre escápulas o espalda alta) — rescate puntual donde más duele."},
-      {id:17, name:"SOS Cuello y Hombros",        nameBG:"SOS Врат и Рамене",             duration:"25 min", durationBG:"25 мин", price:35,  desc:"Terapia focalizada en cuello, trapecios y hombros — donde el ordenador deja huella."},
-      {id:18, name:"Ritual Mar Negro Mini",       nameBG:"Ритуал „Черно Море“ Мини",        duration:"30 min", durationBG:"30 мин", price:40,  desc:"Espalda, cuello y hombros con aceite de luga — la fuerza del ritual concentrada donde vive la tensión."},
-      {id:12, name:"La Gran Recuperación",        nameBG:"Голямото Възстановяване",       duration:"120 min",durationBG:"120 мин",price:110, desc:"Protocolo clínico para dolor crónico, cuerpo completo — terapia intensiva para estados dolorosos de larga evolución y tensión muscular acumulada durante meses."},
+      {id:16, mini:true, name:"SOS Espalda", nameBG:"SOS Гръб", duration:"20 min", durationBG:"20 мин", price:30, tec:"tejido profundo", zonas:"solo 1 zona a elección: lumbar, entre los omóplatos o parte alta de la espalda", pres:"●●● fuerte", dias:"solo lunes a jueves, 16:00–21:00", desc:"Ayuda urgente: trabajo profundo y focalizado solo donde hay dolor. → Para toda la espalda: Alivio exprés · 40 min · 60 €."},
+      {id:17, mini:true, name:"SOS Cuello y Hombros", nameBG:"SOS Врат и Рамене", duration:"25 min", durationBG:"25 мин", price:35, tec:"tejido profundo", zonas:"cuello, trapecios y hombros", pres:"●●● fuerte", dias:"solo lunes a jueves, 16:00–21:00", desc:"Trabajo intenso donde el trabajo frente al ordenador deja huella."},
+      {id:18, mini:true, name:"Ritual „Mar Negro“ Mini", nameBG:"Ритуал „Черно Море“ Мини", duration:"30 min", durationBG:"30 мин", price:40, tec:"con luga", zonas:"espalda, cuello y hombros", pres:"●○○ ligera — RELAJANTE, no es tejido profundo", dias:"solo lunes a jueves, 16:00–21:00", desc:"Masaje relajante corto con aceite mineralizado con luga del Mar Negro. → El ritual completo, cuerpo entero: 50 min · 65 €."},
+      {id:3, name:"Piernas Ligeras", nameBG:"Леки Крака", duration:"30 min", durationBG:"30 мин", price:40, tec:"drenaje linfático", zonas:"solo piernas", pres:"●○○ ligera", dias:"", desc:"Reduce la hinchazón, la pesadez y la retención de líquidos en las piernas."},
+      {id:1, name:"Alivio exprés para la espalda", nameBG:"Експрес облекчение за гърба", duration:"40 min", durationBG:"40 мин", price:60, tec:"tejido profundo", zonas:"nuca y cuello por detrás, toda la espalda y zona lumbar · no incluye brazos ni manos", pres:"●●● fuerte", dias:"", desc:"Terapia completa de la espalda. Para contracturas, cansancio y estrés."},
+      {id:11, name:"Pies Sin Dolor", nameBG:"Стъпала Без Болка", duration:"40 min", durationBG:"40 мин", price:60, tec:"tejido profundo + miofascial", zonas:"pies y pantorrillas", pres:"●●● fuerte", dias:"", desc:"Para fascitis plantar, dolor de talón y fatiga tras caminar o estar de pie mucho tiempo."},
+      {id:4, zonas10:["pierna 1 delante","pierna 2 delante","pierna 1 detrás","pierna 2 detrás"], name:"Piernas Esculpidas", nameBG:"Изваяни Крака", duration:"40 min", durationBG:"40 мин", price:50, tec:"anticelulítico", zonas:"piernas", pres:"●●● fuerte", dias:"", desc:"Estimula la circulación y ayuda a modelar y tensar la piel. Técnica intensa — puede resultar dolorosa. Combine con: + abdomen 10 € (+10 min) · + brazos 20 € (+20 min) · + abdomen y brazos 30 € (+30 min)."},
+      {id:13, zonas10:["pierna 1 delante","pierna 2 delante","pierna 1 detrás","pierna 2 detrás","abdomen"], name:"Piernas Esculpidas + abdomen", nameBG:"Изваяни Крака + корем", duration:"50 min", durationBG:"50 мин", price:60, tec:"anticelulítico", zonas:"piernas y abdomen", pres:"●●● fuerte", dias:"", desc:"Piernas Esculpidas (40 min · 50 €) + abdomen (+10 min · +10 €)."},
+      {id:14, zonas10:["pierna 1 delante","pierna 2 delante","pierna 1 detrás","pierna 2 detrás","brazo 1","brazo 2"], name:"Piernas Esculpidas + brazos", nameBG:"Изваяни Крака + ръце", duration:"60 min", durationBG:"60 мин", price:70, tec:"anticelulítico", zonas:"piernas y brazos", pres:"●●● fuerte", dias:"", desc:"Piernas Esculpidas (40 min · 50 €) + brazos (+20 min · +20 €)."},
+      {id:15, zonas10:["pierna 1 delante","pierna 2 delante","pierna 1 detrás","pierna 2 detrás","abdomen","brazo 1","brazo 2"], name:"Piernas Esculpidas + abdomen y brazos", nameBG:"Изваяни Крака + корем и ръце", duration:"70 min", durationBG:"70 мин", price:80, tec:"anticelulítico", zonas:"piernas, abdomen y brazos", pres:"●●● fuerte", dias:"", desc:"Piernas Esculpidas (40 min · 50 €) + abdomen y brazos (+30 min · +30 €)."},
+      {id:10, name:"Mandíbula en Reposo", nameBG:"Челюст в Покой", duration:"45 min", durationBG:"45 мин", price:65, tec:"miofascial + tejido profundo", zonas:"mandíbula, cuello, sienes y detrás de las orejas · si hace falta, también intraoral", pres:"●●● fuerte", dias:"", desc:"Para bruxismo, tensión mandibular y cefalea tensional."},
+      {id:6, name:"Ritual „Mar Negro“", nameBG:"Ритуал „Черно Море“", duration:"50 min", durationBG:"50 мин", price:65, tec:"aceite terapéutico de luga", zonas:"cuerpo completo", pres:"●○○ ligera — RITUAL RELAJANTE, no es tejido profundo", dias:"", desc:"Ritual único con aceite mineralizado con luga del Mar Negro — relajación profunda, recuperación y nutrición de todo el cuerpo. Único masaje relajante del menú; todos los demás son terapéuticos."},
+      {id:2, name:"Sin Cadenas", nameBG:"Без Вериги", duration:"60 min", durationBG:"60 мин", price:70, tec:"miofascial + tejido profundo", zonas:"cuello por delante y por detrás, omóplatos, brazos y manos, espalda media, zona lumbar y nervio ciático", pres:"●●● fuerte", dias:"", desc:"Para cuello rígido, plexitis braquial y dolor lumbar. La técnica se adapta a cómo responde el cuerpo."},
+      {id:8, name:"Detox y Ligereza", nameBG:"Детокс и Лекота", duration:"70 min", durationBG:"70 мин", price:80, tec:"drenaje linfático", zonas:"cuerpo completo", pres:"●○○ ligera", dias:"", desc:"Para piernas pesadas e hinchazón. La sensación de ligereza llega ya tras la primera sesión."},
+      {id:7, name:"Combinado Recuperador", nameBG:"Комбиниран Възстановяващ", duration:"70 min", durationBG:"70 мин", price:85, tec:"tejido profundo + miofascial", zonas:"cuerpo completo", pres:"●●● fuerte", dias:"", desc:"Para quienes tienen tensión crónica, estrés y muchas horas frente al ordenador."},
+      {id:5, name:"Renovación Profunda", nameBG:"Дълбоко Обновяване", duration:"90 min", durationBG:"90 мин", price:90, tec:"tejido profundo", zonas:"cuerpo completo", pres:"●●● fuerte", dias:"", desc:"Terapia integral contra la tensión crónica, los bloqueos musculares y el cansancio acumulado."},
+      {id:12, name:"La Gran Recuperación", nameBG:"Голямото Възстановяване", duration:"120 min", durationBG:"120 мин", price:110, tec:"protocolo clínico", zonas:"cuerpo completo", pres:"●●● fuerte", dias:"", desc:"Terapia intensiva para dolor crónico y tensión muscular acumulada durante meses."},
+      {id:9, name:"Reinicio Total", nameBG:"Пълен Рестарт", duration:"150 min", durationBG:"150 мин", price:150, tec:"tejido profundo + miofascial + drenaje linfático", zonas:"cuerpo completo", pres:"●●○ ligera y fuerte en una misma sesión", dias:"", desc:"Las tres técnicas en una sola sesión. Lo más alto del menú — recuperación completa de todo el cuerpo."},
     ]
   }
 ];
@@ -592,7 +597,7 @@ const ICONS={good:"✅",warn:"⚠️",dead:"🔴",info:"💡"};
 const PAGE_NAMES=["Dashboard","Añadir día","Historial","Calendario","Análisis PRO","Simulador","Pagos","Exportar","Mi Valor Profesional","Configuración","Comparar Centros","Cerebro PRO"];
 const DEFAULT_CFG={lockMinutes:10,fatigueHours:45};
 // Versión visible de la app — mantener sincronizada con CACHE_NAME de sw.js
-const APP_VERSION="v39";
+const APP_VERSION="v41";
 document.addEventListener("DOMContentLoaded",()=>{const v=document.getElementById("gp-version");if(v)v.textContent="Guido PRO · "+APP_VERSION;});
 
 let allData={};  // { hotel5: {days,payments,goal,cfg}, aleksa: {...}, sanatorium: {...} }
@@ -616,7 +621,7 @@ const fmtH=h=>{const hh=Math.floor(h),mm=Math.round((h-hh)*60);return hh+"h "+St
 const fmtDate=d=>{const[y,m,day]=d.split("-");return day+"/"+m+"/"+y;};
 const dow=(d,bg=false)=>(bg?DOW_BG:DOW_ES)[new Date(d+"T12:00:00").getDay()];
 const toMin=t=>{const[h,m]=t.split(":").map(Number);return h*60+m;};
-function calcH(en,ex){if(!en||!ex)return 0;let s=toMin(en),e2=toMin(ex);if(e2<=s)return 0;let m=e2-s;const os=Math.max(s,720),oe=Math.min(e2,780);if(oe>os)m-=(oe-os);return Math.max(0,m/60);}
+function calcH(en,ex,c){if(!en||!ex)return 0;let s=toMin(en),e2=toMin(ex);if(e2<=s)return 0;let m=e2-s;const cc=c||currentCenter();if(cc.lunch!==false){const os=Math.max(s,720),oe=Math.min(e2,780);if(oe>os)m-=(oe-os);}return Math.max(0,m/60);}
 const localISO=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 const today=()=>localISO(new Date());
 const yesterday=()=>{const d=new Date();d.setDate(d.getDate()-1);return localISO(d);};
@@ -642,14 +647,16 @@ function calcDayTotal(workedH, massages, tips, dateStr, center){
 function initCenterData(){return{days:[],payments:[],goal:0,cfg:{...DEFAULT_CFG}};}
 
 function normalizeMassage(m,center){
-  const ref=(center||currentCenter()).massages.find(r=>r.id===m.id);
-  return{id:m.id,name:m.name||(ref?ref.name:""),nameBG:m.nameBG||(ref?ref.nameBG:""),duration:m.duration||(ref?ref.duration:""),durationBG:m.durationBG||(ref?ref.durationBG:""),price:m.price||(ref?ref.price:0),t:m.t||"",nc:m.nc===true?true:m.nc===false?false:null,cn:m.cn||"",src:m.src||""};
+  const cc=center||currentCenter();
+  const ref=cc.massages.find(r=>r.id===m.id);
+  const sync=!!(ref&&cc.syncNames); // VEDA: nombre = menú actual; precio y duración del registro se conservan
+  return{id:m.id,name:sync?ref.name:(m.name||(ref?ref.name:"")),nameBG:sync?ref.nameBG:(m.nameBG||(ref?ref.nameBG:"")),duration:m.duration||(ref?ref.duration:""),durationBG:m.durationBG||(ref?ref.durationBG:""),price:m.price||(ref?ref.price:0),t:m.t||"",nc:m.nc===true?true:m.nc===false?false:null,cn:m.cn||"",src:m.src||"",u:m.u||""};
 }
 
 function normalizeDay(d,center){
   const c=center||currentCenter();
   const massages=(d.massages||[]).map(m=>normalizeMassage(m,c));
-  const workedH=d.workedH!==undefined?d.workedH:calcH(d.entry||"",d.exit||"");
+  const workedH=d.workedH!==undefined?d.workedH:calcH(d.entry||"",d.exit||"",c);
   const calc=calcDayTotal(workedH,massages,d.tips||0,d.date,c);
   return{date:d.date,entry:d.entry||"",exit:d.exit||"",massages,workedH,hourlyPay:calc.hourlyPay,commission:calc.commission,tips:d.tips||0,notes:d.notes||"",dayTotal:calc.dayTotal,holiday:calc.holiday||false,clients:d.clients||0,transport:d.transport||0};
 }
@@ -758,17 +765,21 @@ function buildMassageList(){
   document.getElementById("massage-card-title").textContent="💆 Masajes Realizados · "+c.name;
   document.getElementById("massage-list").innerHTML=c.massages.map(m=>{
     const comm=c.hasVat?(m.price/(1+c.vatRate/100)*c.commRate/100):(m.price*c.commRate/100);
-    return`<div class="massage-row"><div style="flex:1"><div class="m-name">${m.nameBG||m.name}</div><div class="m-meta">${m.name} · ${m.duration} · ${m.price} € · comisión: ${ef(comm)}</div>${m.desc?`<div class="m-desc">${m.desc}</div>`:""}</div><div class="counter"><button class="cnt-btn" onclick="adjQty(${m.id},-1)">−</button><span class="cnt-num" id="qty-${m.id}">0</span><button class="cnt-btn" onclick="adjQty(${m.id},+1)">+</button></div></div>`;
+    return`<div class="massage-row"><div style="flex:1"><div class="m-name">${m.nameBG||m.name}</div><div class="m-meta"><span class="m-es">${m.name}</span> · ${m.duration} · ${m.price} € · comisión: ${ef(comm)}</div>${m.zonas?`<div class="m-zone">📍 ${m.zonas}</div>`:""}${m.tec||m.pres?`<div class="m-tec">${[m.tec,m.pres].filter(Boolean).join(" · ")}</div>`:""}${m.dias?`<div class="m-tec">📅 ${m.dias}</div>`:""}${m.desc?`<div class="m-desc">${m.desc}</div>`:""}</div><div class="counter"><button class="cnt-btn" onclick="adjQty(${m.id},-1)">−</button><span class="cnt-num" id="qty-${m.id}">0</span><button class="cnt-btn" onclick="adjQty(${m.id},+1)">+</button></div></div>`;
   }).join("");
 }
 function adjQty(id,d){
-  if(d>0){instances.push({mid:id,t:"",nc:null,cn:"",src:""});}
+  if(d>0){instances.push({mid:id,t:"",nc:null,cn:"",src:"",u:newU()});}
   else{for(let i=instances.length-1;i>=0;i--){if(instances[i].mid===id){instances.splice(i,1);break;}}}
   qty[id]=instances.filter(x=>x.mid===id).length;
   document.getElementById("qty-"+id).textContent=qty[id]||0;
   renderInstances();updatePreview();
 }
-const getMassages=()=>instances.map(ins=>{const m=currentCenter().massages.find(x=>x.id===ins.mid);return{...m,t:ins.t||"",nc:ins.nc,cn:ins.cn||"",src:ins.src||""};});
+// Identificador fijo de cada masaje (UID estable en el calendario) y datos del masaje
+// con precio/duración del registro guardado cuando se edita un día antiguo.
+const newU=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+const insM=ins=>{const m=currentCenter().massages.find(x=>x.id===ins.mid);return{...m,price:ins.p!=null?ins.p:m.price,duration:ins.d||m.duration,durationBG:ins.dBG||m.durationBG};};
+const getMassages=()=>instances.map(ins=>({...insM(ins),t:ins.t||"",nc:ins.nc,cn:ins.cn||"",src:ins.src||"",u:ins.u||""}));
 
 // ═══════════════ DETALLE POR MASAJE (hora + cliente nuevo) ═══════════════
 function renderInstances(){
@@ -782,7 +793,7 @@ function renderInstances(){
   document.getElementById("instances-list").innerHTML=instances.map((ins,i)=>{
     const m=c.massages.find(x=>x.id===ins.mid);
     return`<div style="padding:9px 0;border-bottom:1px solid var(--bg3)">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:13px;color:var(--text)">${i+1}. ${m.nameBG||m.name} <span style="color:var(--dim);font-size:11px">· ${m.duration}</span></div><button onclick="removeIns(${i})" title="Quitar este masaje" style="background:none;border:1px solid #3a1010;border-radius:6px;color:#804040;width:26px;height:26px;font-size:13px;cursor:pointer;flex-shrink:0">✕</button></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:13px;color:var(--text)">${i+1}. ${m.nameBG||m.name} <span style="color:var(--dim);font-size:11px">· ${ins.d||m.duration}</span></div><button onclick="removeIns(${i})" title="Quitar este masaje" style="background:none;border:1px solid #3a1010;border-radius:6px;color:#804040;width:26px;height:26px;font-size:13px;cursor:pointer;flex-shrink:0">✕</button></div>
       <input type="text" value="${ins.cn||""}" placeholder="Nombre del cliente (opcional)" onchange="setInsName(${i},this.value)" style="width:100%;padding:8px 10px;font-size:14px;margin-bottom:6px">
       <div style="display:flex;gap:7px;align-items:center">
         <input type="time" value="${ins.t}" onchange="setInsTime(${i},this.value)" style="flex:1;padding:8px 10px;font-size:14px">
@@ -790,6 +801,7 @@ function renderInstances(){
         <button onclick="toggleNC(${i})" style="flex-shrink:0;padding:8px 10px;border-radius:8px;font-size:12px;font-family:Georgia,serif;cursor:pointer;border:1px solid ${ins.nc===true?"#4abf7a":ins.nc===false?"#4a8fbf":"#333"};background:${ins.nc===true?"#0a2a10":ins.nc===false?"#0a1a2a":"var(--bg3)"};color:${ins.nc===true?"#4abf7a":ins.nc===false?"#6a9fd0":"var(--muted)"}">${ins.nc===true?"🆕 Nuevo":ins.nc===false?"🔁 Habitual":"👤 Cliente…"}</button>
         <button onclick="scheduleMassage(${i})" title="Añadir a calendario con alertas" style="flex-shrink:0;width:38px;height:36px;border-radius:8px;border:1px solid #5a4a10;background:#1a1400;color:var(--gold);font-size:16px;cursor:pointer">🔔</button>
       </div>
+      ${m.mini&&gpMiniOff(ins)?`<div style="margin-top:6px;font-size:12px;color:#bf8a2a">⚠️ Mini: solo de lunes a jueves, de 16:00 a 21:00</div>`:""}
       ${ins.nc===true?`<select onchange="setInsSrc(${i},this.value)" style="margin-top:6px;padding:8px 10px;font-size:13px"><option value="" ${!ins.src?"selected":""}>📣 ¿Cómo te encontró?</option><option value="google" ${ins.src==="google"?"selected":""}>Google / Maps</option><option value="recepcion" ${ins.src==="recepcion"?"selected":""}>Recepción del spa</option><option value="recomendado" ${ins.src==="recomendado"?"selected":""}>Recomendado</option><option value="redes" ${ins.src==="redes"?"selected":""}>Redes sociales</option><option value="otro" ${ins.src==="otro"?"selected":""}>Otro</option></select>`:""}
     </div>`;
   }).join("");
@@ -797,7 +809,9 @@ function renderInstances(){
 function setInsTime(i,v){if(instances[i])instances[i].t=v;autoExit(false);renderInstances();updatePreview();}
 function setInsName(i,v){if(instances[i])instances[i].cn=v.trim();}
 function setInsSrc(i,v){if(instances[i])instances[i].src=v;}
-const insDur=ins=>{const m=currentCenter().massages.find(x=>x.id===ins.mid);return parseInt(m.duration)||60;};
+const insDur=ins=>parseInt(insM(ins).duration)||60;
+// Minis: solo lunes a jueves, 16:00–21:00 (aviso, no bloquea)
+function gpMiniOff(ins){const ds=document.getElementById("f-date").value;if(ds){const wd=new Date(ds+"T12:00:00").getDay();if(wd===5||wd===6||wd===0)return true;}if(ins.t){const s=t2min(ins.t);if(s<960||s+insDur(ins)>1260)return true;}return false;}
 const t2min=t=>{const[a,b]=t.split(":").map(Number);return a*60+b;};
 const min2t=x=>String(Math.floor(x/60)).padStart(2,"0")+":"+String(x%60).padStart(2,"0");
 function chainFrom(i){
@@ -831,72 +845,107 @@ function removeIns(i){
   renderInstances();updatePreview();autoExit(false);
 }
 
-// Avisos como TAREAS DE TODO EL DÍA (VTODO con VALUE=DATE): no ocupan
-// nada en la línea de tiempo (chip arriba) y llevan recordatorios a HORA
-// ABSOLUTA del día, calculada por la app desde la hora de inicio del
-// masaje. En el .ics: trigger positivo = minutos desde medianoche, que
-// Fossify muestra como "Durante el día a las HH:MM" (comprobado en este
-// móvil) y suena a esa hora. Máx 3 recordatorios por tarea.
-// El "fin" lo da el bloque de descanso/limpieza siguiente en el día
-// completo; en individuales (individual=true) va en una tarea de fin.
-function buildEventBlock(ins,ds,individual){
-  const c=currentCenter(),m=c.massages.find(x=>x.id===ins.mid);
-  const durMin=parseInt(m.duration)||60;
-  const [y,mo,d]=ds.split("-"),[hh,mm]=ins.t.split(":");
-  const start=new Date(+y,mo-1,+d,+hh,+mm);
-  const end=new Date(start.getTime()+durMin*60000);
-  const f=dt=>dt.getFullYear()+String(dt.getMonth()+1).padStart(2,"0")+String(dt.getDate()).padStart(2,"0")+"T"+String(dt.getHours()).padStart(2,"0")+String(dt.getMinutes()).padStart(2,"0")+"00";
-  const title="💆 "+(m.nameBG||m.name)+" ("+m.duration+") · "+c.nameShort;
-  const esc=s=>String(s).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,");
-  const descParts=[];
-  if(ins.cn)descParts.push("👤 Cliente: "+ins.cn+(ins.nc===true?" (nuevo)":ins.nc===false?" (habitual)":""));
-  descParts.push(m.name+" — "+m.price+" €");
-  const descLine="DESCRIPTION:"+esc(descParts.join("\\n"))+"\r\n";
-  const locLine="LOCATION:"+esc(c.name+" · "+c.location)+"\r\n";
-  const alarm=(trig,desc)=>"BEGIN:VALARM\r\nDESCRIPTION:"+desc+"\r\nACTION:DISPLAY\r\nTRIGGER"+trig+"\r\nEND:VALARM\r\n";
-  const hexUID=()=>{let h="";for(let i=0;i<32;i++)h+="0123456789abcdef"[Math.floor(Math.random()*16)];return h+Date.now();};
-  // Minuto del día en que empieza el masaje y formateador HH:MM
-  const S=(+hh)*60+(+mm);
-  const hm=min=>String(Math.floor(min/60)).padStart(2,"0")+":"+String(min%60).padStart(2,"0");
-  // Tarea de TODO EL DÍA con recordatorios a hora absoluta del día.
-  // Trigger en formato horas+minutos desde medianoche (PT14H18M = 14:18),
-  // no en minutos totales, para que Fossify lo interprete correctamente.
-  const dayTask=(txt,absMins)=>{
-    let a="";
-    for(const [abs,lab] of absMins)if(abs>=0&&abs<1440){
-      const H=Math.floor(abs/60),M=abs%60;
-      a+=alarm(":P0DT"+H+"H"+M+"M0S",lab);
-    }
-    if(!a)return "";
-    const now=f(new Date())+"Z";return "BEGIN:VTODO\r\nSUMMARY:"+txt+"\r\nUID:"+hexUID()+"\r\nX-FOSSIFY-CATEGORY-COLOR:-24081\r\nCATEGORIES:AVISOS\r\nLAST-MODIFIED:"+now+"\r\nDTSTART;VALUE=DATE:"+y+mo+d+"\r\nDTSTAMP:"+now+"\r\n"+a+"END:VTODO\r\n";
-  };
-  // Cuartos redondeados y sin duplicados (Set "seen").
-  const seen=new Set([0,durMin]);
-  const qmins=[];
-  for(const fr of [0.25,0.5,0.75]){
-    const t=Math.round(durMin*fr);
-    if(t>0 && t<durMin && !seen.has(t)){seen.add(t);qmins.push(t);}
+// ═══════════════ CALENDARIO (.ics para Fossify) — v41 ═══════════════
+// Formato comprobado contra el importador de Fossify (IcsImporter.kt):
+// · Fossify guarda como máximo 3 recordatorios por evento/tarea e IGNORA el
+//   texto de cada VALARM → la información de cada aviso va en el TÍTULO.
+// · Un UID ya importado se ACTUALIZA solo si LAST-MODIFIED es más reciente
+//   → UID estables (id fijo por masaje) + LAST-MODIFIED en UTC real.
+// · Al saltar una alarma, Fossify relee el evento: si ya no tiene
+//   recordatorios no notifica → los eventos sobrantes se reexportan sin
+//   alarmas y con título "🗑 BORRAR".
+// Avisos intermedios = TAREAS DE TODO EL DÍA (VTODO, VALUE=DATE) con
+// recordatorios a hora absoluta (trigger positivo desde medianoche).
+// El aviso "10 min antes de terminar" y el fin los dan, en el día completo,
+// el bloque siguiente (descanso/limpieza) o el masaje encadenado; en el
+// masaje suelto, una tarea de fin. Regla: una sola alarma por minuto.
+const utcStamp=()=>{const n=new Date(),p=x=>String(x).padStart(2,"0");return n.getUTCFullYear()+p(n.getUTCMonth()+1)+p(n.getUTCDate())+"T"+p(n.getUTCHours())+p(n.getUTCMinutes())+p(n.getUTCSeconds())+"Z";};
+const gpTS=(ds,x)=>{const [y,mo,d]=ds.split("-");const dt=new Date(+y,mo-1,+d,0,x);return dt.getFullYear()+String(dt.getMonth()+1).padStart(2,"0")+String(dt.getDate()).padStart(2,"0")+"T"+String(dt.getHours()).padStart(2,"0")+String(dt.getMinutes()).padStart(2,"0")+"00";};
+const hex32=k=>{let o="";for(let r=0;r<4;r++){let h=(0x811c9dc5^Math.imul(r+1,0x9e3779b1))>>>0;for(let i=0;i<k.length;i++){h^=k.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}o+=h.toString(16).padStart(8,"0");}return o;};
+const icsEsc=s=>String(s).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\r?\n/g,"\\n");
+const icsAlarm=(trig,desc)=>"BEGIN:VALARM\r\nDESCRIPTION:"+desc+"\r\nACTION:DISPLAY\r\nTRIGGER"+trig+"\r\nEND:VALARM\r\n";
+const shortZ=z=>z.replace(/^pierna /,"P");
+function gpTask(ymd,uid,txt,absMins,lm){
+  let a="";
+  for(const [abs,lab] of absMins)if(abs>=0&&abs<1440){a+=icsAlarm(":P0DT"+Math.floor(abs/60)+"H"+(abs%60)+"M0S",lab);}
+  if(!a)return "";
+  return "BEGIN:VTODO\r\nSUMMARY:"+icsEsc(txt)+"\r\nUID:"+uid+"\r\nX-FOSSIFY-CATEGORY-COLOR:-24081\r\nCATEGORIES:AVISOS\r\nLAST-MODIFIED:"+lm+"\r\nDTSTART;VALUE=DATE:"+ymd+"\r\nDTSTAMP:"+lm+"\r\n"+a+"END:VTODO\r\n";
+}
+// Puntos de aviso dentro del masaje (minutos desde el inicio):
+// · anticelulíticos (zonas10): cambio de zona cada 10 min;
+// · resto: ¼ · ½ · ¾ redondeados.
+// Si hay aviso "quedan 10" (has10), se quita todo punto a ≤2 min de él.
+function gpCheckpoints(m,D,has10){
+  const lim=D-10,near=t=>has10&&Math.abs(t-lim)<=2,out=[];
+  if(m.zonas10&&m.zonas10.length){
+    m.zonas10.forEach((z,k)=>{const t=k*10;if(t>0&&t<D&&!near(t))out.push({t,sym:"🔄",lab:z});});
+  }else{
+    const seen=new Set();
+    [[0.25,"◔","¼"],[0.5,"◑","½"],[0.75,"◕","¾"]].forEach(([fr,sym,lab])=>{const t=Math.round(D*fr);if(t>0&&t<D&&!seen.has(t)&&!near(t)){seen.add(t);out.push({t,sym,lab});}});
   }
-  const short=(m.nameBG||m.name).split(" ").slice(0,2).join(" ");
+  return out;
+}
+function buildEventBlock(ins,ds,individual,end10,lm){
+  if(end10===undefined)end10=true;
+  lm=lm||utcStamp();
+  if(!ins.u)ins.u=newU();
+  const c=currentCenter(),m=insM(ins);
+  const D=parseInt(m.duration)||60,S=t2min(ins.t),lim=D-10;
+  const ymd=ds.replace(/-/g,"");
+  const hm=x=>min2t(((x%1440)+1440)%1440);
+  const has10=D>10&&(individual||end10);
+  const zones=m.zonas10&&m.zonas10.length?m.zonas10:null;
+  const cps=gpCheckpoints(m,D,has10);
+  const nm=m.nameBG||m.name;
+  const own={o:ins.u,mid:ins.mid,st:ins.t};
+  const reg={};
+  // Línea de tiempo para la descripción
+  const tl=[];
+  if(zones)zones.forEach((z,k)=>{if(k*10<D)tl.push([k*10,z]);});else tl.push([0,"inicio"]);
+  if(!zones)cps.forEach(p=>tl.push([p.t,p.sym+" "+p.lab]));
+  if(has10){const hit=tl.find(e=>e[0]===lim);if(hit)hit[1]+=" ⏰ quedan 10";else tl.push([lim,"⏰ quedan 10"]);}
+  tl.push([D,"fin"]);
+  tl.sort((a,b)=>a[0]-b[0]);
+  const desc=[];
+  if(ins.cn)desc.push("👤 Cliente: "+ins.cn+(ins.nc===true?" (nuevo)":ins.nc===false?" (habitual)":""));
+  desc.push(m.name+" — "+m.duration+" · "+m.price+" €");
+  if(m.zonas)desc.push("📍 "+m.zonas);
+  if(m.tec||m.pres)desc.push("🖐 "+[m.tec,m.pres].filter(Boolean).join(" · "));
+  if(m.desc)desc.push("📝 "+m.desc);
+  desc.push((zones?"🔄 ":"⏱ ")+tl.map(e=>hm(S+e[0])+" "+e[1]).join(" · "));
+  // Evento principal: alarmas 10 min antes y al inicio (las que Fossify respeta en eventos)
+  const title="💆 "+nm+" ("+m.duration+") · "+c.nameShort;
+  const uidE="gp-"+ymd+"-"+ins.u+"@guidopro";
+  const now=new Date(),fl=gpTS(localISO(now),now.getHours()*60+now.getMinutes());
+  const ev="BEGIN:VEVENT\r\nUID:"+uidE+"\r\nDTSTAMP:"+fl+"\r\nLAST-MODIFIED:"+lm+"\r\nDTSTART:"+gpTS(ds,S)+"\r\nDTEND:"+gpTS(ds,S+D)+"\r\nSUMMARY:"+icsEsc(title)+"\r\nX-FOSSIFY-CATEGORY-COLOR:-8715009\r\nCATEGORIES:MASAJES\r\n"
+    +"DESCRIPTION:"+desc.map(icsEsc).join("\\n")+"\r\n"
+    +"LOCATION:"+icsEsc(c.name+" · "+c.location)+"\r\n"
+    +icsAlarm(":-P0DT0H10M0S","⏰ Masaje en 10 minutos")
+    +icsAlarm(":-P0DT0H0M0S","▶️ Comienza el masaje")
+    +"END:VEVENT\r\n";
+  reg[uidE]={k:"ev",s:gpTS(ds,S),e:gpTS(ds,S+D),t:title,...own};
+  // Tareas de avisos intermedios (máx. 3 por tarea)
   let chk="";
-  if(qmins.length){
-    chk+=dayTask("◔◑◕ "+qmins.map(q=>hm(S+q)).join(" · ")+" — cuartos "+short+" ("+ins.t+")",
-      qmins.map(q=>[S+q,"cuarto a las "+hm(S+q)]));
+  const lastZ=zones&&has10&&lim%10===0?zones[lim/10]:null;
+  for(let j=0;j*3<cps.length;j++){
+    const part=cps.slice(j*3,j*3+3);
+    let ttl=part.map(p=>zones?hm(S+p.t)+" "+shortZ(p.lab):p.sym+" "+hm(S+p.t)).join(" · ");
+    if(lastZ&&(j+1)*3>=cps.length)ttl+=" · "+hm(S+lim)+" "+shortZ(lastZ)+" (aviso 10 min)";
+    ttl=(zones?"🔄 ":"")+ttl+" — "+nm+" ("+ins.t+")";
+    const uid=hex32(ymd+"|"+ins.u+"|cp"+j);
+    const t=gpTask(ymd,uid,ttl,part.map(p=>[S+p.t,p.sym+" "+p.lab+" · "+hm(S+p.t)]),lm);
+    if(t){chk+=t;reg[uid]={k:"todo",t:ttl,...own};}
   }
   if(individual){
-    // Sin bloques auxiliares: tarea de fin con quedan-10 (si no colisiona
-    // con un cuarto ya emitido) + fin.
-    const fal=[];
-    if(durMin>10 && !seen.has(durMin-10)){seen.add(durMin-10);fal.push([S+durMin-10,"⏳ Quedan 10 minutos"]);}
-    fal.push([S+durMin,"✅ Fin del masaje"]);
-    chk+=dayTask("✅ "+hm(S+durMin)+" — fin "+short+" ("+ins.t+")",fal);
+    const fal=[];let ft="";
+    if(has10){fal.push([S+lim,"⏳ Quedan 10 minutos"]);ft="⏳ "+hm(S+lim)+(lastZ?" "+shortZ(lastZ):" quedan 10")+" · ";}
+    fal.push([S+D,"✅ Fin del masaje"]);
+    const ttl=ft+"✅ "+hm(S+D)+" fin — "+nm+" ("+ins.t+")";
+    const uid=hex32(ymd+"|"+ins.u+"|fin");
+    const t=gpTask(ymd,uid,ttl,fal,lm);
+    if(t){chk+=t;reg[uid]={k:"todo",t:ttl,...own};}
   }
-  // Evento principal: solo alarmas ANTES/AL inicio (las que Fossify respeta).
-  const ev="BEGIN:VEVENT\r\nUID:gp-"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+"@guidopro\r\nDTSTAMP:"+f(new Date())+"\r\nDTSTART:"+f(start)+"\r\nDTEND:"+f(end)+"\r\nSUMMARY:"+title+"\r\nX-FOSSIFY-CATEGORY-COLOR:-8715009\r\nCATEGORIES:MASAJES\r\n"+descLine+locLine
-    +alarm(":-P0DT0H10M0S","⏰ Masaje en 10 minutos")
-    +alarm(":-P0DT0H0M0S","▶️ Comienza el masaje")
-    +"END:VEVENT\r\n";
-  return {ev:ev,chk:chk};
+  return {ev:ev,chk:chk,reg:reg};
 }
 // Entrega del .ics: Chrome en Android NO permite compartir archivos .ics
 // por la hoja de Android (lista blanca de tipos: imágenes, pdf, txt...),
@@ -934,56 +983,113 @@ async function downloadICS(body,name){
   setTimeout(()=>URL.revokeObjectURL(url),3000);
   gpToast("📥 "+uname+" descargado — abre la notificación de descarga y elige tu calendario");
 }
+// Registro de lo exportado por día y centro (para actualizar sin duplicar
+// y silenciar lo que sobra). Se purga lo de hace más de 60 días.
+const gpRegKey=ds=>"gp_ics_"+currentCenter().key+"_"+ds;
+function gpReg(ds){try{const r=JSON.parse(localStorage.getItem(gpRegKey(ds)));return r&&r.items?r:{items:{}};}catch(e){return{items:{}};}}
+function gpRegSave(ds,obj){
+  try{
+    localStorage.setItem(gpRegKey(ds),JSON.stringify(obj));
+    const lim=localISO(new Date(Date.now()-60*86400000));
+    Object.keys(localStorage).filter(k=>k.startsWith("gp_ics_")&&k.slice(-10)<lim).forEach(k=>localStorage.removeItem(k));
+  }catch(e){}
+}
+function gpNeutral(ds,uid,it,lm){
+  const t="🗑 BORRAR — "+String(it.t||"").replace(/^🗑 BORRAR — /,"");
+  if(it.k==="todo")return "BEGIN:VTODO\r\nSUMMARY:"+icsEsc(t)+"\r\nUID:"+uid+"\r\nX-FOSSIFY-CATEGORY-COLOR:-24081\r\nCATEGORIES:AVISOS\r\nLAST-MODIFIED:"+lm+"\r\nDTSTART;VALUE=DATE:"+ds.replace(/-/g,"")+"\r\nDTSTAMP:"+lm+"\r\nEND:VTODO\r\n";
+  return "BEGIN:VEVENT\r\nUID:"+uid+"\r\nDTSTAMP:"+it.s+"\r\nLAST-MODIFIED:"+lm+"\r\nDTSTART:"+it.s+"\r\nDTEND:"+it.e+"\r\nSUMMARY:"+icsEsc(t)+"\r\nX-FOSSIFY-CATEGORY-COLOR:-24081\r\nCATEGORIES:AVISOS\r\nTRANSP:TRANSPARENT\r\nEND:VEVENT\r\n";
+}
+// Si el formulario se rehízo desde cero, un masaje del mismo tipo y a la
+// misma hora que uno ya exportado hereda su identificador → se actualiza
+// en Fossify en lugar de duplicarse o marcarse para borrar.
+function gpAdopt(ds,list){
+  const it=Object.values(gpReg(ds).items);
+  const known=new Set(it.map(v=>v.o)),used=new Set(instances.map(x=>x.u));
+  list.forEach(ins=>{
+    if(ins.u&&known.has(ins.u))return;
+    const cand=it.find(v=>v.k==="ev"&&v.o!=="day"&&v.mid===ins.mid&&v.st===ins.t&&!used.has(v.o));
+    if(cand){ins.u=cand.o;used.add(cand.o);}
+  });
+}
+const gpStaleMsg=n=>"🗑 "+n+" aviso(s) antiguo(s) ya no corresponden: quedan silenciados y aparecen en Fossify como «🗑 BORRAR». Bórralos a mano.";
 function scheduleMassage(i){
   const ins=instances[i];if(!ins)return;
   const ds=document.getElementById("f-date").value;
   if(!ds){alert("Selecciona primero la fecha del día.");return;}
   if(!ins.t){alert("Pon la hora de inicio de este masaje.");return;}
-  // UN solo archivo: los avisos llevan CATEGORIES:Avisos y Fossify los
-  // asigna automáticamente a ese tipo de evento al importar (los demás
-  // toman el tipo elegido en el diálogo de importación).
-  const b=buildEventBlock(ins,ds,true);
-  downloadICS(b.ev+b.chk,"masaje_"+ds+"_"+ins.t.replace(":","")+".ics");
+  // Si el día ya está completo en el calendario, se actualiza entero
+  // (recalcula descansos y avisos del nuevo masaje sin duplicar).
+  if(gpReg(ds).full){alert("Este día ya está completo en el calendario: se actualiza el día entero.");scheduleAll();return;}
+  if(!ins.u)ins.u=newU();
+  gpAdopt(ds,[ins]);
+  const lm=utcStamp(),b=buildEventBlock(ins,ds,true,true,lm);
+  const r=gpReg(ds);
+  // Sobrantes: avisos anteriores de ESTE masaje que ya no existen, o de un
+  // masaje igual (mismo tipo y hora) creado de nuevo en el formulario.
+  const stale=Object.keys(r.items).filter(u=>!b.reg[u]&&(r.items[u].o===ins.u||(r.items[u].o!=="day"&&r.items[u].mid===ins.mid&&r.items[u].st===ins.t)));
+  let neut="";stale.forEach(u=>{neut+=gpNeutral(ds,u,r.items[u],lm);delete r.items[u];});
+  Object.assign(r.items,b.reg);r.full=false;gpRegSave(ds,r);
+  downloadICS(b.ev+b.chk+neut,"masaje_"+ds+"_"+ins.t.replace(":","")+".ics");
+  if(stale.length)setTimeout(()=>alert(gpStaleMsg(stale.length)),300);
 }
-function buildAuxBlock(ds,startMin,endMin,title,alarmTxt,alarm0Txt){
-  const [y,mo,d]=ds.split("-");
-  const mk=x=>{const dt=new Date(+y,mo-1,+d,Math.floor(x/60),x%60);return dt.getFullYear()+String(dt.getMonth()+1).padStart(2,"0")+String(dt.getDate()).padStart(2,"0")+"T"+String(dt.getHours()).padStart(2,"0")+String(dt.getMinutes()).padStart(2,"0")+"00";};
-  let al=alarmTxt?"BEGIN:VALARM\r\nDESCRIPTION:"+alarmTxt+"\r\nACTION:DISPLAY\r\nTRIGGER:-P0DT0H10M0S\r\nEND:VALARM\r\n":"";
+function buildAuxBlock(ds,startMin,endMin,title,alarmTxt,alarm0Txt,uid,lm){
+  let al=alarmTxt?icsAlarm(":-P0DT0H10M0S",alarmTxt):"";
   // Recordatorio "al inicio" del bloque = suena justo al FIN del masaje
   // anterior (los bloques empiezan cuando termina el masaje).
-  if(alarm0Txt)al+="BEGIN:VALARM\r\nDESCRIPTION:"+alarm0Txt+"\r\nACTION:DISPLAY\r\nTRIGGER:-P0DT0H0M0S\r\nEND:VALARM\r\n";
-  return "BEGIN:VEVENT\r\nUID:gp-aux-"+Date.now()+"-"+startMin+"@guidopro\r\nDTSTAMP:"+mk(startMin)+"\r\nDTSTART:"+mk(startMin)+"\r\nDTEND:"+mk(endMin)+"\r\nSUMMARY:"+title+"\r\nX-FOSSIFY-CATEGORY-COLOR:-24081\r\nCATEGORIES:AVISOS\r\nCOLOR:gray\r\nTRANSP:TRANSPARENT\r\n"+al+"END:VEVENT\r\n";
+  if(alarm0Txt)al+=icsAlarm(":-P0DT0H0M0S",alarm0Txt);
+  return "BEGIN:VEVENT\r\nUID:"+uid+"\r\nDTSTAMP:"+gpTS(ds,startMin)+"\r\nLAST-MODIFIED:"+lm+"\r\nDTSTART:"+gpTS(ds,startMin)+"\r\nDTEND:"+gpTS(ds,endMin)+"\r\nSUMMARY:"+icsEsc(title)+"\r\nX-FOSSIFY-CATEGORY-COLOR:-24081\r\nCATEGORIES:AVISOS\r\nCOLOR:gray\r\nTRANSP:TRANSPARENT\r\n"+al+"END:VEVENT\r\n";
 }
 function scheduleAll(){
   const ds=document.getElementById("f-date").value;
   if(!ds){alert("Selecciona primero la fecha del día.");return;}
   const withTime=instances.filter(x=>x.t).sort((a,b)=>t2min(a.t)-t2min(b.t));
   if(withTime.length===0){alert("Pon la hora de inicio de al menos un masaje.");return;}
+  withTime.forEach(x=>{if(!x.u)x.u=newU();});
+  gpAdopt(ds,withTime);
+  const ymd=ds.replace(/-/g,""),lm=utcStamp(),reg={},overlap=[];
   let body="",avisos="";
-  for(const ins of withTime){const b=buildEventBlock(ins,ds,false);body+=b.ev;avisos+=b.chk;}
+  withTime.forEach((ins,i)=>{
+    const end=t2min(ins.t)+insDur(ins),nx=withTime[i+1];
+    const ok10=!nx||t2min(nx.t)>=end; // hay aviso de 10 min antes del fin (bloque siguiente o masaje encadenado)
+    if(!ok10)overlap.push(nx.t);
+    const b=buildEventBlock(ins,ds,false,ok10,lm);
+    body+=b.ev;avisos+=b.chk;Object.assign(reg,b.reg);
+  });
+  const aux=(key,s,e,title,a10,a0)=>{const uid="gp-"+ymd+"-"+key+"@guidopro";body+=buildAuxBlock(ds,s,e,title,a10,a0,uid,lm);reg[uid]={k:"ev",s:gpTS(ds,s),e:gpTS(ds,e),t:title,o:"day"};};
   // Preparación 15 min antes del primer masaje
   const firstStart=t2min(withTime[0].t);
-  body+=buildAuxBlock(ds,firstStart-15,firstStart,"🧴 Preparación (15 min)","⏰ Preparación en 10 minutos");
-  // Bloques de descanso entre masajes: aviso 10 min antes + aviso al
-  // inicio (= fin exacto del masaje anterior)
+  aux("prep",firstStart-15,firstStart,"🧴 Preparación (15 min)","⏰ Preparación en 10 minutos");
+  // Descansos entre masajes: aviso 10 min antes (= quedan 10 del masaje)
+  // + aviso al inicio (= fin exacto del masaje anterior)
   for(let i=0;i<withTime.length-1;i++){
     const end=t2min(withTime[i].t)+insDur(withTime[i]);
     const next=t2min(withTime[i+1].t);
-    if(next>end)body+=buildAuxBlock(ds,end,next,"☕ Descanso ("+(next-end)+" min)","☕ Descanso en 10 minutos","✅ Fin del masaje — comienza el descanso");
+    if(next>end)aux("rest-"+withTime[i].u,end,next,"☕ Descanso ("+(next-end)+" min)","☕ Descanso en 10 minutos","✅ Fin del masaje — comienza el descanso");
   }
-  // Limpieza y cierre 20 min tras el último masaje (su aviso al inicio
-  // marca el fin del último masaje)
+  // Limpieza y cierre 20 min tras el último masaje
   const lastEnd=Math.max(...withTime.map(x=>t2min(x.t)+insDur(x)));
-  body+=buildAuxBlock(ds,lastEnd,lastEnd+20,"🧹 Limpieza y cierre (20 min)","⏰ Limpieza y cierre en 10 minutos","✅ Fin del último masaje — limpieza");
-  // UN solo archivo: los avisos (CATEGORIES:Avisos) van al final y Fossify
+  aux("clean",lastEnd,lastEnd+20,"🧹 Limpieza y cierre (20 min)","⏰ Limpieza y cierre en 10 minutos","✅ Fin del último masaje — limpieza");
+  // Sobrantes de una exportación anterior de este día
+  const prev=gpReg(ds);
+  const stale=Object.keys(prev.items).filter(u=>!reg[u]);
+  const lostM=stale.filter(u=>prev.items[u].k==="ev"&&prev.items[u].o!=="day").map(u=>"· "+String(prev.items[u].t).replace(/^💆 /,""));
+  if(lostM.length&&!confirm("Estos masajes ya estaban en el calendario y no están en la lista:\n"+lostM.join("\n")+"\n\nSe silenciarán y aparecerán como «🗑 BORRAR». ¿Continuar?"))return;
+  let neut="";stale.forEach(u=>neut+=gpNeutral(ds,u,prev.items[u],lm));
+  gpRegSave(ds,{full:true,items:reg});
+  // UN solo archivo: los avisos (CATEGORIES:AVISOS) van al final y Fossify
   // los asigna a su tipo automáticamente al importar.
-  downloadICS(body+avisos,"masajes_"+ds+".ics");
-  if(withTime.length<instances.length)alert("⚠️ "+(instances.length-withTime.length)+" masaje(s) sin hora quedaron fuera del archivo.");
+  downloadICS(body+avisos+neut,"masajes_"+ds+".ics");
+  const msgs=[];
+  if(withTime.length<instances.length)msgs.push("⚠️ "+(instances.length-withTime.length)+" masaje(s) sin hora quedaron fuera del archivo.");
+  if(overlap.length)msgs.push("⚠️ Masaje que empieza antes de que termine el anterior: "+overlap.join(", ")+". Revisa las horas.");
+  if(stale.length)msgs.push(gpStaleMsg(stale.length));
+  if(msgs.length)setTimeout(()=>alert(msgs.join("\n\n")),300);
 }
 
 // ═══════════════ DATE CHANGE ═══════════════
 function onDateChange(){
   const ds=document.getElementById("f-date").value;
+  renderInstances();
   if(!ds){document.getElementById("notice-holiday").style.display="none";updatePreview();return;}
   const c=currentCenter();
   if(c.hasHolidays&&isHoliday(ds)){
@@ -1051,7 +1157,7 @@ function saveDay(){
 function resetForm(){["f-date","f-entry","f-exit"].forEach(id=>document.getElementById(id).value="");document.getElementById("f-tips").value="";document.getElementById("f-notes").value="";document.getElementById("f-clients").value="";document.getElementById("f-transport").value="";qty={};instances=[];renderInstances();currentCenter().massages.forEach(m=>{const el=document.getElementById("qty-"+m.id);if(el)el.textContent="0";});document.getElementById("preview-card").style.display="none";document.getElementById("hours-preview").style.display="none";document.getElementById("notice-holiday").style.display="none";document.getElementById("save-btn").disabled=true;}
 function showNotice(id,msg){const el=document.getElementById(id);if(!el)return;el.textContent=msg;el.style.display="block";setTimeout(()=>el.style.display="none",3000);}
 
-function editDay(ds){const day=cDays().find(d=>d.date===ds);if(!day)return;editingDate=ds;document.getElementById("f-date").value=day.date;document.getElementById("f-entry").value=day.entry;document.getElementById("f-exit").value=day.exit;document.getElementById("f-tips").value=day.tips||"";document.getElementById("f-notes").value=day.notes||"";document.getElementById("f-clients").value=day.clients||"";document.getElementById("f-transport").value=day.transport||"";qty={};instances=day.massages.map(m=>({mid:m.id,t:m.t||"",nc:m.nc===true?true:m.nc===false?false:null,cn:m.cn||"",src:m.src||""}));day.massages.forEach(m=>{qty[m.id]=(qty[m.id]||0)+1;});currentCenter().massages.forEach(m=>{const el=document.getElementById("qty-"+m.id);if(el)el.textContent=qty[m.id]||0;});renderInstances();onDateChange();document.getElementById("save-btn").textContent="💾 Actualizar Día";document.getElementById("notice-edit").style.display="block";document.getElementById("cancel-edit-btn").style.display="block";showTab(1);window.scrollTo(0,0);}
+function editDay(ds){const day=cDays().find(d=>d.date===ds);if(!day)return;editingDate=ds;document.getElementById("f-date").value=day.date;document.getElementById("f-entry").value=day.entry;document.getElementById("f-exit").value=day.exit;document.getElementById("f-tips").value=day.tips||"";document.getElementById("f-notes").value=day.notes||"";document.getElementById("f-clients").value=day.clients||"";document.getElementById("f-transport").value=day.transport||"";qty={};instances=day.massages.map(m=>({mid:m.id,t:m.t||"",nc:m.nc===true?true:m.nc===false?false:null,cn:m.cn||"",src:m.src||"",u:m.u||newU(),p:m.price,d:m.duration,dBG:m.durationBG}));day.massages.forEach(m=>{qty[m.id]=(qty[m.id]||0)+1;});currentCenter().massages.forEach(m=>{const el=document.getElementById("qty-"+m.id);if(el)el.textContent=qty[m.id]||0;});renderInstances();onDateChange();document.getElementById("save-btn").textContent="💾 Actualizar Día";document.getElementById("notice-edit").style.display="block";document.getElementById("cancel-edit-btn").style.display="block";showTab(1);window.scrollTo(0,0);}
 function cancelEdit(){editingDate=null;resetForm();document.getElementById("save-btn").textContent="💾 Guardar Día";document.getElementById("notice-edit").style.display="none";document.getElementById("cancel-edit-btn").style.display="none";}
 function deleteDay(ds){cData().days=cDays().filter(d=>d.date!==ds);saveData();updateHeader();renderHistory();}
 
@@ -1060,7 +1166,7 @@ function shareDay(ds){
   const d=cDays().find(x=>x.date===ds),c=currentCenter();if(!d)return;
   const totalRaw=d.massages.reduce((s,m)=>s+m.price,0);
   let msg="✦ "+c.name+"\n📅 "+dow(d.date)+" "+fmtDate(d.date)+(d.holiday?" 🎉":"")+"\n⏰ "+d.entry+" → "+d.exit+" ("+fmtH(d.workedH)+(d.holiday?" ×2":"")+")\n\n";
-  if(d.massages.length>0){d.massages.forEach(m=>msg+="💆 "+m.name+" — "+m.price+" €\n");msg+="\n";}
+  if(d.massages.length>0){d.massages.forEach(m=>msg+="💆 "+(m.nameBG||m.name)+" — "+m.price+" €\n");msg+="\n";}
   if(c.hasSalary)msg+="💶 Horas: "+ef(d.hourlyPay)+"\n";
   if(d.massages.length>0){if(c.hasVat){const av=totalRaw/(1+c.vatRate/100);msg+="💆 Facturado: "+ef(totalRaw)+" − IVA = "+ef(av)+" → comisión: "+ef(d.commission)+"\n";}else msg+="💆 Comisión "+c.commRate+"%: "+ef(d.commission)+"\n";}
   if(d.tips>0)msg+="💵 Propina: "+ef(d.tips)+"\n";
@@ -1107,7 +1213,7 @@ function renderDashboard(){
   // Payment alert
   if(payments.length>0){const lastPay=payments.reduce((a,p)=>p.date>a.date?p:a);const daysSince=Math.floor((new Date()-new Date(lastPay.date+"T12:00:00"))/(1000*60*60*24));const maxDays=c.paymentCycle==="daily"?2:c.paymentCycle==="weekly"?9:32;if(daysSince>maxDays&&pending>0)alerts+=`<div class="notice red" style="display:block">⚠️ Han pasado ${daysSince} días desde tu último pago. Pendiente: ${ef(pending)}</div>`;}
   // Massage not sold alert
-  if(days.length>7){const recent=days.slice(-14);c.massages.forEach(m=>{const used=recent.some(d=>d.massages.some(x=>x.id===m.id));if(!used)alerts+=`<div class="notice blue" style="display:block">💆 No has ofrecido "${m.name}" en 2 semanas.</div>`;});}
+  if(days.length>7){const recent=days.slice(-14);c.massages.forEach(m=>{const used=recent.some(d=>d.massages.some(x=>x.id===m.id));if(!used)alerts+=`<div class="notice blue" style="display:block">💆 No has ofrecido "${m.nameBG||m.name}" en 2 semanas.</div>`;});}
 
   // All centers summary
   const allSummary=CENTERS.map(ct=>{const d=allData[ct.key];if(!d)return"";const e=d.days.reduce((s,dd)=>s+dd.dayTotal,0);const p=d.payments.reduce((s,pp)=>s+pp.amount,0);const pend=Math.max(0,e-p);if(e===0)return"";return`<div class="center-summary" onclick="selectCenter(${ct.id})"><div><div class="cs-name" style="color:${ct.color}">${ct.icon} ${ct.name}</div><div class="cs-meta">${d.days.length} días · ${ct.location}</div></div><div><div class="cs-total" style="color:${ct.color}">${ef(e)}</div><div class="cs-pending" style="color:${pend>0?"#bf8a2a":"var(--green)"}">⏳ ${ef(pend)}</div></div></div>`;}).join("");
@@ -1133,7 +1239,7 @@ function renderHistory(){
   el.innerHTML=[...days].reverse().map(d=>{
     const eph=d.workedH>0?d.dayTotal/d.workedH:0;
     const totalRaw=d.massages.reduce((s,m)=>s+m.price,0);
-    const massDetail=d.massages.length>0?`<div style="margin-top:8px"><div class="pro-sub" style="text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Masajes</div>`+d.massages.map(m=>`<div class="d-row"><span>· ${m.t?m.t+" · ":""}${m.name} (${m.duration})${m.cn?" · "+m.cn:""}${m.nc===true?" 🆕":""}</span><span>${m.price} €</span></div>`).join("")+(c.hasVat?`<div class="d-row"><span>− IVA ${c.vatRate}% → comisión ${c.commRate}%</span><span>${ef(d.commission)}</span></div>`:`<div class="d-row"><span>Comisión ${c.commRate}%</span><span>${ef(d.commission)}</span></div>`)+"</div>":"";
+    const massDetail=d.massages.length>0?`<div style="margin-top:8px"><div class="pro-sub" style="text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Masajes</div>`+d.massages.map(m=>`<div class="d-row"><span>· ${m.t?m.t+" · ":""}${m.nameBG||m.name} (${m.duration})${m.cn?" · "+m.cn:""}${m.nc===true?" 🆕":""}</span><span>${m.price} €</span></div>`).join("")+(c.hasVat?`<div class="d-row"><span>− IVA ${c.vatRate}% → comisión ${c.commRate}%</span><span>${ef(d.commission)}</span></div>`:`<div class="d-row"><span>Comisión ${c.commRate}%</span><span>${ef(d.commission)}</span></div>`)+"</div>":"";
     const tipsH=d.tips>0?`<div class="d-row"><span>💵 Propina</span><span>${ef(d.tips)}</span></div>`:"";
     const notesH=d.notes?`<div style="margin-top:7px;font-size:11px;color:var(--muted)">📝 ${d.notes}</div>`:"";
     return`<div class="day-card${d.holiday?" holiday-day":""}"><div class="day-hdr" onclick="toggleDetail('${d.date}')"><div><div class="day-date-txt">${fmtDate(d.date)} <span class="day-dow">· ${dow(d.date)}${d.holiday?" 🎉":""}</span></div><div class="day-meta-txt">${d.entry}→${d.exit} · ${fmtH(d.workedH)} · ${d.massages.length} masaje${d.massages.length!==1?"s":""}</div></div><div><div class="day-total-txt">${ef(d.dayTotal)}</div><div class="day-eph-txt">${eph.toFixed(2)} €/h ▼</div></div></div><div class="day-detail" id="detail-${d.date}">${c.hasSalary?`<div class="d-row"><span>💶 Por horas${d.holiday?" (×2)":""}</span><span>${ef(d.hourlyPay)}</span></div>`:""}<div class="d-row"><span>💆 Comisión</span><span>${ef(d.commission)}</span></div>${tipsH}<div class="d-row" style="color:var(--gold);font-weight:700"><span>📈 €/hora real</span><span>${eph.toFixed(2)} €/h</span></div>${massDetail}${notesH}<div class="action-btns"><button class="edit-btn" onclick="editDay('${d.date}')">✏️ Editar</button><button class="wa-btn" onclick="shareDay('${d.date}')">📱 Compartir</button><div id="delzone-${d.date}"><button class="del-btn" onclick="showConfirm('${d.date}')">🗑</button></div></div></div></div>`;
@@ -1216,7 +1322,7 @@ function renderPro(){
   let streak=0;const sd=[...days].map(d=>d.date).sort((a,b)=>b.localeCompare(a));for(let i=0;i<sd.length;i++){const d=new Date(sd[i]+"T12:00:00"),exp=new Date();exp.setDate(exp.getDate()-i);if(d.toDateString()===exp.toDateString())streak++;else break;}
 
   // Insights
-  const byType={};days.forEach(d=>d.massages.forEach(m=>{if(!byType[m.id])byType[m.id]={name:m.name,count:0,revenue:0,commission:0};byType[m.id].count++;byType[m.id].revenue+=m.price;byType[m.id].commission+=calcCommission([m],c);}));
+  const byType={};days.forEach(d=>d.massages.forEach(m=>{if(!byType[m.id])byType[m.id]={name:m.name,nameBG:m.nameBG,count:0,revenue:0,commission:0};byType[m.id].count++;byType[m.id].revenue+=m.price;byType[m.id].commission+=calcCommission([m],c);}));
   const ranking=Object.values(byType).sort((a,b)=>b.commission-a.commission);
   const daysEPH=days.map(d=>({...d,eph:d.workedH>0?d.dayTotal/d.workedH:0}));
   const byDow={};days.forEach(d=>{const dw=dow(d.date);if(!byDow[dw])byDow[dw]={total:0,count:0};byDow[dw].total+=d.dayTotal;byDow[dw].count++;});
@@ -1240,7 +1346,7 @@ function renderPro(){
   <div class="card"><div class="card-title">📆 Año ${new Date().getFullYear()} — mes a mes</div>${annualHTML}${totTransport>0?`<div class="pro-row" style="margin-top:8px"><span>🚌 Gasto transporte acumulado</span><div class="pro-val" style="color:var(--red)">− ${ef(totTransport)}</div></div><div class="pro-row"><span>💰 Ganancia neta (− transporte)</span><div class="pro-val gold">${ef(tot.tt-totTransport)}</div></div>`:""}${totClients>0?`<div class="pro-row"><span>👥 Clientes atendidos (total)</span><div class="pro-val">${totClients}</div></div><div class="pro-row"><span>👥 Promedio clientes/día</span><div class="pro-val">${(totClients/days.length).toFixed(1)}</div></div>`:""}${totNewClients>0?`<div class="pro-row"><span>🆕 Clientes nuevos captados</span><div class="pro-val gold">${totNewClients}</div></div>`:""}</div>
   <div class="card"><div class="card-title">⭐ Récords · ${c.name}</div><div class="record-box"><div><div class="record-label">💰 Mejor día</div><div class="record-date">${fmtDate(bestDay.date)}</div></div><div class="record-val">${ef(bestDay.dayTotal)}</div></div><div class="record-box"><div><div class="record-label">📅 Mejor semana</div><div class="record-date">${bestWeekEntry?fmtDate(bestWeekEntry[0]):"-"}</div></div><div class="record-val">${bestWeekEntry?ef(bestWeekEntry[1]):"-"}</div></div><div class="record-box"><div><div class="record-label">💆 Más masajes en un día</div><div class="record-date">${fmtDate(bestMassDay.date)}</div></div><div class="record-val">${bestMassDay.massages.length}</div></div><div class="record-box"><div><div class="record-label">🔥 Racha actual</div></div><div class="record-val">${streak} día${streak!==1?"s":""}</div></div><div class="record-box"><div><div class="record-label">⏱ Horas esta semana</div></div><div class="record-val" style="color:${weekH>=cCfg().fatigueHours?"var(--red)":"var(--gold)"}">${fmtH(weekH)}</div></div></div>
   ${ins.length?`<div class="card"><div class="card-title">🧠 Inteligencia Operativa</div>${ins.map(i=>`<div class="insight ${i.c}"><span>${ICONS[i.c]}</span><span>${i.t}</span></div>`).join("")}</div>`:""}
-  ${ranking.length?`<div class="card"><div class="card-title">🏆 Ranking de Masajes</div>${ranking.map((r,i)=>`<div class="rank-row"><div class="rank-left"><span class="rank-medal">${MEDAL[i]||"·"}</span><div><div class="rank-name">${r.name}</div><div class="rank-sub">×${r.count} · ${ef(r.revenue)} facturado</div></div></div><div class="rank-right"><div class="rank-earn">${ef(r.commission)}</div><div class="rank-earn-sub">comisión</div></div></div>`).join("")}</div>`:""}
+  ${ranking.length?`<div class="card"><div class="card-title">🏆 Ranking de Masajes</div>${ranking.map((r,i)=>`<div class="rank-row"><div class="rank-left"><span class="rank-medal">${MEDAL[i]||"·"}</span><div><div class="rank-name">${r.nameBG||r.name}</div><div class="rank-sub">${r.nameBG?r.name+" · ":""}×${r.count} · ${ef(r.revenue)} facturado</div></div></div><div class="rank-right"><div class="rank-earn">${ef(r.commission)}</div><div class="rank-earn-sub">comisión</div></div></div>`).join("")}</div>`:""}
   <div class="card"><div class="card-title">📅 Desglose por Día</div>${[...days].reverse().map(d=>`<div class="pro-row"><div><div style="font-size:12px;color:var(--text)">${fmtDate(d.date)} <span style="color:var(--dim)">· ${dow(d.date)}${d.holiday?" 🎉":""}</span></div><div class="pro-sub">${fmtH(d.workedH)} · ${d.massages.length} masaje${d.massages.length!==1?"s":""}</div></div><div class="pro-val gold">${ef(d.dayTotal)}</div></div>`).join("")}<div style="display:flex;justify-content:space-between;padding:9px 0 0;font-weight:700"><span style="font-size:13px;color:var(--text)">TOTAL ACUMULADO</span><span style="font-size:16px;color:var(--gold)">${ef(tot.tt)}</span></div></div>`;
 }
 function saveGoal(){cData().goal=parseFloat(document.getElementById("goal-input").value)||0;saveData();renderPro();}
@@ -1483,7 +1589,7 @@ function renderPortfolio(){
 
   <div class="card">
     <div class="card-title">💆 Servicios Realizados</div>
-    ${ranking.map((r,i)=>`<div class="rank-row"><div class="rank-left"><span class="rank-medal">${MEDAL[i]||"·"}</span><div><div class="rank-name">${r.name}</div><div class="rank-sub">×${r.count} sesiones</div></div></div><div class="rank-right"><div class="rank-earn">${ef(r.revenue)}</div><div class="rank-earn-sub">${((r.revenue/totalRevenue)*100).toFixed(0)}% del total</div></div></div>`).join("")}
+    ${ranking.map((r,i)=>`<div class="rank-row"><div class="rank-left"><span class="rank-medal">${MEDAL[i]||"·"}</span><div><div class="rank-name">${r.nameBG||r.name}</div><div class="rank-sub">${r.nameBG?r.name+" · ":""}×${r.count} sesiones</div></div></div><div class="rank-right"><div class="rank-earn">${ef(r.revenue)}</div><div class="rank-earn-sub">${((r.revenue/totalRevenue)*100).toFixed(0)}% del total</div></div></div>`).join("")}
   </div>
 
   ${Object.keys(monthMap).length>1?`<div class="card"><div class="card-title">📅 Evolución Mensual</div>${monthRows}</div>`:""}
@@ -1679,7 +1785,7 @@ function renderCompare(){
       const topId=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0];if(!topId)return"";
       const tm=ct.massages.find(x=>x.id==topId[0]);if(!tm)return"";
       const ppm=tm.price/(parseInt(tm.duration)||60);
-      return`<div class="pro-row"><span style="color:${ct.color}">${ct.icon} ${ct.nameShort}<div class="pro-sub">${tm.name} ×${topId[1]} · ${tm.price} € / ${tm.duration}</div></span><div class="pro-val gold">${ppm.toFixed(2)} €/min</div></div>`;
+      return`<div class="pro-row"><span style="color:${ct.color}">${ct.icon} ${ct.nameShort}<div class="pro-sub">${tm.nameBG||tm.name} ×${topId[1]} · ${tm.price} € / ${tm.duration}</div></span><div class="pro-val gold">${ppm.toFixed(2)} €/min</div></div>`;
     }).join("")}
   </div>
   <div class="card"><div class="card-title">📋 Mismo masaje, distinto centro</div>
@@ -1758,22 +1864,22 @@ function renderCerebro(){
   let returned=0;const newNames=Object.keys(namedNew);
   newNames.forEach(n=>{if(allMass.some(m=>m.cn&&m.cn.toLowerCase()===n&&m.date>namedNew[n]))returned++;});
   const retPct=newNames.length>0?returned/newNames.length*100:null;
-  const ppmList=c.massages.map(m=>({name:m.name,duration:m.duration,price:m.price,ppm:m.price/(parseInt(m.duration)||60)})).sort((a,b)=>b.ppm-a.ppm);
+  const ppmList=c.massages.map(m=>({name:m.name,nameBG:m.nameBG,duration:m.duration,price:m.price,ppm:m.price/(parseInt(m.duration)||60)})).sort((a,b)=>b.ppm-a.ppm);
 
   // ── CEREBRO: recomendaciones cruzadas ──
   const recs=[];
   unsold30.forEach(u=>{
     const mini=Math.round(u.price*0.65);
     const miniDur=Math.round((parseInt(u.duration)||60)*0.6);
-    let r="«"+u.name+"» "+(u.count===0?"nunca se ha vendido":"lleva 30+ días sin venderse")+". Opciones concretas: ";
+    let r="«"+(u.nameBG||u.name)+"» "+(u.count===0?"nunca se ha vendido":"lleva 30+ días sin venderse")+". Opciones concretas: ";
     const opts=[];
     opts.push("versión mini de "+miniDur+" min a "+mini+" € para que lo prueben");
-    if(top&&top.name!==u.name)opts.push("paquete con tu estrella «"+top.name+"» con 10-15% de descuento");
+    if(top&&top.name!==u.name)opts.push("paquete con tu estrella «"+(top.nameBG||top.name)+"» con 10-15% de descuento");
     if(bestDow)opts.push("proponerlo en recepción los "+bestDow.dow+" (tu mejor día)");
     opts.push("ofrecerlo como extensión de +"+Math.round(u.price*0.5)+" € al terminar otro masaje");
     recs.push({t:r+opts.join("; ")+".",c:"warn",a:"💊 Ventas+Precios"});
   });
-  if(top)recs.push({t:"Tu producto estrella es «"+top.name+"» ("+top.count+" ventas, "+ef(top.revenue)+"). Pide a recepción que lo ofrezca primero a clientes nuevos: es tu mejor carta de fidelización.",c:"good",a:"📈 Ventas"});
+  if(top)recs.push({t:"Tu producto estrella es «"+(top.nameBG||top.name)+"» ("+top.count+" ventas, "+ef(top.revenue)+"). Pide a recepción que lo ofrezca primero a clientes nuevos: es tu mejor carta de fidelización.",c:"good",a:"📈 Ventas"});
   if(bestDow&&worstDow&&bestDow.dow!==worstDow.dow&&bestDow.avg>worstDow.avg*1.5)recs.push({t:"Los "+bestDow.dow+" rindes "+ef(bestDow.avg)+"/día de media vs "+ef(worstDow.avg)+" los "+worstDow.dow+" — un "+Math.round((bestDow.avg/worstDow.avg-1)*100)+"% más. Prioriza pedir turnos de "+bestDow.dow+".",c:"info",a:"📅 Tiempo"});
   recs.push({t:"Trabajas mejor por las "+bestSlot+" ("+ef(bestSlot==="mañanas"?mornRev:aftRev)+" vs "+ef(bestSlot==="mañanas"?aftRev:mornRev)+"). Al negociar horarios, defiende ese bloque.",c:"info",a:"📅 Tiempo"});
   if(trackedNC>=5){
@@ -1781,7 +1887,7 @@ function renderCerebro(){
     else if(pctNew>60)recs.push({t:"El "+pctNew.toFixed(0)+"% de tus masajes son clientes nuevos pero pocos repiten. Refuerza la retención: al terminar, agenda directamente la próxima sesión y explica el plan de tratamiento (\"con 4 sesiones más resolvemos esta contractura\").",c:"warn",a:"👥 Clientes"});
     else recs.push({t:"Buen equilibrio: "+pctNew.toFixed(0)+"% clientes nuevos, "+(100-pctNew).toFixed(0)+"% habituales. Mantén las dos palancas activas.",c:"good",a:"👥 Clientes"});
   } else recs.push({t:"Marca 🆕/🔁 en cada masaje que registres — con esos datos el agente de clientes podrá darte análisis de captación y retención precisos.",c:"info",a:"👥 Clientes"});
-  if(top&&bottom&&top.name!==bottom.name&&bestDow)recs.push({t:"Jugada combinada del Cerebro: los "+bestDow.dow+" (máximo tráfico) ofrece el paquete «"+top.name+" + "+bottom.name+"» — usas tu día fuerte y tu producto fuerte para arrastrar al débil.",c:"good",a:"🧠 Cerebro"});
+  if(top&&bottom&&top.name!==bottom.name&&bestDow)recs.push({t:"Jugada combinada del Cerebro: los "+bestDow.dow+" (máximo tráfico) ofrece el paquete «"+(top.nameBG||top.name)+" + "+(bottom.nameBG||bottom.name)+"» — usas tu día fuerte y tu producto fuerte para arrastrar al débil.",c:"good",a:"🧠 Cerebro"});
 
   el.innerHTML=`
   <div class="card"><div class="card-title">🧠 Cerebro PRO · ${c.name}</div>
@@ -1813,11 +1919,11 @@ function renderCerebro(){
   </div>
   <div class="card"><div class="card-title">💶 Precio por Minuto del Catálogo</div>
     <div style="font-size:11px;color:var(--dim);margin-bottom:6px">Qué masaje paga mejor tu tiempo (precio ÷ duración)</div>
-    ${ppmList.map((p,i)=>`<div class="pro-row"><span>${i===0?"🥇 ":i===ppmList.length-1?"🐢 ":""}${p.name}<div class="pro-sub">${p.duration} · ${p.price} €</div></span><div class="pro-val ${i===0?"gold":""}">${p.ppm.toFixed(2)} €/min</div></div>`).join("")}
+    ${ppmList.map((p,i)=>`<div class="pro-row"><span>${i===0?"🥇 ":i===ppmList.length-1?"🐢 ":""}${p.nameBG||p.name}<div class="pro-sub">${p.nameBG?p.name+" · ":""}${p.duration} · ${p.price} €</div></span><div class="pro-val ${i===0?"gold":""}">${p.ppm.toFixed(2)} €/min</div></div>`).join("")}
   </div>
   <div class="card"><div class="card-title">📈 Agente Ventas · ${scopeLabel}</div>
-    ${top?`<div class="pro-row"><span>🥇 Más vendido</span><div class="pro-val gold">${top.name}<div class="pro-sub">×${top.count} · ${ef(top.revenue)}</div></div></div>`:""}
-    ${bottom?`<div class="pro-row"><span>🐢 Menos vendido</span><div class="pro-val">${bottom.name}<div class="pro-sub">×${bottom.count} · ${ef(bottom.revenue)}</div></div></div>`:""}
+    ${top?`<div class="pro-row"><span>🥇 Más vendido</span><div class="pro-val gold">${top.nameBG||top.name}<div class="pro-sub">×${top.count} · ${ef(top.revenue)}</div></div></div>`:""}
+    ${bottom?`<div class="pro-row"><span>🐢 Menos vendido</span><div class="pro-val">${bottom.nameBG||bottom.name}<div class="pro-sub">×${bottom.count} · ${ef(bottom.revenue)}</div></div></div>`:""}
     ${unsold30.length?`<div class="pro-row"><span>🚨 Sin ventas 30+ días</span><div class="pro-val" style="color:var(--red)">${unsold30.length} masaje${unsold30.length>1?"s":""}</div></div>`:`<div class="pro-row"><span>✅ Catálogo activo</span><div class="pro-val green">todo se vende</div></div>`}
   </div>
   <div class="card"><div class="card-title">📅 Agente Tiempo · ${scopeLabel}</div>
