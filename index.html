@@ -604,7 +604,7 @@ const ICONS={good:"✅",warn:"⚠️",dead:"🔴",info:"💡"};
 const PAGE_NAMES=["Dashboard","Añadir día","Historial","Calendario","Análisis PRO","Simulador","Pagos","Exportar","Mi Valor Profesional","Configuración","Comparar Centros","Cerebro PRO"];
 const DEFAULT_CFG={lockMinutes:10,fatigueHours:45};
 // Versión visible de la app — mantener sincronizada con CACHE_NAME de sw.js
-const APP_VERSION="v43";
+const APP_VERSION="v44";
 document.addEventListener("DOMContentLoaded",()=>{const v=document.getElementById("gp-version");if(v)v.textContent="Guido PRO · "+APP_VERSION;});
 
 let allData={};  // { hotel5: {days,payments,goal,cfg}, aleksa: {...}, sanatorium: {...} }
@@ -1977,7 +1977,7 @@ function renderCerebro(){
     const exMini=c.massages.find(x=>x.miniOf===u.id);
     if(exMini)opts.push("ya existe su versión corta «"+nmM(exMini)+"» ("+exMini.duration+" · "+exMini.price+" €): úsala como puerta de entrada y propón el completo en la siguiente visita");
     else if(D>=45){const md=Math.max(20,Math.round(D*0.6/5)*5);const mp=Math.ceil(Math.max(u.price*0.65,md*Math.max(1.2,ppmO*1.05)));opts.push("versión mini de "+md+" min a "+mp+" € ("+(mp/md).toFixed(2).replace(".",",")+" €/min, más que el original) para que lo prueben");}
-    if(topCore&&topCore.id!==u.id)opts.push("paquete con tu estrella «"+nmM(topCore)+"» con 10-15% de descuento");
+    if(topCore&&topCore.id!==u.id)opts.push("ofrecerlo a quien ya repite «"+nmM(topCore)+"» como siguiente paso de su tratamiento (a precio de menú)");
     if(bestDow)opts.push("proponerlo en recepción los "+bestDow.dow+" (tu mejor día)");
     recs.push({t:r+opts.join("; ")+".",c:"warn",a:"💊 Ventas+Precios"});
   });
@@ -1989,11 +1989,11 @@ function renderCerebro(){
   if(bestDow&&worstDow&&bestDow.dow!==worstDow.dow&&bestDow.avg>worstDow.avg*1.5)recs.push({t:"Los "+bestDow.dow+" rindes "+ef(bestDow.avg)+"/día de media vs "+ef(worstDow.avg)+" los "+worstDow.dow+" — un "+Math.round((bestDow.avg/worstDow.avg-1)*100)+"% más. Prioriza pedir turnos de "+bestDow.dow+".",c:"info",a:"📅 Tiempo"});
   recs.push({t:"Trabajas mejor por las "+bestSlot+" ("+ef(bestSlot==="mañanas"?mornRev:aftRev)+" vs "+ef(bestSlot==="mañanas"?aftRev:mornRev)+"). Al negociar horarios, defiende ese bloque.",c:"info",a:"📅 Tiempo"});
   if(trackedNC>=5){
-    if(pctNew<20)recs.push({t:"Solo el "+pctNew.toFixed(0)+"% de tus masajes son de clientes nuevos: tu base es fiel pero necesitas captación. Acciones: perfil de Google Business activo, tarjeta \"5º masaje −50%\", pedir a los habituales que te recomienden (el boca a boca es tu canal #1).",c:"warn",a:"👥 Clientes"});
+    if(pctNew<20)recs.push({t:"Solo el "+pctNew.toFixed(0)+"% de tus masajes son de clientes nuevos: tu base es fiel pero necesitas captación. Acciones: perfil de Google Business activo, pedir una reseña en Google a cada cliente satisfecho, pedir a los habituales que te recomienden (el boca a boca es tu canal #1).",c:"warn",a:"👥 Clientes"});
     else if(pctNew>60)recs.push({t:"El "+pctNew.toFixed(0)+"% de tus masajes son clientes nuevos pero pocos repiten. Refuerza la retención: al terminar, agenda directamente la próxima sesión y explica el plan de tratamiento (\"con 4 sesiones más resolvemos esta contractura\").",c:"warn",a:"👥 Clientes"});
     else recs.push({t:"Buen equilibrio: "+pctNew.toFixed(0)+"% clientes nuevos, "+(100-pctNew).toFixed(0)+"% habituales. Mantén las dos palancas activas.",c:"good",a:"👥 Clientes"});
   } else recs.push({t:"Marca 🆕/🔁 en cada masaje que registres — con esos datos el agente de clientes podrá darte análisis de captación y retención precisos.",c:"info",a:"👥 Clientes"});
-  if(topCore&&bottom&&topCore.id!==bottom.id&&bestDow)recs.push({t:"Jugada combinada del Cerebro: los "+bestDow.dow+" (máximo tráfico) ofrece el paquete «"+(topCore.nameBG||topCore.name)+" + "+(bottom.nameBG||bottom.name)+"» — usas tu día fuerte y tu producto fuerte para arrastrar al débil.",c:"good",a:"🧠 Cerebro"});
+  if(topCore&&bottom&&topCore.id!==bottom.id&&bestDow)recs.push({t:"Jugada combinada del Cerebro: los "+bestDow.dow+" (máximo tráfico), a quien reserve «"+(topCore.nameBG||topCore.name)+"» proponle «"+(bottom.nameBG||bottom.name)+"» para su próxima visita, a precio de menú — usas tu día fuerte y tu producto fuerte para arrastrar al débil.",c:"good",a:"🧠 Cerebro"});
 
   el.innerHTML=`
   <div class="card"><div class="card-title">🧠 Cerebro PRO · ${c.name}</div>
@@ -2090,7 +2090,7 @@ function exportCerebroReport(){
   if(nnk.length){let ret=0;nnk.forEach(n=>{if(cDays().flatMap(d=>d.massages.map(x=>({...x,date:d.date}))).some(m=>m.cn&&normCN(m.cn)===n&&m.date>nn[n]))ret++;});
   o+="RETENCIÓN: "+ret+" de "+nnk.length+" nuevos volvieron ("+(ret/nnk.length*100).toFixed(0)+"%)\n\n";}
   o+="PRECIO POR MINUTO (mejor → peor)\n";ppm.forEach(x=>o+="  "+x.n+": "+x.p.toFixed(2)+" €/min\n");
-  o+="\n"+S+"\nPara Claude: analiza este mes contra el plan del Proyecto 10K, detecta cuellos de botella y dame las 3 acciones de mayor impacto para el próximo mes.\n"+S;
+  o+="\n"+S+"\nPara Claude: analiza este mes contra el plan del Proyecto 10K, detecta cuellos de botella y dame las 3 acciones de mayor impacto para el próximo mes. Regla: no se hacen descuentos en los masajes; propón estrategias sin rebajar precios.\n"+S;
   copyReport(o);
   localStorage.setItem("gp_rep_cerebro_"+c.key,from.slice(0,7));
 }
