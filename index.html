@@ -11,71 +11,72 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 :root {
+  --fs: 1.5; /* escala del texto (Configuración → Tamaño del texto) */
   --gold: #c9a84c; --gold2: #a07830; --bg: #0d0d0d; --bg2: #161410;
   --bg3: #1e1c18; --border: #2a2010; --text: #e8e0d0;
-  --muted: #8a7a60; --dim: #6a5a40; --green: #4caf80; --red: #cf4a4a; --blue: #4a8fbf;
+  --muted: #c0b193; --dim: #a8997c; /* v42: más contraste (≥6:1) para presbicia */ --green: #4caf80; --red: #cf4a4a; --blue: #4a8fbf;
   --c1: #c9a84c; --c2: #4a8fbf; --c3: #4abf7a;
 }
-html, body { background: var(--bg); color: var(--text); font-family: Georgia, serif; min-height: 100vh; font-size: 16px; }
+html, body { background: var(--bg); color: var(--text); font-family: Georgia, serif; min-height: 100vh; font-size: calc(16px*var(--fs)); }
 body { max-width: 500px; margin: 0 auto; padding-bottom: 100px; overflow-x: hidden; }
 
 /* ── PIN ── */
 #pin-screen { position: fixed; inset: 0; background: var(--bg); z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 30px; }
-.pin-logo { font-size: 52px; color: var(--gold); margin-bottom: 10px; }
-.pin-title { font-size: 24px; font-weight: 700; color: var(--gold); letter-spacing: 2px; margin-bottom: 6px; }
-.pin-sub { font-size: 15px; color: var(--muted); margin-bottom: 40px; }
+.pin-logo { font-size: max(52px,calc(20px*var(--fs))); color: var(--gold); margin-bottom: 10px; }
+.pin-title { font-size: max(24px,calc(20px*var(--fs))); font-weight: 700; color: var(--gold); letter-spacing: 2px; margin-bottom: 6px; }
+.pin-sub { font-size: calc(15px*var(--fs)); color: var(--muted); margin-bottom: 40px; }
 #pin-dots { display: flex; gap: 18px; margin-bottom: 36px; }
 .pin-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); transition: all 0.15s; }
 .pin-dot.filled { background: var(--gold); border-color: var(--gold); }
-#pin-error { font-size: 14px; color: #bf4a4a; margin-bottom: 16px; min-height: 20px; text-align: center; }
+#pin-error { font-size: calc(14px*var(--fs)); color: #ee6f6f; margin-bottom: 16px; min-height: 20px; text-align: center; }
 #pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; width: 100%; max-width: 290px; }
-.pin-key { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 20px 10px; font-size: 24px; font-weight: 700; color: var(--text); cursor: pointer; text-align: center; font-family: Georgia, serif; user-select: none; }
+.pin-key { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 20px 10px; font-size: max(24px,calc(20px*var(--fs))); font-weight: 700; color: var(--text); cursor: pointer; text-align: center; font-family: Georgia, serif; user-select: none; }
 .pin-key:active { background: var(--bg3); }
-.pin-key.del { font-size: 20px; color: var(--muted); }
+.pin-key.del { font-size: max(20px,calc(20px*var(--fs))); color: var(--muted); }
 .pin-key.empty { background: transparent; border-color: transparent; cursor: default; }
-#pin-change-btn { margin-top: 28px; background: none; border: none; color: var(--dim); font-size: 13px; cursor: pointer; font-family: Georgia, serif; text-decoration: underline; }
+#pin-change-btn { margin-top: 28px; background: none; border: none; color: var(--dim); font-size: calc(13px*var(--fs)); cursor: pointer; font-family: Georgia, serif; text-decoration: underline; }
 
 /* ── CENTER SELECTOR ── */
 #center-screen { position: fixed; inset: 0; background: var(--bg); z-index: 998; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 30px 24px; }
 #center-screen.show { display: flex; }
-.center-title { font-size: 28px; font-weight: 700; color: var(--gold); letter-spacing: 2px; margin-bottom: 6px; }
-.center-sub { font-size: 14px; color: var(--muted); margin-bottom: 40px; text-align: center; }
+.center-title { font-size: max(28px,calc(20px*var(--fs))); font-weight: 700; color: var(--gold); letter-spacing: 2px; margin-bottom: 6px; }
+.center-sub { font-size: calc(14px*var(--fs)); color: var(--muted); margin-bottom: 40px; text-align: center; }
 .center-btn { width: 100%; max-width: 320px; padding: 20px 24px; border-radius: 14px; border: 2px solid; cursor: pointer; font-family: Georgia, serif; margin-bottom: 14px; display: flex; align-items: center; gap: 16px; transition: all 0.2s; }
 .center-btn:active { opacity: 0.8; }
-.center-btn-icon { font-size: 28px; flex-shrink: 0; }
+.center-btn-icon { font-size: max(28px,calc(20px*var(--fs))); flex-shrink: 0; }
 .center-btn-info { text-align: left; }
-.center-btn-name { font-size: 17px; font-weight: 700; }
-.center-btn-meta { font-size: 12px; margin-top: 3px; opacity: 0.7; }
+.center-btn-name { font-size: calc(17px*var(--fs)); font-weight: 700; }
+.center-btn-meta { font-size: calc(12px*var(--fs)); margin-top: 3px; opacity: 0.7; }
 .center-btn-1 { background: #1a1408; border-color: var(--gold); color: var(--gold); }
 .center-btn-2 { background: #0a1420; border-color: var(--blue); color: var(--blue); }
 .center-btn-3 { background: #0a1a0a; border-color: var(--green); color: var(--green); }
 .center-btn-4 { background: #180a2a; border-color: #9a6abf; color: #9a6abf; }
-.m-desc { font-size: 11px; color: var(--dim); margin-top: 3px; line-height: 1.4; font-style: italic; }
+.m-desc { font-size: calc(11px*var(--fs)); color: var(--dim); margin-top: 3px; line-height: 1.4; }
 
 /* ── MODALS ── */
 .modal-overlay { display: none; position: fixed; inset: 0; background: #000c; z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
 .modal-overlay.open { display: flex; }
 .modal-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 100%; max-width: 340px; max-height: 90vh; overflow-y: auto; }
-.modal-box h3 { color: var(--gold); font-size: 17px; margin-bottom: 16px; }
-.modal-box input, .modal-box select, .modal-box textarea { width: 100%; background: var(--bg); border: 1px solid #333; border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: 16px; font-family: Georgia, serif; outline: none; margin-bottom: 10px; color-scheme: dark; resize: none; }
-.modal-box input[type=password] { font-size: 22px; font-family: monospace; letter-spacing: 10px; text-align: center; }
+.modal-box h3 { color: var(--gold); font-size: calc(17px*var(--fs)); margin-bottom: 16px; }
+.modal-box input, .modal-box select, .modal-box textarea { width: 100%; background: var(--bg); border: 1px solid #333; border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: calc(16px*var(--fs)); font-family: Georgia, serif; outline: none; margin-bottom: 10px; color-scheme: dark; resize: none; }
+.modal-box input[type=password] { font-size: max(22px,calc(20px*var(--fs))); font-family: monospace; letter-spacing: 10px; text-align: center; }
 .modal-btns { display: flex; gap: 10px; margin-top: 6px; }
-.modal-save { flex: 1; background: linear-gradient(135deg,var(--gold),var(--gold2)); border: none; border-radius: 9px; padding: 12px; color: #0d0d0d; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Georgia,serif; }
-.modal-cancel { flex: 1; background: var(--bg3); border: 1px solid #333; border-radius: 9px; padding: 12px; color: var(--muted); font-size: 15px; cursor: pointer; font-family: Georgia,serif; }
-.modal-err { font-size: 13px; color: #bf4a4a; min-height: 18px; margin-bottom: 4px; }
+.modal-save { flex: 1; background: linear-gradient(135deg,var(--gold),var(--gold2)); border: none; border-radius: 9px; padding: 12px; color: #0d0d0d; font-size: calc(15px*var(--fs)); font-weight: 700; cursor: pointer; font-family: Georgia,serif; }
+.modal-cancel { flex: 1; background: var(--bg3); border: 1px solid #333; border-radius: 9px; padding: 12px; color: var(--muted); font-size: calc(15px*var(--fs)); cursor: pointer; font-family: Georgia,serif; }
+.modal-err { font-size: calc(13px*var(--fs)); color: #ee6f6f; min-height: 18px; margin-bottom: 4px; }
 
 /* ── HEADER ── */
 #header { border-bottom: 1px solid var(--border); padding: 12px 15px; display: flex; align-items: center; gap: 11px; position: sticky; top: 0; z-index: 100; }
-#hamburger { background: none; border: none; color: var(--gold); font-size: 28px; cursor: pointer; padding: 0; line-height: 1; flex-shrink: 0; }
-.h-logo { font-size: 20px; flex-shrink: 0; }
+#hamburger { background: none; border: none; color: var(--gold); font-size: max(28px,calc(20px*var(--fs))); cursor: pointer; padding: 0; line-height: 1; flex-shrink: 0; }
+.h-logo { font-size: max(20px,calc(20px*var(--fs))); flex-shrink: 0; }
 .h-info { flex: 1; }
-.h-title { font-size: 15px; font-weight: 700; letter-spacing: 1px; }
-.h-center { font-size: 10px; margin-top: 1px; opacity: 0.8; }
+.h-title { font-size: calc(15px*var(--fs)); font-weight: 700; letter-spacing: 1px; }
+.h-center { font-size: calc(10px*var(--fs)); margin-top: 1px; opacity: 0.8; }
 #h-accum { text-align: right; display: none; }
-.h-total { font-size: 15px; font-weight: 700; }
-.h-label { font-size: 10px; margin-top: 1px; opacity: 0.7; }
-#switch-center-btn { background: none; border: 1px solid; border-radius: 7px; padding: 5px 9px; font-size: 11px; cursor: pointer; font-family: Georgia, serif; flex-shrink: 0; }
-#current-page { background: #0f0f0d; border-bottom: 1px solid var(--border); padding: 8px 18px; font-size: 14px; color: var(--muted); }
+.h-total { font-size: calc(15px*var(--fs)); font-weight: 700; }
+.h-label { font-size: calc(10px*var(--fs)); margin-top: 1px; opacity: 0.7; }
+#switch-center-btn { background: none; border: 1px solid; border-radius: 7px; padding: 5px 9px; font-size: calc(11px*var(--fs)); cursor: pointer; font-family: Georgia, serif; flex-shrink: 0; }
+#current-page { background: #0f0f0d; border-bottom: 1px solid var(--border); padding: 8px 18px; font-size: calc(14px*var(--fs)); color: var(--muted); }
 #current-page span { font-weight: 700; }
 
 /* ── DRAWER ── */
@@ -84,18 +85,18 @@ body { max-width: 500px; margin: 0 auto; padding-bottom: 100px; overflow-x: hidd
 #drawer { position: fixed; top: 0; left: -310px; width: 290px; height: 100vh; background: #0f0e0a; border-right: 1px solid var(--border); z-index: 201; transition: left 0.28s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; }
 #drawer.open { left: 0; }
 .drawer-header { padding: 24px 20px 16px; border-bottom: 1px solid var(--border); }
-.drawer-app-name { font-size: 20px; font-weight: 700; color: var(--gold); letter-spacing: 1px; }
-.drawer-center-name { font-size: 13px; margin-top: 4px; }
+.drawer-app-name { font-size: max(20px,calc(20px*var(--fs))); font-weight: 700; color: var(--gold); letter-spacing: 1px; }
+.drawer-center-name { font-size: calc(13px*var(--fs)); margin-top: 4px; }
 .drawer-nav { flex: 1; padding: 10px 0; overflow-y: auto; }
 .drawer-item { display: flex; align-items: center; gap: 14px; padding: 14px 20px; cursor: pointer; transition: background 0.15s; border-left: 3px solid transparent; }
 .drawer-item:active { background: var(--bg3); }
 .drawer-item.active { background: #1a1408; border-left-color: var(--gold); }
-.drawer-icon { font-size: 19px; width: 24px; text-align: center; flex-shrink: 0; }
-.drawer-label { font-size: 15px; color: var(--text); font-family: Georgia, serif; }
+.drawer-icon { font-size: calc(19px*var(--fs)); width: 24px; text-align: center; flex-shrink: 0; }
+.drawer-label { font-size: calc(15px*var(--fs)); color: var(--text); font-family: Georgia, serif; }
 .drawer-item.active .drawer-label { color: var(--gold); font-weight: 700; }
-.drawer-section { padding: 10px 20px 4px; font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+.drawer-section { padding: 10px 20px 4px; font-size: calc(10px*var(--fs)); color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
 .drawer-footer { padding: 14px 18px; border-top: 1px solid var(--border); display: flex; gap: 7px; flex-wrap: wrap; }
-.drawer-footer button { flex: 1; min-width: 80px; background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); padding: 8px 8px; font-size: 11px; cursor: pointer; font-family: Georgia, serif; text-align: center; }
+.drawer-footer button { flex: 1; min-width: 80px; background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); padding: 8px 8px; font-size: calc(11px*var(--fs)); cursor: pointer; font-family: Georgia, serif; text-align: center; }
 
 /* ── BODY ── */
 #body { padding: 13px 13px 20px; }
@@ -104,21 +105,22 @@ body { max-width: 500px; margin: 0 auto; padding-bottom: 100px; overflow-x: hidd
 
 /* ── CARDS ── */
 .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
-.card-title { font-size: 14px; font-weight: 700; color: var(--gold); margin-bottom: 11px; border-bottom: 1px solid var(--border); padding-bottom: 7px; }
+.card-title { font-size: calc(14px*var(--fs)); font-weight: 700; color: var(--gold); margin-bottom: 11px; border-bottom: 1px solid var(--border); padding-bottom: 7px; }
 
 /* ── FORM ── */
-.lbl { display: block; font-size: 11px; color: var(--muted); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+.lbl { display: block; font-size: calc(11px*var(--fs)); color: var(--muted); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
 input[type=date], input[type=time], input[type=number], input[type=text], textarea, select {
   width: 100%; background: var(--bg); border: 1px solid #333; border-radius: 8px;
-  padding: 10px 12px; color: var(--text); font-size: 16px; font-family: Georgia, serif;
+  padding: 10px 12px; color: var(--text); font-size: calc(16px*var(--fs)); font-family: Georgia, serif;
   outline: none; color-scheme: dark; resize: none;
 }
-textarea { min-height: 60px; font-size: 14px; }
-.row2 { display: flex; gap: 10px; margin-top: 10px; }
-.row2 > div { flex: 1; }
+textarea { min-height: 60px; font-size: calc(14px*var(--fs)); }
+.row2 { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.row2 > div { flex: 1 1 calc(115px*var(--fs)); min-width: 0; }
+input, select, textarea { max-width: 100%; }
 
 /* ── NOTICES ── */
-.notice { border-radius: 10px; padding: 10px 13px; margin-bottom: 11px; font-size: 13px; display: none; line-height: 1.5; }
+.notice { border-radius: 10px; padding: 10px 13px; margin-bottom: 11px; font-size: calc(13px*var(--fs)); display: none; line-height: 1.5; }
 .notice.green { background: #0a2010; border: 1px solid #1a5030; color: var(--green); }
 .notice.blue { background: #0a1a2a; border: 1px solid #1a3a5a; color: var(--blue); }
 .notice.amber { background: #1a1000; border: 1px solid #3a2800; color: #bf8a2a; }
@@ -129,167 +131,168 @@ textarea { min-height: 60px; font-size: 14px; }
 /* ── INSTALL ── */
 #install-banner { display: none; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 11px; align-items: center; gap: 10px; }
 #install-banner.show { display: flex; }
-#install-btn { background: linear-gradient(135deg,var(--gold),var(--gold2)); border: none; border-radius: 8px; color: #0d0d0d; padding: 7px 12px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
-#install-close { background: none; border: none; color: #555; font-size: 20px; cursor: pointer; margin-left: auto; }
+#install-btn { background: linear-gradient(135deg,var(--gold),var(--gold2)); border: none; border-radius: 8px; color: #0d0d0d; padding: 7px 12px; font-size: calc(13px*var(--fs)); font-weight: 700; cursor: pointer; white-space: nowrap; }
+#install-close { background: none; border: none; color: #9a9a8e; font-size: max(20px,calc(20px*var(--fs))); cursor: pointer; margin-left: auto; }
 
 /* ── DASHBOARD ── */
 .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 12px; }
 .dash-box { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 13px; text-align: center; }
-.dash-val { font-size: 22px; font-weight: 700; color: var(--text); }
-.dash-val.gold { color: var(--gold); font-size: 18px; }
+.dash-val { font-size: max(22px,calc(20px*var(--fs))); font-weight: 700; color: var(--text); }
+.dash-val.gold { color: var(--gold); font-size: calc(18px*var(--fs)); }
 .dash-val.green { color: var(--green); }
-.dash-lbl { font-size: 11px; color: var(--dim); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.4px; }
+.dash-lbl { font-size: calc(11px*var(--fs)); color: var(--dim); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.4px; }
 .dash-pending { background: var(--bg); border: 2px solid #3a2800; border-radius: 12px; padding: 16px; margin-bottom: 12px; text-align: center; }
-.dash-pending-lbl { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
-.dash-pending-val { font-size: 32px; font-weight: 700; color: #bf8a2a; }
-.dash-pending-meta { font-size: 12px; color: var(--dim); margin-top: 5px; }
+.dash-pending-lbl { font-size: calc(11px*var(--fs)); color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+.dash-pending-val { font-size: max(32px,calc(20px*var(--fs))); font-weight: 700; color: #bf8a2a; }
+.dash-pending-meta { font-size: calc(12px*var(--fs)); color: var(--dim); margin-top: 5px; }
 .center-summary { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 9px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-.cs-name { font-size: 14px; font-weight: 700; }
-.cs-meta { font-size: 11px; color: var(--dim); margin-top: 2px; }
-.cs-total { font-size: 16px; font-weight: 700; }
-.cs-pending { font-size: 11px; text-align: right; margin-top: 2px; }
+.cs-name { font-size: calc(14px*var(--fs)); font-weight: 700; }
+.cs-meta { font-size: calc(11px*var(--fs)); color: var(--dim); margin-top: 2px; }
+.cs-total { font-size: calc(16px*var(--fs)); font-weight: 700; }
+.cs-pending { font-size: calc(11px*var(--fs)); text-align: right; margin-top: 2px; }
 
 /* ── MASSAGES ── */
 .massage-row { display: flex; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--bg3); gap: 8px; }
 .massage-row:last-child { border-bottom: none; }
-.m-name { font-size: 13px; color: var(--text); line-height: 1.35; }
-.m-meta { font-size: 11px; color: var(--dim); margin-top: 2px; }
+.m-name { font-size: calc(13px*var(--fs)); color: var(--text); line-height: 1.35; }
+.m-meta { font-size: calc(11px*var(--fs)); color: var(--dim); margin-top: 2px; }
 .m-es { color: var(--gold); }
-.m-zone { font-size: 11.5px; color: #b8ac94; margin-top: 3px; line-height: 1.4; }
-.m-tec { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+.m-zone { font-size: calc(11.5px*var(--fs)); color: #b8ac94; margin-top: 3px; line-height: 1.4; }
+.m-tec { font-size: calc(11px*var(--fs)); color: var(--muted); margin-top: 2px; line-height: 1.4; }
 .counter { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-.cnt-btn { width: 30px; height: 30px; background: var(--bg3); border: 1px solid #333; border-radius: 6px; color: var(--gold); font-size: 19px; cursor: pointer; display: flex; align-items: center; justify-content: center; user-select: none; }
-.cnt-num { font-size: 15px; font-weight: 700; color: var(--gold); min-width: 20px; text-align: center; }
+.cnt-btn { width: 30px; height: 30px; background: var(--bg3); border: 1px solid #333; border-radius: 6px; color: var(--gold); font-size: calc(19px*var(--fs)); cursor: pointer; display: flex; align-items: center; justify-content: center; user-select: none; }
+.cnt-num { font-size: calc(15px*var(--fs)); font-weight: 700; color: var(--gold); min-width: 20px; text-align: center; }
 
 /* ── PREVIEW ── */
-.preview-box { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 11px; margin-top: 8px; font-size: 13px; color: var(--muted); }
+.preview-box { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 11px; margin-top: 8px; font-size: calc(13px*var(--fs)); color: var(--muted); }
 .preview-box span { color: var(--gold); font-weight: 700; }
-.total-row { display: flex; justify-content: space-between; font-size: 14px; color: #888; padding: 5px 0; border-bottom: 1px solid #1a1a18; }
-.total-final { display: flex; justify-content: space-between; font-size: 17px; font-weight: 700; color: var(--gold); padding: 8px 0 2px; margin-top: 3px; }
+.total-row { display: flex; justify-content: space-between; font-size: calc(14px*var(--fs)); color: #888; padding: 5px 0; border-bottom: 1px solid #1a1a18; }
+.total-final { display: flex; justify-content: space-between; font-size: calc(17px*var(--fs)); font-weight: 700; color: var(--gold); padding: 8px 0 2px; margin-top: 3px; }
 
 /* ── BUTTONS ── */
-.btn-gold { width: 100%; padding: 13px; background: linear-gradient(135deg,var(--gold),var(--gold2)); border: none; border-radius: 11px; color: #0d0d0d; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Georgia, serif; margin-top: 3px; }
+.btn-gold { width: 100%; padding: 13px; background: linear-gradient(135deg,var(--gold),var(--gold2)); border: none; border-radius: 11px; color: #0d0d0d; font-size: calc(15px*var(--fs)); font-weight: 700; cursor: pointer; font-family: Georgia, serif; margin-top: 3px; }
 .btn-gold:disabled { background: var(--bg3); color: #444; cursor: not-allowed; }
-.btn-ghost { width: 100%; padding: 10px; background: none; border: 1px solid #333; border-radius: 11px; color: var(--muted); font-size: 14px; cursor: pointer; font-family: Georgia, serif; margin-top: 7px; display: none; }
-.btn-green { width: 100%; padding: 12px; background: linear-gradient(135deg,#4abf7a,#2a8f5a); border: none; border-radius: 11px; color: #0d0d0d; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Georgia,serif; margin-top: 11px; }
-.btn-blue { width: 100%; padding: 12px; background: linear-gradient(135deg,#2a6abf,#1a4a8f); border: none; border-radius: 11px; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Georgia,serif; margin-top: 8px; }
+.btn-ghost { width: 100%; padding: 10px; background: none; border: 1px solid #333; border-radius: 11px; color: var(--muted); font-size: calc(14px*var(--fs)); cursor: pointer; font-family: Georgia, serif; margin-top: 7px; display: none; }
+.btn-green { width: 100%; padding: 12px; background: linear-gradient(135deg,#4abf7a,#2a8f5a); border: none; border-radius: 11px; color: #0d0d0d; font-size: calc(15px*var(--fs)); font-weight: 700; cursor: pointer; font-family: Georgia,serif; margin-top: 11px; }
+.btn-blue { width: 100%; padding: 12px; background: linear-gradient(135deg,#2a6abf,#1a4a8f); border: none; border-radius: 11px; color: #fff; font-size: calc(15px*var(--fs)); font-weight: 700; cursor: pointer; font-family: Georgia,serif; margin-top: 8px; }
 
 /* ── HISTORY ── */
 .day-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 9px; overflow: hidden; }
 .day-card.holiday-day { border-color: #5a3000; }
 .day-hdr { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; cursor: pointer; }
-.day-date-txt { font-size: 15px; font-weight: 700; color: var(--text); }
-.day-dow { font-size: 11px; color: var(--dim); }
-.day-meta-txt { font-size: 11px; color: var(--dim); margin-top: 2px; }
-.day-total-txt { font-size: 15px; font-weight: 700; color: var(--gold); text-align: right; }
-.day-eph-txt { font-size: 11px; color: var(--dim); text-align: right; margin-top: 1px; }
+.day-date-txt { font-size: calc(15px*var(--fs)); font-weight: 700; color: var(--text); }
+.day-dow { font-size: calc(11px*var(--fs)); color: var(--dim); }
+.day-meta-txt { font-size: calc(11px*var(--fs)); color: var(--dim); margin-top: 2px; }
+.day-total-txt { font-size: calc(15px*var(--fs)); font-weight: 700; color: var(--gold); text-align: right; }
+.day-eph-txt { font-size: calc(11px*var(--fs)); color: var(--dim); text-align: right; margin-top: 1px; }
 .day-detail { padding: 11px 14px 13px; border-top: 1px solid var(--bg3); background: var(--bg); display: none; }
 .day-detail.open { display: block; }
-.d-row { display: flex; justify-content: space-between; font-size: 13px; color: #888; padding: 4px 0; border-bottom: 1px solid #1a1a18; }
+.d-row { display: flex; justify-content: space-between; font-size: calc(13px*var(--fs)); color: #888; padding: 4px 0; border-bottom: 1px solid #1a1a18; }
 .d-row span:last-child { color: var(--gold); }
 .action-btns { display: flex; gap: 8px; margin-top: 11px; flex-wrap: wrap; }
-.edit-btn { flex: 1; background: #0a1a2a; border: 1px solid #1a3a5a; border-radius: 7px; color: var(--blue); padding: 8px 9px; font-size: 12px; cursor: pointer; font-family: Georgia, serif; }
-.del-btn { background: none; border: 1px solid #3a1010; border-radius: 7px; color: #804040; padding: 8px 12px; font-size: 12px; cursor: pointer; font-family: Georgia, serif; }
-.wa-btn { background: #0a2a10; border: 1px solid #1a5a20; border-radius: 7px; color: #4abf7a; padding: 8px 10px; font-size: 12px; cursor: pointer; font-family: Georgia, serif; }
-.email-btn { background: #0a1020; border: 1px solid #1a2a4a; border-radius: 7px; color: #6a8abf; padding: 8px 10px; font-size: 12px; cursor: pointer; font-family: Georgia, serif; }
+.edit-btn { flex: 1; background: #0a1a2a; border: 1px solid #1a3a5a; border-radius: 7px; color: var(--blue); padding: 8px 9px; font-size: calc(12px*var(--fs)); cursor: pointer; font-family: Georgia, serif; }
+.del-btn { background: none; border: 1px solid #3a1010; border-radius: 7px; color: #e07474; padding: 8px 12px; font-size: calc(12px*var(--fs)); cursor: pointer; font-family: Georgia, serif; }
+.wa-btn { background: #0a2a10; border: 1px solid #1a5a20; border-radius: 7px; color: #4abf7a; padding: 8px 10px; font-size: calc(12px*var(--fs)); cursor: pointer; font-family: Georgia, serif; }
+.email-btn { background: #0a1020; border: 1px solid #1a2a4a; border-radius: 7px; color: #6a8abf; padding: 8px 10px; font-size: calc(12px*var(--fs)); cursor: pointer; font-family: Georgia, serif; }
 .del-confirm { display: flex; gap: 8px; margin-top: 11px; }
-.del-yes { background: #3a1010; border: none; border-radius: 7px; color: #ff6060; padding: 8px 13px; font-size: 12px; cursor: pointer; font-family: Georgia, serif; }
-.del-no { background: #1a1a18; border: 1px solid #333; border-radius: 7px; color: #aaa; padding: 8px 13px; font-size: 12px; cursor: pointer; font-family: Georgia, serif; }
-.empty { text-align: center; color: #555; padding: 40px 20px; line-height: 2.2; font-size: 15px; }
+.del-yes { background: #3a1010; border: none; border-radius: 7px; color: #ff6060; padding: 8px 13px; font-size: calc(12px*var(--fs)); cursor: pointer; font-family: Georgia, serif; }
+.del-no { background: #1a1a18; border: 1px solid #333; border-radius: 7px; color: #aaa; padding: 8px 13px; font-size: calc(12px*var(--fs)); cursor: pointer; font-family: Georgia, serif; }
+.empty { text-align: center; color: #9a9a8e; padding: 40px 20px; line-height: 2.2; font-size: calc(15px*var(--fs)); }
 
 /* ── PRO ── */
 .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 11px; }
 .stat-box { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center; }
-.stat-val { font-size: 20px; font-weight: 700; color: var(--text); }
-.stat-val.gold { font-size: 14px; color: var(--gold); }
-.stat-lbl { font-size: 10px; color: var(--dim); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.4px; }
-.pro-row { display: flex; justify-content: space-between; align-items: flex-start; font-size: 13px; color: #888; padding: 6px 0; border-bottom: 1px solid #1a1a18; }
+.stat-val { font-size: max(20px,calc(20px*var(--fs))); font-weight: 700; color: var(--text); }
+.stat-val.gold { font-size: calc(14px*var(--fs)); color: var(--gold); }
+.stat-lbl { font-size: calc(10px*var(--fs)); color: var(--dim); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.4px; }
+.pro-row { display: flex; justify-content: space-between; align-items: flex-start; font-size: calc(13px*var(--fs)); color: #888; padding: 6px 0; border-bottom: 1px solid #1a1a18; }
 .pro-val { color: var(--text); text-align: right; }
 .pro-val.gold { color: var(--gold); font-weight: 700; }
-.pro-sub { font-size: 10px; color: var(--dim); }
-.insight { display: flex; gap: 8px; padding: 8px 10px; background: var(--bg); border-radius: 9px; margin-bottom: 6px; font-size: 13px; color: #aaa; line-height: 1.6; }
+.pro-sub { font-size: calc(10px*var(--fs)); color: var(--dim); }
+.insight { display: flex; gap: 8px; padding: 8px 10px; background: var(--bg); border-radius: 9px; margin-bottom: 6px; font-size: calc(13px*var(--fs)); color: #aaa; line-height: 1.6; }
 .insight.good { border: 1px solid #4abf7a33; }
 .insight.warn { border: 1px solid #bf8f3a33; }
 .insight.dead { border: 1px solid #bf4a4a33; }
 .insight.info { border: 1px solid #4a8fbf33; }
 .rank-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #1a1a18; gap: 8px; }
 .rank-left { display: flex; align-items: flex-start; gap: 8px; flex: 1; }
-.rank-medal { font-size: 15px; flex-shrink: 0; }
-.rank-name { font-size: 13px; color: var(--text); line-height: 1.3; }
-.rank-sub { font-size: 10px; color: var(--dim); margin-top: 1px; }
+.rank-medal { font-size: calc(15px*var(--fs)); flex-shrink: 0; }
+.rank-name { font-size: calc(13px*var(--fs)); color: var(--text); line-height: 1.3; }
+.rank-sub { font-size: calc(10px*var(--fs)); color: var(--dim); margin-top: 1px; }
 .rank-right { text-align: right; flex-shrink: 0; }
-.rank-earn { font-size: 13px; font-weight: 700; color: var(--gold); }
-.rank-earn-sub { font-size: 10px; color: var(--dim); }
+.rank-earn { font-size: calc(13px*var(--fs)); font-weight: 700; color: var(--gold); }
+.rank-earn-sub { font-size: calc(10px*var(--fs)); color: var(--dim); }
 .goal-bar-wrap { background: var(--bg); border-radius: 100px; height: 9px; overflow: hidden; margin: 7px 0 3px; }
 .goal-bar { height: 100%; background: linear-gradient(90deg,var(--gold2),var(--gold)); border-radius: 100px; transition: width 0.5s; }
-.goal-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); }
+.goal-labels { display: flex; justify-content: space-between; font-size: calc(11px*var(--fs)); color: var(--dim); }
 .record-box { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #1a1a18; }
-.record-label { font-size: 13px; color: #888; }
-.record-val { font-size: 14px; font-weight: 700; color: var(--gold); }
-.record-date { font-size: 10px; color: var(--dim); }
+.record-label { font-size: calc(13px*var(--fs)); color: #888; }
+.record-val { font-size: calc(14px*var(--fs)); font-weight: 700; color: var(--gold); }
+.record-date { font-size: calc(10px*var(--fs)); color: var(--dim); }
 
 /* ── CHART ── */
 .chart-wrap { width: 100%; padding-bottom: 4px; }
 .chart-bars { display: flex; align-items: flex-end; gap: 3px; height: 110px; width: 100%; }
 .chart-bar-wrap { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 0; }
 .chart-bar { width: 100%; border-radius: 3px 3px 0 0; transition: height 0.4s; min-height: 2px; }
-.chart-bar-lbl { font-size: 8px; color: var(--dim); margin-top: 3px; text-align: center; width: 100%; overflow: hidden; white-space: nowrap; }
-.chart-bar-val { font-size: 8px; color: var(--gold); margin-bottom: 2px; text-align: center; width: 100%; overflow: hidden; white-space: nowrap; }
+.chart-bar-lbl { font-size: calc(8px*var(--fs)); color: var(--dim); margin-top: 3px; text-align: center; width: 100%; overflow: hidden; white-space: nowrap; }
+.chart-bar-val { font-size: calc(8px*var(--fs)); color: var(--gold); margin-bottom: 2px; text-align: center; width: 100%; overflow: hidden; white-space: nowrap; }
 
 /* ── CALENDAR ── */
 .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 11px; }
-.cal-title { font-size: 15px; font-weight: 700; color: var(--gold); }
-.cal-nav { background: none; border: 1px solid var(--border); border-radius: 7px; color: var(--gold); padding: 5px 11px; font-size: 16px; cursor: pointer; }
+.cal-title { font-size: calc(15px*var(--fs)); font-weight: 700; color: var(--gold); }
+.cal-nav { background: none; border: 1px solid var(--border); border-radius: 7px; color: var(--gold); padding: 5px 11px; font-size: calc(16px*var(--fs)); cursor: pointer; }
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
-.cal-dow { text-align: center; font-size: 10px; color: var(--dim); padding: 3px 0; }
-.cal-day { height: 42px; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 7px; font-size: 12px; cursor: pointer; overflow: hidden; }
+.cal-dow { text-align: center; font-size: calc(10px*var(--fs)); color: var(--dim); padding: 3px 0; }
+.cal-day { height: 42px; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 7px; font-size: calc(12px*var(--fs)); cursor: pointer; overflow: hidden; }
 .cal-day.empty { background: transparent; cursor: default; }
-.cal-day.weekend { background: #1a1a18; color: #555; }
+.cal-day.weekend { background: #1a1a18; color: #9a9a8e; }
 .cal-day.holiday { background: #2a1800; color: #ffaa44; border: 1px solid #5a3000; }
 .cal-day.worked { background: #0a2010; color: var(--green); border: 1px solid #1a5030; }
-.cal-day.no-work { background: #1a0a0a; color: #804040; border: 1px solid #3a1010; }
+.cal-day.no-work { background: #1a0a0a; color: #e07474; border: 1px solid #3a1010; }
 .cal-day.today-marker { outline: 2px solid var(--gold); }
-.cal-day-num { font-size: 13px; font-weight: 700; }
+.cal-day-num { font-size: calc(13px*var(--fs)); font-weight: 700; }
 .cal-dot { width: 4px; height: 4px; border-radius: 50%; margin-top: 2px; }
 .cal-legend { display: flex; gap: 10px; margin-top: 9px; flex-wrap: wrap; }
-.cal-legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--dim); }
+.cal-legend-item { display: flex; align-items: center; gap: 4px; font-size: calc(10px*var(--fs)); color: var(--dim); }
 .cal-legend-dot { width: 9px; height: 9px; border-radius: 2px; }
 
 /* ── SIMULATOR ── */
 .sim-result { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 13px; margin-top: 11px; }
-.sim-line { display: flex; justify-content: space-between; font-size: 13px; color: #888; padding: 4px 0; border-bottom: 1px solid #1a1a18; }
-.sim-total { display: flex; justify-content: space-between; font-size: 17px; font-weight: 700; color: var(--gold); padding: 8px 0 0; margin-top: 3px; }
+.sim-line { display: flex; justify-content: space-between; font-size: calc(13px*var(--fs)); color: #888; padding: 4px 0; border-bottom: 1px solid #1a1a18; }
+.sim-total { display: flex; justify-content: space-between; font-size: calc(17px*var(--fs)); font-weight: 700; color: var(--gold); padding: 8px 0 0; margin-top: 3px; }
 
 /* ── PAGOS ── */
 .pending-box { background: var(--bg); border: 1px solid #3a2800; border-radius: 11px; padding: 14px; margin-bottom: 11px; }
-.pending-lbl { font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-.pending-val { font-size: 26px; font-weight: 700; color: #bf8a2a; }
-.pending-meta { font-size: 12px; color: var(--dim); margin-top: 4px; }
+.pending-lbl { font-size: calc(10px*var(--fs)); color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.pending-val { font-size: max(26px,calc(20px*var(--fs))); font-weight: 700; color: #bf8a2a; }
+.pending-meta { font-size: calc(12px*var(--fs)); color: var(--dim); margin-top: 4px; }
 .pay-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #1a1a18; }
-.pay-date { font-size: 13px; color: var(--text); }
-.pay-note { font-size: 11px; color: var(--dim); margin-top: 1px; }
-.pay-amount { font-size: 14px; font-weight: 700; color: var(--green); }
-.pay-del { background: none; border: none; color: #804040; font-size: 19px; cursor: pointer; padding: 0 3px; }
+.pay-date { font-size: calc(13px*var(--fs)); color: var(--text); }
+.pay-note { font-size: calc(11px*var(--fs)); color: var(--dim); margin-top: 1px; }
+.pay-amount { font-size: calc(14px*var(--fs)); font-weight: 700; color: var(--green); }
+.pay-del { background: none; border: none; color: #e07474; font-size: calc(19px*var(--fs)); cursor: pointer; padding: 0 3px; }
 .month-pay-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #1a1a18; }
-.month-pay-name { font-size: 13px; color: var(--text); }
+.month-pay-name { font-size: calc(13px*var(--fs)); color: var(--text); }
 .month-pay-vals { text-align: right; }
-.month-pay-earned { font-size: 13px; color: var(--gold); }
-.month-pay-paid { font-size: 11px; color: var(--green); }
-.month-pay-pending { font-size: 11px; color: #bf8a2a; }
+.month-pay-earned { font-size: calc(13px*var(--fs)); color: var(--gold); }
+.month-pay-paid { font-size: calc(11px*var(--fs)); color: var(--green); }
+.month-pay-pending { font-size: calc(11px*var(--fs)); color: #bf8a2a; }
 
 /* ── EXPORT ── */
 .period-btns { display: flex; gap: 7px; margin-bottom: 11px; flex-wrap: wrap; }
-.period-btn { flex: 1; min-width: 80px; padding: 8px 4px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-size: 12px; cursor: pointer; font-family: Georgia, serif; text-align: center; }
+.period-btn { flex: 1; min-width: 80px; padding: 8px 4px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-size: calc(12px*var(--fs)); cursor: pointer; font-family: Georgia, serif; text-align: center; }
 .period-btn.active { background: var(--bg3); border-color: var(--gold); color: var(--gold); }
-.export-output { background: var(--bg); border: 1px solid #333; border-radius: 9px; padding: 11px; font-size: 11px; color: #aaa; white-space: pre-wrap; font-family: monospace; line-height: 1.7; max-height: 360px; overflow-y: auto; margin-top: 11px; }
-.btn-copy { width: 100%; padding: 12px; background: linear-gradient(135deg,var(--gold),var(--gold2)); border: none; border-radius: 10px; color: #0d0d0d; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Georgia, serif; margin-top: 9px; }
+.export-output { background: var(--bg); border: 1px solid #333; border-radius: 9px; padding: 11px; font-size: calc(11px*var(--fs)); color: #aaa; white-space: pre-wrap; font-family: monospace; line-height: 1.7; max-height: 360px; overflow-y: auto; margin-top: 11px; }
+.btn-copy { width: 100%; padding: 12px; background: linear-gradient(135deg,var(--gold),var(--gold2)); border: none; border-radius: 10px; color: #0d0d0d; font-size: calc(15px*var(--fs)); font-weight: 700; cursor: pointer; font-family: Georgia, serif; margin-top: 9px; }
 
 /* ── CONFIG ── */
-.config-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid #1a1a18; gap: 10px; }
-.config-label { font-size: 13px; color: var(--text); flex: 1; }
-.config-sub { font-size: 11px; color: var(--dim); margin-top: 2px; }
-.config-input { width: 90px; background: var(--bg); border: 1px solid #333; border-radius: 7px; padding: 7px 9px; color: var(--text); font-size: 14px; font-family: Georgia, serif; outline: none; text-align: right; color-scheme: dark; flex-shrink: 0; }
-.holiday-tag { display: inline-block; background: #2a1800; border: 1px solid #5a3000; border-radius: 5px; color: #ffaa44; font-size: 11px; padding: 3px 7px; margin: 2px; }
+.config-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid #1a1a18; gap: 10px; }
+.config-row > div:first-child { flex: 1 1 150px; min-width: 0; }
+.config-label { font-size: calc(13px*var(--fs)); color: var(--text); flex: 1; }
+.config-sub { font-size: calc(11px*var(--fs)); color: var(--dim); margin-top: 2px; }
+.config-input { width: 90px; background: var(--bg); border: 1px solid #333; border-radius: 7px; padding: 7px 9px; color: var(--text); font-size: calc(14px*var(--fs)); font-family: Georgia, serif; outline: none; text-align: right; color-scheme: dark; flex-shrink: 0; }
+.holiday-tag { display: inline-block; background: #2a1800; border: 1px solid #5a3000; border-radius: 5px; color: #ffaa44; font-size: calc(11px*var(--fs)); padding: 3px 7px; margin: 2px; }
 
 @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-9px)} 75%{transform:translateX(9px)} }
 </style>
@@ -317,7 +320,7 @@ textarea { min-height: 60px; font-size: 14px; }
 
 <!-- CENTER SELECTOR -->
 <div id="center-screen">
-  <div style="font-size:36px;color:var(--gold);margin-bottom:12px">✦</div>
+  <div style="font-size:max(36px,calc(20px*var(--fs)));color:var(--gold);margin-bottom:12px">✦</div>
   <div class="center-title">GUIDO PRO</div>
   <div class="center-sub">Selecciona el centro de trabajo</div>
   <button class="center-btn center-btn-1" onclick="selectCenter(0)">
@@ -393,7 +396,7 @@ textarea { min-height: 60px; font-size: 14px; }
     <button onclick="closeDrawer();exportBackup()">💾 Backup</button>
     <button onclick="closeDrawer();showCenterScreen()">🔄 Centro</button>
   </div>
-  <div id="gp-version" style="text-align:center;font-size:11px;color:var(--muted);padding:6px 0 12px"></div>
+  <div id="gp-version" style="text-align:center;font-size:calc(11px*var(--fs));color:var(--muted);padding:6px 0 12px"></div>
 </div>
 
 <!-- HEADER -->
@@ -421,7 +424,7 @@ textarea { min-height: 60px; font-size: 14px; }
     <div class="notice holiday" id="notice-holiday"></div>
     <div class="notice fatigue" id="notice-fatigue"></div>
     <div id="install-banner">
-      <div style="flex:1;font-size:12px;color:var(--muted);line-height:1.4">📲 <strong style="color:var(--gold)">Instalar Guido PRO</strong></div>
+      <div style="flex:1;font-size:calc(12px*var(--fs));color:var(--muted);line-height:1.4">📲 <strong style="color:var(--gold)">Instalar Guido PRO</strong></div>
       <button id="install-btn" onclick="installApp()">Instalar</button>
       <button id="install-close" onclick="document.getElementById('install-banner').classList.remove('show')">×</button>
     </div>
@@ -440,19 +443,20 @@ textarea { min-height: 60px; font-size: 14px; }
     </div>
     <div class="card" id="instances-card" style="display:none">
       <div class="card-title">🕐 Hora y Cliente por Masaje</div>
-      <div style="font-size:11px;color:var(--dim);margin-bottom:6px;line-height:1.5">La lista se ordena sola por hora. ⏭ empieza al terminar el anterior · ⇩ desplaza en cadena todos los siguientes · ✕ quita ese masaje · 🔔 solo este masaje al calendario (avisos ¼ ½ ¾, o cambio de zona cada 10 min en anticelulíticos). Reexportar actualiza los eventos: no duplica.</div>
+      <div style="font-size:calc(11px*var(--fs));color:var(--dim);margin-bottom:6px;line-height:1.5">La lista se ordena sola por hora. ⏭ empieza al terminar el anterior · ⇩ desplaza en cadena todos los siguientes · ✕ quita ese masaje · 🔔 solo este masaje al calendario (avisos ¼ ½ ¾, o cambio de zona cada 10 min en anticelulíticos). Reexportar actualiza los eventos: no duplica.</div>
       <div id="instances-list"></div>
       <button class="btn-gold" style="margin-top:10px" onclick="scheduleAll()">🔔 Todos al calendario (con descansos)</button>
       <button class="btn-blue" style="margin-top:8px" onclick="autoExit(true)">🚪 Salida automática (último masaje + 20 min)</button>
+      <div id="ics-result"></div>
     </div>
     <div class="card" id="tips-card">
       <div class="card-title">💵 Propinas, Clientes y Gastos</div>
       <div class="row2" style="margin-top:0">
         <div><label class="lbl">Propina (€)</label><input type="number" id="f-tips" min="0" step="0.5" placeholder="0" oninput="updatePreview()"></div>
-        <div><label class="lbl">Clientes atendidos</label><input type="number" id="f-clients" min="0" step="1" placeholder="0"></div>
+        <div><label class="lbl">Clientes atendidos</label><input type="number" id="f-clients" min="0" step="1" placeholder="0" oninput="saveDraft()"></div>
       </div>
       <div style="margin-top:9px"><label class="lbl">Gasto transporte del día (€)</label><input type="number" id="f-transport" min="0" step="0.5" placeholder="0" oninput="updatePreview()"></div>
-      <div style="margin-top:9px"><label class="lbl">Notas del día</label><textarea id="f-notes" placeholder="Observaciones..."></textarea></div>
+      <div style="margin-top:9px"><label class="lbl">Notas del día</label><textarea id="f-notes" placeholder="Observaciones..." oninput="saveDraft()"></textarea></div>
     </div>
     <div class="card" id="preview-card" style="display:none">
       <div id="preview-rows"></div>
@@ -474,6 +478,9 @@ textarea { min-height: 60px; font-size: 14px; }
 </div>
 
 <script>
+// Tamaño del texto guardado (legibilidad con presbicia)
+try{const fsv=localStorage.getItem("gp_fs");if(fsv)document.documentElement.style.setProperty("--fs",fsv);}catch(e){}
+function setFontScale(v){try{localStorage.setItem("gp_fs",v);}catch(e){}document.documentElement.style.setProperty("--fs",v);renderConfig();}
 // ═══════════════ VERSIÓN ═══════════════
 const SCHEMA_VERSION = 3;
 const STORAGE_KEY = "guidopro_v3";
@@ -553,16 +560,16 @@ const CENTERS = [
     syncNames: true,
     lunch: false, // VEDA: no se descuenta pausa de almuerzo (decisión de Guido, v41) // nombres de registros antiguos = nombres actuales del menú (precio/duración históricos se conservan)
     massages: [
-      {id:16, mini:true, name:"SOS Espalda", nameBG:"SOS Гръб", duration:"20 min", durationBG:"20 мин", price:30, tec:"tejido profundo", zonas:"solo 1 zona a elección: lumbar, entre los omóplatos o parte alta de la espalda", pres:"●●● fuerte", dias:"solo lunes a jueves, 16:00–21:00", desc:"Ayuda urgente: trabajo profundo y focalizado solo donde hay dolor. → Para toda la espalda: Alivio exprés · 40 min · 60 €."},
+      {id:16, mini:true, miniOf:1, name:"SOS Espalda", nameBG:"SOS Гръб", duration:"20 min", durationBG:"20 мин", price:30, tec:"tejido profundo", zonas:"solo 1 zona a elección: lumbar, entre los omóplatos o parte alta de la espalda", pres:"●●● fuerte", dias:"solo lunes a jueves, 16:00–21:00", desc:"Ayuda urgente: trabajo profundo y focalizado solo donde hay dolor.", sug:"Para toda la espalda: Alivio exprés · 40 min · 60 €."},
       {id:17, mini:true, name:"SOS Cuello y Hombros", nameBG:"SOS Врат и Рамене", duration:"25 min", durationBG:"25 мин", price:35, tec:"tejido profundo", zonas:"cuello, trapecios y hombros", pres:"●●● fuerte", dias:"solo lunes a jueves, 16:00–21:00", desc:"Trabajo intenso donde el trabajo frente al ordenador deja huella."},
-      {id:18, mini:true, name:"Ritual „Mar Negro“ Mini", nameBG:"Ритуал „Черно Море“ Мини", duration:"30 min", durationBG:"30 мин", price:40, tec:"con luga", zonas:"espalda, cuello y hombros", pres:"●○○ ligera — RELAJANTE, no es tejido profundo", dias:"solo lunes a jueves, 16:00–21:00", desc:"Masaje relajante corto con aceite mineralizado con luga del Mar Negro. → El ritual completo, cuerpo entero: 50 min · 65 €."},
+      {id:18, mini:true, miniOf:6, name:"Ritual „Mar Negro“ Mini", nameBG:"Ритуал „Черно Море“ Мини", duration:"30 min", durationBG:"30 мин", price:40, tec:"con luga", zonas:"espalda, cuello y hombros", pres:"●○○ ligera — RELAJANTE, no es tejido profundo", dias:"solo lunes a jueves, 16:00–21:00", desc:"Masaje relajante corto con aceite mineralizado con luga del Mar Negro.", sug:"El ritual completo, cuerpo entero: 50 min · 65 €."},
       {id:3, name:"Piernas Ligeras", nameBG:"Леки Крака", duration:"30 min", durationBG:"30 мин", price:40, tec:"drenaje linfático", zonas:"solo piernas", pres:"●○○ ligera", dias:"", desc:"Reduce la hinchazón, la pesadez y la retención de líquidos en las piernas."},
       {id:1, name:"Alivio exprés para la espalda", nameBG:"Експрес облекчение за гърба", duration:"40 min", durationBG:"40 мин", price:60, tec:"tejido profundo", zonas:"nuca y cuello por detrás, toda la espalda y zona lumbar · no incluye brazos ni manos", pres:"●●● fuerte", dias:"", desc:"Terapia completa de la espalda. Para contracturas, cansancio y estrés."},
       {id:11, name:"Pies Sin Dolor", nameBG:"Стъпала Без Болка", duration:"40 min", durationBG:"40 мин", price:60, tec:"tejido profundo + miofascial", zonas:"pies y pantorrillas", pres:"●●● fuerte", dias:"", desc:"Para fascitis plantar, dolor de talón y fatiga tras caminar o estar de pie mucho tiempo."},
-      {id:4, zonas10:["pierna 1 delante","pierna 2 delante","pierna 1 detrás","pierna 2 detrás"], name:"Piernas Esculpidas", nameBG:"Изваяни Крака", duration:"40 min", durationBG:"40 мин", price:50, tec:"anticelulítico", zonas:"piernas", pres:"●●● fuerte", dias:"", desc:"Estimula la circulación y ayuda a modelar y tensar la piel. Técnica intensa — puede resultar dolorosa. Combine con: + abdomen 10 € (+10 min) · + brazos 20 € (+20 min) · + abdomen y brazos 30 € (+30 min)."},
-      {id:13, zonas10:["pierna 1 delante","pierna 2 delante","pierna 1 detrás","pierna 2 detrás","abdomen"], name:"Piernas Esculpidas + abdomen", nameBG:"Изваяни Крака + корем", duration:"50 min", durationBG:"50 мин", price:60, tec:"anticelulítico", zonas:"piernas y abdomen", pres:"●●● fuerte", dias:"", desc:"Piernas Esculpidas (40 min · 50 €) + abdomen (+10 min · +10 €)."},
-      {id:14, zonas10:["pierna 1 delante","pierna 2 delante","pierna 1 detrás","pierna 2 detrás","brazo 1","brazo 2"], name:"Piernas Esculpidas + brazos", nameBG:"Изваяни Крака + ръце", duration:"60 min", durationBG:"60 мин", price:70, tec:"anticelulítico", zonas:"piernas y brazos", pres:"●●● fuerte", dias:"", desc:"Piernas Esculpidas (40 min · 50 €) + brazos (+20 min · +20 €)."},
-      {id:15, zonas10:["pierna 1 delante","pierna 2 delante","pierna 1 detrás","pierna 2 detrás","abdomen","brazo 1","brazo 2"], name:"Piernas Esculpidas + abdomen y brazos", nameBG:"Изваяни Крака + корем и ръце", duration:"70 min", durationBG:"70 мин", price:80, tec:"anticelulítico", zonas:"piernas, abdomen y brazos", pres:"●●● fuerte", dias:"", desc:"Piernas Esculpidas (40 min · 50 €) + abdomen y brazos (+30 min · +30 €)."},
+      {id:4, zonas10:["pierna 1 delante","pierna 2 delante","pierna 1 detrás","pierna 2 detrás"], name:"Piernas Esculpidas", nameBG:"Изваяни Крака", duration:"40 min", durationBG:"40 мин", price:50, tec:"anticelulítico", zonas:"piernas", pres:"●●● fuerte", dias:"", desc:"Estimula la circulación y ayuda a modelar y tensar la piel. Técnica intensa — puede resultar dolorosa.", sug:"Combine con: + abdomen 10 € (+10 min) · + brazos 20 € (+20 min) · + abdomen y brazos 30 € (+30 min)."},
+      {id:13, addonOf:4, zonas10:["pierna 1 delante","pierna 2 delante","pierna 1 detrás","pierna 2 detrás","abdomen"], name:"Piernas Esculpidas + abdomen", nameBG:"Изваяни Крака + корем", duration:"50 min", durationBG:"50 мин", price:60, tec:"anticelulítico", zonas:"piernas y abdomen", pres:"●●● fuerte", dias:"", desc:"Piernas Esculpidas (40 min · 50 €) + abdomen (+10 min · +10 €)."},
+      {id:14, addonOf:4, zonas10:["pierna 1 delante","pierna 2 delante","pierna 1 detrás","pierna 2 detrás","brazo 1","brazo 2"], name:"Piernas Esculpidas + brazos", nameBG:"Изваяни Крака + ръце", duration:"60 min", durationBG:"60 мин", price:70, tec:"anticelulítico", zonas:"piernas y brazos", pres:"●●● fuerte", dias:"", desc:"Piernas Esculpidas (40 min · 50 €) + brazos (+20 min · +20 €)."},
+      {id:15, addonOf:4, zonas10:["pierna 1 delante","pierna 2 delante","pierna 1 detrás","pierna 2 detrás","abdomen","brazo 1","brazo 2"], name:"Piernas Esculpidas + abdomen y brazos", nameBG:"Изваяни Крака + корем и ръце", duration:"70 min", durationBG:"70 мин", price:80, tec:"anticelulítico", zonas:"piernas, abdomen y brazos", pres:"●●● fuerte", dias:"", desc:"Piernas Esculpidas (40 min · 50 €) + abdomen y brazos (+30 min · +30 €)."},
       {id:10, name:"Mandíbula en Reposo", nameBG:"Челюст в Покой", duration:"45 min", durationBG:"45 мин", price:65, tec:"miofascial + tejido profundo", zonas:"mandíbula, cuello, sienes y detrás de las orejas · si hace falta, también intraoral", pres:"●●● fuerte", dias:"", desc:"Para bruxismo, tensión mandibular y cefalea tensional."},
       {id:6, name:"Ritual „Mar Negro“", nameBG:"Ритуал „Черно Море“", duration:"50 min", durationBG:"50 мин", price:65, tec:"aceite terapéutico de luga", zonas:"cuerpo completo", pres:"●○○ ligera — RITUAL RELAJANTE, no es tejido profundo", dias:"", desc:"Ritual único con aceite mineralizado con luga del Mar Negro — relajación profunda, recuperación y nutrición de todo el cuerpo. Único masaje relajante del menú; todos los demás son terapéuticos."},
       {id:2, name:"Sin Cadenas", nameBG:"Без Вериги", duration:"60 min", durationBG:"60 мин", price:70, tec:"miofascial + tejido profundo", zonas:"cuello por delante y por detrás, omóplatos, brazos y manos, espalda media, zona lumbar y nervio ciático", pres:"●●● fuerte", dias:"", desc:"Para cuello rígido, plexitis braquial y dolor lumbar. La técnica se adapta a cómo responde el cuerpo."},
@@ -597,7 +604,7 @@ const ICONS={good:"✅",warn:"⚠️",dead:"🔴",info:"💡"};
 const PAGE_NAMES=["Dashboard","Añadir día","Historial","Calendario","Análisis PRO","Simulador","Pagos","Exportar","Mi Valor Profesional","Configuración","Comparar Centros","Cerebro PRO"];
 const DEFAULT_CFG={lockMinutes:10,fatigueHours:45};
 // Versión visible de la app — mantener sincronizada con CACHE_NAME de sw.js
-const APP_VERSION="v41";
+const APP_VERSION="v43";
 document.addEventListener("DOMContentLoaded",()=>{const v=document.getElementById("gp-version");if(v)v.textContent="Guido PRO · "+APP_VERSION;});
 
 let allData={};  // { hotel5: {days,payments,goal,cfg}, aleksa: {...}, sanatorium: {...} }
@@ -739,10 +746,57 @@ function applyCenter(){
   document.getElementById("drawer-center-name").style.color=c.color;
   // Tips card: only for hotel (has salary)
   document.getElementById("tips-card").style.display=c.hasSalary?"block":"block"; // always show
-  buildMassageList();
+  if(gpDraftT){clearTimeout(gpDraftT);gpDraftT=null;saveDraftNow(gpFormCenter);}
+  if(gpFormCenter!==c.key){
+    gpRestoring=true;
+    try{editingDate=null;resetForm(true);gpEditUI(false);}finally{gpRestoring=false;}
+    gpFormCenter=c.key;
+    buildMassageList();
+    restoreDraft(c.key);
+  }else buildMassageList();
   updateHeader();
   checkUnregistered();
   renderDashboard();
+}
+
+// ═══════════════ BORRADOR DEL FORMULARIO ═══════════════
+// Si Android cierra Chrome, lo apuntado sin guardar se recupera al volver.
+// Un borrador por centro (gp_draft_<clave>); se borra al guardar o cancelar
+// y caduca a los 7 días.
+let gpDraftT=null,gpRestoring=false,gpFormCenter=null;
+function saveDraft(){if(gpRestoring)return;clearTimeout(gpDraftT);gpDraftT=setTimeout(()=>{gpDraftT=null;saveDraftNow();},300);}
+function saveDraftNow(key){
+  key=key||gpFormCenter;if(!key)return;
+  try{
+    const g=id=>document.getElementById(id).value;
+    const d={ds:g("f-date"),en:g("f-entry"),ex:g("f-exit"),tips:g("f-tips"),clients:g("f-clients"),transport:g("f-transport"),notes:g("f-notes"),ins:instances,ed:editingDate,ts:Date.now()};
+    const empty=!d.ds&&!d.en&&!d.ex&&!d.tips&&!d.clients&&!d.transport&&!d.notes&&!instances.length;
+    if(empty)localStorage.removeItem("gp_draft_"+key);else localStorage.setItem("gp_draft_"+key,JSON.stringify(d));
+  }catch(e){}
+}
+function clearDraft(){clearTimeout(gpDraftT);gpDraftT=null;try{if(gpFormCenter)localStorage.removeItem("gp_draft_"+gpFormCenter);}catch(e){}}
+function gpEditUI(on){
+  document.getElementById("save-btn").textContent=on?"💾 Actualizar Día":"💾 Guardar Día";
+  document.getElementById("notice-edit").style.display=on?"block":"none";
+  document.getElementById("cancel-edit-btn").style.display=on?"block":"none";
+}
+function restoreDraft(key){
+  let d=null;try{d=JSON.parse(localStorage.getItem("gp_draft_"+key));}catch(e){}
+  if(!d)return;
+  if(!d.ts||Date.now()-d.ts>7*86400000){try{localStorage.removeItem("gp_draft_"+key);}catch(e){}return;}
+  const c=currentCenter();
+  gpRestoring=true;
+  try{
+    const set=(id,v)=>{document.getElementById(id).value=v||"";};
+    set("f-date",d.ds);set("f-entry",d.en);set("f-exit",d.ex);set("f-tips",d.tips);set("f-clients",d.clients);set("f-transport",d.transport);set("f-notes",d.notes);
+    instances=(d.ins||[]).filter(x=>c.massages.some(m=>m.id===x.mid));
+    qty={};instances.forEach(x=>{qty[x.mid]=(qty[x.mid]||0)+1;});
+    c.massages.forEach(m=>{const el=document.getElementById("qty-"+m.id);if(el)el.textContent=qty[m.id]||0;});
+    editingDate=d.ed&&cDays().some(x=>x.date===d.ed)?d.ed:null;
+    gpEditUI(!!editingDate);
+    renderInstances();onDateChange();
+  }finally{gpRestoring=false;}
+  gpToast("📝 Recuperado el formulario sin guardar"+(d.ds?" del "+fmtDate(d.ds):""));
 }
 
 // ═══════════════ DRAWER ═══════════════
@@ -765,7 +819,7 @@ function buildMassageList(){
   document.getElementById("massage-card-title").textContent="💆 Masajes Realizados · "+c.name;
   document.getElementById("massage-list").innerHTML=c.massages.map(m=>{
     const comm=c.hasVat?(m.price/(1+c.vatRate/100)*c.commRate/100):(m.price*c.commRate/100);
-    return`<div class="massage-row"><div style="flex:1"><div class="m-name">${m.nameBG||m.name}</div><div class="m-meta"><span class="m-es">${m.name}</span> · ${m.duration} · ${m.price} € · comisión: ${ef(comm)}</div>${m.zonas?`<div class="m-zone">📍 ${m.zonas}</div>`:""}${m.tec||m.pres?`<div class="m-tec">${[m.tec,m.pres].filter(Boolean).join(" · ")}</div>`:""}${m.dias?`<div class="m-tec">📅 ${m.dias}</div>`:""}${m.desc?`<div class="m-desc">${m.desc}</div>`:""}</div><div class="counter"><button class="cnt-btn" onclick="adjQty(${m.id},-1)">−</button><span class="cnt-num" id="qty-${m.id}">0</span><button class="cnt-btn" onclick="adjQty(${m.id},+1)">+</button></div></div>`;
+    return`<div class="massage-row"><div style="flex:1"><div class="m-name">${m.nameBG||m.name}</div><div class="m-meta"><span class="m-es">${m.name}</span> · ${m.duration} · ${m.price} € · comisión: ${ef(comm)}</div>${m.zonas?`<div class="m-zone">📍 ${m.zonas}</div>`:""}${m.tec||m.pres?`<div class="m-tec">${[m.tec,m.pres].filter(Boolean).join(" · ")}</div>`:""}${m.dias?`<div class="m-tec">📅 ${m.dias}</div>`:""}${m.desc?`<div class="m-desc">${m.desc}</div>`:""}${m.sug?`<div class="m-desc">→ ${m.sug}</div>`:""}</div><div class="counter"><button class="cnt-btn" onclick="adjQty(${m.id},-1)">−</button><span class="cnt-num" id="qty-${m.id}">0</span><button class="cnt-btn" onclick="adjQty(${m.id},+1)">+</button></div></div>`;
   }).join("");
 }
 function adjQty(id,d){
@@ -777,6 +831,7 @@ function adjQty(id,d){
 }
 // Identificador fijo de cada masaje (UID estable en el calendario) y datos del masaje
 // con precio/duración del registro guardado cuando se edita un día antiguo.
+const normCN=s=>String(s||"").trim().replace(/\s+/g," ").toLowerCase();
 const newU=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
 const insM=ins=>{const m=currentCenter().massages.find(x=>x.id===ins.mid);return{...m,price:ins.p!=null?ins.p:m.price,duration:ins.d||m.duration,durationBG:ins.dBG||m.durationBG};};
 const getMassages=()=>instances.map(ins=>({...insM(ins),t:ins.t||"",nc:ins.nc,cn:ins.cn||"",src:ins.src||"",u:ins.u||""}));
@@ -789,26 +844,47 @@ function renderInstances(){
   // Ordenar por hora (sin hora al final) — así un masaje imprevisto se coloca solo en su lugar
   instances.sort((a,b)=>{if(a.t&&b.t)return t2min(a.t)-t2min(b.t);if(a.t)return -1;if(b.t)return 1;return 0;});
   box.style.display="block";
-  const c=currentCenter();
-  document.getElementById("instances-list").innerHTML=instances.map((ins,i)=>{
+  const c=currentCenter(),cl=gpClients();
+  const dl=`<datalist id="gp-clients">${Object.values(cl).sort((a,b)=>b.last.localeCompare(a.last)).map(o=>`<option value="${o.name.replace(/"/g,"&quot;")}"></option>`).join("")}</datalist>`;
+  document.getElementById("instances-list").innerHTML=dl+instances.map((ins,i)=>{
+    const pv=ins.cn?gpPastVisits(ins.cn,cl):[];
+    const lv=pv[pv.length-1];
+    const visitLine=!ins.cn?"":pv.length?`<div style="margin:-2px 0 6px;font-size:calc(12px*var(--fs));color:${ins.nc===true?"#ee6f6f":"var(--muted)"}">${ins.nc===true?"⚠️ Marcado 🆕 pero ya vino · ":"🔁 "}${pv.length} visita${pv.length>1?"s":""} · última ${fmtDate(lv.date)} · ${lv.nb}</div>`:`<div style="margin:-2px 0 6px;font-size:calc(12px*var(--fs));color:var(--dim)">Sin visitas anteriores con este nombre</div>`;
     const m=c.massages.find(x=>x.id===ins.mid);
     return`<div style="padding:9px 0;border-bottom:1px solid var(--bg3)">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:13px;color:var(--text)">${i+1}. ${m.nameBG||m.name} <span style="color:var(--dim);font-size:11px">· ${ins.d||m.duration}</span></div><button onclick="removeIns(${i})" title="Quitar este masaje" style="background:none;border:1px solid #3a1010;border-radius:6px;color:#804040;width:26px;height:26px;font-size:13px;cursor:pointer;flex-shrink:0">✕</button></div>
-      <input type="text" value="${ins.cn||""}" placeholder="Nombre del cliente (opcional)" onchange="setInsName(${i},this.value)" style="width:100%;padding:8px 10px;font-size:14px;margin-bottom:6px">
-      <div style="display:flex;gap:7px;align-items:center">
-        <input type="time" value="${ins.t}" onchange="setInsTime(${i},this.value)" style="flex:1;padding:8px 10px;font-size:14px">
-        ${i>0?`<button onclick="chainFrom(${i})" title="Empieza al terminar el anterior" style="flex-shrink:0;width:38px;height:36px;border-radius:8px;border:1px solid #2a4a2a;background:#0a1a0a;color:var(--green);font-size:15px;cursor:pointer">⏭</button>`:""}${i<instances.length-1&&ins.t?`<button onclick="pushFrom(${i})" title="Desplazar todos los siguientes en cadena" style="flex-shrink:0;width:38px;height:36px;border-radius:8px;border:1px solid #4a3a10;background:#1a1200;color:#bf8a2a;font-size:15px;cursor:pointer">⇩</button>`:""}
-        <button onclick="toggleNC(${i})" style="flex-shrink:0;padding:8px 10px;border-radius:8px;font-size:12px;font-family:Georgia,serif;cursor:pointer;border:1px solid ${ins.nc===true?"#4abf7a":ins.nc===false?"#4a8fbf":"#333"};background:${ins.nc===true?"#0a2a10":ins.nc===false?"#0a1a2a":"var(--bg3)"};color:${ins.nc===true?"#4abf7a":ins.nc===false?"#6a9fd0":"var(--muted)"}">${ins.nc===true?"🆕 Nuevo":ins.nc===false?"🔁 Habitual":"👤 Cliente…"}</button>
-        <button onclick="scheduleMassage(${i})" title="Añadir a calendario con alertas" style="flex-shrink:0;width:38px;height:36px;border-radius:8px;border:1px solid #5a4a10;background:#1a1400;color:var(--gold);font-size:16px;cursor:pointer">🔔</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:calc(13px*var(--fs));color:var(--text)">${i+1}. ${m.nameBG||m.name} <span style="color:var(--dim);font-size:calc(11px*var(--fs))">· ${ins.d||m.duration}</span></div><button onclick="removeIns(${i})" title="Quitar este masaje" style="background:none;border:1px solid #3a1010;border-radius:6px;color:#e07474;width:26px;height:26px;font-size:calc(13px*var(--fs));cursor:pointer;flex-shrink:0">✕</button></div>
+      <input type="text" list="gp-clients" autocomplete="off" value="${(ins.cn||"").replace(/"/g,"&quot;")}" placeholder="Nombre del cliente (opcional)" onchange="setInsName(${i},this.value)" style="width:100%;padding:8px 10px;font-size:calc(14px*var(--fs));margin-bottom:6px">
+      ${visitLine}
+      <div style="display:flex;flex-wrap:wrap;gap:7px;align-items:center">
+        <input type="time" value="${ins.t}" onchange="setInsTime(${i},this.value)" style="flex:1;padding:8px 10px;font-size:calc(14px*var(--fs))">
+        ${i>0?`<button onclick="chainFrom(${i})" title="Empieza al terminar el anterior" style="flex-shrink:0;width:38px;height:36px;border-radius:8px;border:1px solid #2a4a2a;background:#0a1a0a;color:var(--green);font-size:calc(15px*var(--fs));cursor:pointer">⏭</button>`:""}${i<instances.length-1&&ins.t?`<button onclick="pushFrom(${i})" title="Desplazar todos los siguientes en cadena" style="flex-shrink:0;width:38px;height:36px;border-radius:8px;border:1px solid #4a3a10;background:#1a1200;color:#bf8a2a;font-size:calc(15px*var(--fs));cursor:pointer">⇩</button>`:""}
+        <button onclick="toggleNC(${i})" style="flex-shrink:0;padding:8px 10px;border-radius:8px;font-size:calc(12px*var(--fs));font-family:Georgia,serif;cursor:pointer;border:1px solid ${ins.nc===true?"#4abf7a":ins.nc===false?"#4a8fbf":"#333"};background:${ins.nc===true?"#0a2a10":ins.nc===false?"#0a1a2a":"var(--bg3)"};color:${ins.nc===true?"#4abf7a":ins.nc===false?"#6a9fd0":"var(--muted)"}">${ins.nc===true?"🆕 Nuevo":ins.nc===false?"🔁 Habitual":"👤 Cliente…"}</button>
+        <button onclick="scheduleMassage(${i})" title="Añadir a calendario con alertas" style="flex-shrink:0;width:38px;height:36px;border-radius:8px;border:1px solid #5a4a10;background:#1a1400;color:var(--gold);font-size:calc(16px*var(--fs));cursor:pointer">🔔</button>
       </div>
-      ${m.mini&&gpMiniOff(ins)?`<div style="margin-top:6px;font-size:12px;color:#bf8a2a">⚠️ Mini: solo de lunes a jueves, de 16:00 a 21:00</div>`:""}
-      ${ins.nc===true?`<select onchange="setInsSrc(${i},this.value)" style="margin-top:6px;padding:8px 10px;font-size:13px"><option value="" ${!ins.src?"selected":""}>📣 ¿Cómo te encontró?</option><option value="google" ${ins.src==="google"?"selected":""}>Google / Maps</option><option value="recepcion" ${ins.src==="recepcion"?"selected":""}>Recepción del spa</option><option value="recomendado" ${ins.src==="recomendado"?"selected":""}>Recomendado</option><option value="redes" ${ins.src==="redes"?"selected":""}>Redes sociales</option><option value="otro" ${ins.src==="otro"?"selected":""}>Otro</option></select>`:""}
+      ${m.mini&&gpMiniOff(ins)?`<div style="margin-top:6px;font-size:calc(12px*var(--fs));color:#bf8a2a">⚠️ Mini: solo de lunes a jueves, de 16:00 a 21:00</div>`:""}
+      ${ins.nc===true?`<select onchange="setInsSrc(${i},this.value)" style="margin-top:6px;padding:8px 10px;font-size:calc(13px*var(--fs))"><option value="" ${!ins.src?"selected":""}>📣 ¿Cómo te encontró?</option><option value="google" ${ins.src==="google"?"selected":""}>Google / Maps</option><option value="recepcion" ${ins.src==="recepcion"?"selected":""}>Recepción del spa</option><option value="recomendado" ${ins.src==="recomendado"?"selected":""}>Recomendado</option><option value="redes" ${ins.src==="redes"?"selected":""}>Redes sociales</option><option value="otro" ${ins.src==="otro"?"selected":""}>Otro</option></select>`:""}
     </div>`;
   }).join("");
+  saveDraft();
 }
 function setInsTime(i,v){if(instances[i])instances[i].t=v;autoExit(false);renderInstances();updatePreview();}
-function setInsName(i,v){if(instances[i])instances[i].cn=v.trim();}
-function setInsSrc(i,v){if(instances[i])instances[i].src=v;}
+// Clientes del centro actual: nombre normalizado → visitas ordenadas por fecha
+function gpClients(){
+  const idx={};
+  cDays().forEach(d=>d.massages.forEach(m=>{if(!m.cn)return;const k=normCN(m.cn);(idx[k]=idx[k]||{v:[]}).v.push({date:d.date,nb:m.nameBG||m.name,raw:String(m.cn).trim().replace(/\s+/g," ")});}));
+  Object.values(idx).forEach(o=>{o.v.sort((a,b)=>a.date.localeCompare(b.date));const cap=o.v.filter(x=>/^\p{Lu}/u.test(x.raw));o.name=(cap.length?cap[cap.length-1]:o.v[o.v.length-1]).raw;o.last=o.v[o.v.length-1].date;});
+  return idx;
+}
+// Visitas ANTERIORES a la fecha del formulario (sin fecha: todas)
+function gpPastVisits(cn,cl){const o=(cl||gpClients())[normCN(cn)];if(!o)return[];const ds=document.getElementById("f-date").value;return o.v.filter(x=>!ds||x.date<ds);}
+function setInsName(i,v){
+  if(!instances[i])return;
+  instances[i].cn=String(v||"").trim().replace(/\s+/g," ");
+  // Si ya vino antes, se marca 🔁 Habitual automáticamente (salvo que lo hayas marcado a mano)
+  if(instances[i].cn&&instances[i].nc===null&&gpPastVisits(instances[i].cn).length)instances[i].nc=false;
+  renderInstances();
+}
+function setInsSrc(i,v){if(instances[i])instances[i].src=v;saveDraft();}
 const insDur=ins=>parseInt(insM(ins).duration)||60;
 // Minis: solo lunes a jueves, 16:00–21:00 (aviso, no bloquea)
 function gpMiniOff(ins){const ds=document.getElementById("f-date").value;if(ds){const wd=new Date(ds+"T12:00:00").getDay();if(wd===5||wd===6||wd===0)return true;}if(ins.t){const s=t2min(ins.t);if(s<960||s+insDur(ins)>1260)return true;}return false;}
@@ -957,7 +1033,7 @@ function buildEventBlock(ins,ds,individual,end10,lm){
 function gpToast(msg){
   let t=document.getElementById("gp-toast");
   if(!t){t=document.createElement("div");t.id="gp-toast";
-    t.style.cssText="position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#1a1400;color:var(--gold,#d4af37);border:1px solid #5a4a10;border-radius:10px;padding:10px 16px;font-size:14px;z-index:9999;max-width:90%;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.6)";
+    t.style.cssText="position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#1a1400;color:var(--gold,#d4af37);border:1px solid #5a4a10;border-radius:10px;padding:10px 16px;font-size:calc(14px*var(--fs));z-index:9999;max-width:90%;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.6)";
     document.body.appendChild(t);}
   t.textContent=msg;t.style.display="block";
   clearTimeout(t._h);t._h=setTimeout(()=>{t.style.display="none";},6000);
@@ -968,10 +1044,10 @@ async function downloadICS(body,name){
     const file=new File([ics],name,{type:"text/calendar"});
     if(navigator.canShare && navigator.canShare({files:[file]})){
       await navigator.share({files:[file],title:name});
-      return;
+      return "";
     }
   }catch(e){
-    if(e && e.name==="AbortError")return; // usuario cerró la hoja de compartir
+    if(e && e.name==="AbortError")return null; // usuario cerró la hoja de compartir
   }
   // Nombre único (hora actual) para forzar notificación nueva cada vez
   const now=new Date();
@@ -981,7 +1057,21 @@ async function downloadICS(body,name){
   const url=URL.createObjectURL(blob);
   const a=document.createElement("a");a.href=url;a.download=uname;a.click();
   setTimeout(()=>URL.revokeObjectURL(url),3000);
-  gpToast("📥 "+uname+" descargado — abre la notificación de descarga y elige tu calendario");
+  return uname;
+}
+// Chrome no permite abrir Fossify ni Descargas desde una web: se explica el
+// camino seguro con el nombre exacto del archivo.
+function showIcsResult(fname,msgs){
+  const el=document.getElementById("ics-result");if(!el||fname===null)return;
+  const extra=(msgs||[]).map(m=>`<div style="margin-top:8px;color:#ffaa44">${m}</div>`).join("");
+  el.innerHTML=`<div class="notice blue" style="display:block;margin:10px 0 0;text-align:left">
+    ${fname?`<b>📥 Descargado:</b> <span style="word-break:break-all">${fname}</span>
+    <div style="margin-top:6px">Toca <b>«Abrir»</b> en el aviso de descarga o en la barra de notificaciones y elige Fossify.</div>
+    <div style="margin-top:6px">Si no aparece: <b>Fossify → ⋮ → Ajustes → Migrando → «Importar eventos desde un archivo .ics»</b> → Descargas → este archivo (el más reciente).</div>`:`<b>📤 Archivo compartido.</b>`}
+    ${extra}
+    <button onclick="document.getElementById('ics-result').innerHTML=''" style="margin-top:9px;background:none;border:1px solid #1a3a5a;border-radius:8px;color:var(--blue);padding:7px 14px;cursor:pointer;font-family:Georgia,serif;font-size:calc(13px*var(--fs))">Entendido</button>
+  </div>`;
+  el.scrollIntoView({block:"nearest",behavior:"smooth"});
 }
 // Registro de lo exportado por día y centro (para actualizar sin duplicar
 // y silenciar lo que sobra). Se purga lo de hace más de 60 días.
@@ -1019,7 +1109,7 @@ function scheduleMassage(i){
   if(!ins.t){alert("Pon la hora de inicio de este masaje.");return;}
   // Si el día ya está completo en el calendario, se actualiza entero
   // (recalcula descansos y avisos del nuevo masaje sin duplicar).
-  if(gpReg(ds).full){alert("Este día ya está completo en el calendario: se actualiza el día entero.");scheduleAll();return;}
+  if(gpReg(ds).full){scheduleAll("🔄 Este día ya estaba completo en el calendario: se ha actualizado el día entero.");return;}
   if(!ins.u)ins.u=newU();
   gpAdopt(ds,[ins]);
   const lm=utcStamp(),b=buildEventBlock(ins,ds,true,true,lm);
@@ -1029,8 +1119,7 @@ function scheduleMassage(i){
   const stale=Object.keys(r.items).filter(u=>!b.reg[u]&&(r.items[u].o===ins.u||(r.items[u].o!=="day"&&r.items[u].mid===ins.mid&&r.items[u].st===ins.t)));
   let neut="";stale.forEach(u=>{neut+=gpNeutral(ds,u,r.items[u],lm);delete r.items[u];});
   Object.assign(r.items,b.reg);r.full=false;gpRegSave(ds,r);
-  downloadICS(b.ev+b.chk+neut,"masaje_"+ds+"_"+ins.t.replace(":","")+".ics");
-  if(stale.length)setTimeout(()=>alert(gpStaleMsg(stale.length)),300);
+  downloadICS(b.ev+b.chk+neut,"masaje_"+ds+"_"+ins.t.replace(":","")+".ics").then(n=>showIcsResult(n,stale.length?[gpStaleMsg(stale.length)]:[]));
 }
 function buildAuxBlock(ds,startMin,endMin,title,alarmTxt,alarm0Txt,uid,lm){
   let al=alarmTxt?icsAlarm(":-P0DT0H10M0S",alarmTxt):"";
@@ -1039,7 +1128,7 @@ function buildAuxBlock(ds,startMin,endMin,title,alarmTxt,alarm0Txt,uid,lm){
   if(alarm0Txt)al+=icsAlarm(":-P0DT0H0M0S",alarm0Txt);
   return "BEGIN:VEVENT\r\nUID:"+uid+"\r\nDTSTAMP:"+gpTS(ds,startMin)+"\r\nLAST-MODIFIED:"+lm+"\r\nDTSTART:"+gpTS(ds,startMin)+"\r\nDTEND:"+gpTS(ds,endMin)+"\r\nSUMMARY:"+icsEsc(title)+"\r\nX-FOSSIFY-CATEGORY-COLOR:-24081\r\nCATEGORIES:AVISOS\r\nCOLOR:gray\r\nTRANSP:TRANSPARENT\r\n"+al+"END:VEVENT\r\n";
 }
-function scheduleAll(){
+function scheduleAll(pre){
   const ds=document.getElementById("f-date").value;
   if(!ds){alert("Selecciona primero la fecha del día.");return;}
   const withTime=instances.filter(x=>x.t).sort((a,b)=>t2min(a.t)-t2min(b.t));
@@ -1078,12 +1167,12 @@ function scheduleAll(){
   gpRegSave(ds,{full:true,items:reg});
   // UN solo archivo: los avisos (CATEGORIES:AVISOS) van al final y Fossify
   // los asigna a su tipo automáticamente al importar.
-  downloadICS(body+avisos+neut,"masajes_"+ds+".ics");
   const msgs=[];
+  if(typeof pre==="string"&&pre)msgs.push(pre);
   if(withTime.length<instances.length)msgs.push("⚠️ "+(instances.length-withTime.length)+" masaje(s) sin hora quedaron fuera del archivo.");
   if(overlap.length)msgs.push("⚠️ Masaje que empieza antes de que termine el anterior: "+overlap.join(", ")+". Revisa las horas.");
   if(stale.length)msgs.push(gpStaleMsg(stale.length));
-  if(msgs.length)setTimeout(()=>alert(msgs.join("\n\n")),300);
+  downloadICS(body+avisos+neut,"masajes_"+ds+".ics").then(n=>showIcsResult(n,msgs));
 }
 
 // ═══════════════ DATE CHANGE ═══════════════
@@ -1128,6 +1217,7 @@ function updatePreview(){
     document.getElementById("preview-rows").innerHTML=rows;document.getElementById("preview-total").textContent=ef(calc.dayTotal);pc.style.display="block";
   }else pc.style.display="none";
   document.getElementById("save-btn").disabled=!canSave;
+  saveDraft();
   // Fatigue
   const cfg=cCfg();const td=today(),ws=getMonday();
   const wh=cDays().filter(d=>d.date>=ws&&d.date<=td).reduce((s,d)=>s+d.workedH,0)+workedH;
@@ -1154,7 +1244,7 @@ function saveDay(){
   document.getElementById("notice-edit").style.display="none";document.getElementById("cancel-edit-btn").style.display="none";
   setTimeout(()=>showTab(4),1500);
 }
-function resetForm(){["f-date","f-entry","f-exit"].forEach(id=>document.getElementById(id).value="");document.getElementById("f-tips").value="";document.getElementById("f-notes").value="";document.getElementById("f-clients").value="";document.getElementById("f-transport").value="";qty={};instances=[];renderInstances();currentCenter().massages.forEach(m=>{const el=document.getElementById("qty-"+m.id);if(el)el.textContent="0";});document.getElementById("preview-card").style.display="none";document.getElementById("hours-preview").style.display="none";document.getElementById("notice-holiday").style.display="none";document.getElementById("save-btn").disabled=true;}
+function resetForm(keepDraft){if(!keepDraft)clearDraft();["f-date","f-entry","f-exit"].forEach(id=>document.getElementById(id).value="");document.getElementById("f-tips").value="";document.getElementById("f-notes").value="";document.getElementById("f-clients").value="";document.getElementById("f-transport").value="";qty={};instances=[];renderInstances();currentCenter().massages.forEach(m=>{const el=document.getElementById("qty-"+m.id);if(el)el.textContent="0";});document.getElementById("preview-card").style.display="none";document.getElementById("hours-preview").style.display="none";document.getElementById("notice-holiday").style.display="none";document.getElementById("save-btn").disabled=true;}
 function showNotice(id,msg){const el=document.getElementById(id);if(!el)return;el.textContent=msg;el.style.display="block";setTimeout(()=>el.style.display="none",3000);}
 
 function editDay(ds){const day=cDays().find(d=>d.date===ds);if(!day)return;editingDate=ds;document.getElementById("f-date").value=day.date;document.getElementById("f-entry").value=day.entry;document.getElementById("f-exit").value=day.exit;document.getElementById("f-tips").value=day.tips||"";document.getElementById("f-notes").value=day.notes||"";document.getElementById("f-clients").value=day.clients||"";document.getElementById("f-transport").value=day.transport||"";qty={};instances=day.massages.map(m=>({mid:m.id,t:m.t||"",nc:m.nc===true?true:m.nc===false?false:null,cn:m.cn||"",src:m.src||"",u:m.u||newU(),p:m.price,d:m.duration,dBG:m.durationBG}));day.massages.forEach(m=>{qty[m.id]=(qty[m.id]||0)+1;});currentCenter().massages.forEach(m=>{const el=document.getElementById("qty-"+m.id);if(el)el.textContent=qty[m.id]||0;});renderInstances();onDateChange();document.getElementById("save-btn").textContent="💾 Actualizar Día";document.getElementById("notice-edit").style.display="block";document.getElementById("cancel-edit-btn").style.display="block";showTab(1);window.scrollTo(0,0);}
@@ -1205,13 +1295,19 @@ function renderDashboard(){
   // Recordatorio informes mensuales (primeros 7 días del mes)
   {const now=new Date();const prevKey=localISO(new Date(now.getFullYear(),now.getMonth()-1,1)).slice(0,7);
    if(now.getDate()<=7&&days.length>0&&(localStorage.getItem("gp_rep_cerebro_"+c.key)!==prevKey||localStorage.getItem("gp_rep_fin_"+c.key)!==prevKey)){
-     alerts+=`<div class="notice amber" style="display:block">📋 <b>Proyecto 10K:</b> genera los informes de ${monthName(new Date(now.getFullYear(),now.getMonth()-1,1).getMonth())} (Cerebro + Financiero) y súbelos a Claude. <button onclick="showTab(11)" style="background:none;border:none;color:var(--gold);cursor:pointer;font-family:Georgia,serif;font-size:13px;text-decoration:underline">Ir al Cerebro</button></div>`;
+     alerts+=`<div class="notice amber" style="display:block">📋 <b>Proyecto 10K:</b> genera los informes de ${monthName(new Date(now.getFullYear(),now.getMonth()-1,1).getMonth())} (Cerebro + Financiero) y súbelos a Claude. <button onclick="showTab(11)" style="background:none;border:none;color:var(--gold);cursor:pointer;font-family:Georgia,serif;font-size:calc(13px*var(--fs));text-decoration:underline">Ir al Cerebro</button></div>`;
    }}
   // Days without massages alert
   const lastNoMassage=days.filter(d=>d.massages.length===0);
   if(lastNoMassage.length>0){const last=lastNoMassage[lastNoMassage.length-1];alerts+=`<div class="notice amber" style="display:block">💆 El ${fmtDate(last.date)} trabajaste sin registrar masajes.</div>`;}
   // Payment alert
   if(payments.length>0){const lastPay=payments.reduce((a,p)=>p.date>a.date?p:a);const daysSince=Math.floor((new Date()-new Date(lastPay.date+"T12:00:00"))/(1000*60*60*24));const maxDays=c.paymentCycle==="daily"?2:c.paymentCycle==="weekly"?9:32;if(daysSince>maxDays&&pending>0)alerts+=`<div class="notice red" style="display:block">⚠️ Han pasado ${daysSince} días desde tu último pago. Pendiente: ${ef(pending)}</div>`;}
+  // Recordatorio de copia de seguridad (cada 7 días)
+  {const lb=localStorage.getItem("gp_last_backup");
+   if(CENTERS.some(ct=>allData[ct.key]&&allData[ct.key].days.length)){
+     const dd=lb?Math.floor((new Date(td+"T12:00:00")-new Date(lb+"T12:00:00"))/86400000):null;
+     if(dd===null||dd>=7)alerts+=`<div class="notice amber" style="display:block">💾 ${dd===null?"Todavía no has hecho ninguna copia de seguridad":"Tu última copia de seguridad es de hace "+dd+" días"}. Si Android borra los datos del navegador, se pierde todo. <button onclick="exportBackup()" style="background:none;border:none;color:var(--gold);cursor:pointer;font-family:Georgia,serif;font-size:calc(13px*var(--fs));text-decoration:underline">Hacer copia ahora</button></div>`;
+   }}
   // Massage not sold alert
   if(days.length>7){const recent=days.slice(-14);c.massages.forEach(m=>{const used=recent.some(d=>d.massages.some(x=>x.id===m.id));if(!used)alerts+=`<div class="notice blue" style="display:block">💆 No has ofrecido "${m.nameBG||m.name}" en 2 semanas.</div>`;});}
 
@@ -1227,7 +1323,7 @@ function renderDashboard(){
       <div class="dash-box"><div class="dash-val">${ef(monthTotal)}</div><div class="dash-lbl">Este mes</div></div>
       <div class="dash-box"><div class="dash-val">${fmtH(weekH)}</div><div class="dash-lbl">Horas semana</div></div>
     </div>
-    ${goal>0?`<div class="card"><div class="card-title">🎯 Meta del Mes</div><div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:3px"><span>${ef(monthTotal)}</span><span>Meta: ${ef(goal)}</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:${goalPct}%"></div></div><div class="goal-labels"><span>${goalPct.toFixed(0)}%</span><span>${ef(goal-monthTotal>0?goal-monthTotal:0)} para la meta</span></div></div>`:""}
+    ${goal>0?`<div class="card"><div class="card-title">🎯 Meta del Mes</div><div style="display:flex;justify-content:space-between;font-size:calc(12px*var(--fs));color:#888;margin-bottom:3px"><span>${ef(monthTotal)}</span><span>Meta: ${ef(goal)}</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:${goalPct}%"></div></div><div class="goal-labels"><span>${goalPct.toFixed(0)}%</span><span>${ef(goal-monthTotal>0?goal-monthTotal:0)} para la meta</span></div></div>`:""}
     ${allSummary?`<div class="card"><div class="card-title">🏢 Todos los Centros</div>${allSummary}</div>`:""}
     <button class="btn-gold" onclick="showTab(1)" style="margin-top:0">➕ Añadir día en ${c.name}</button>`;
 }
@@ -1241,7 +1337,7 @@ function renderHistory(){
     const totalRaw=d.massages.reduce((s,m)=>s+m.price,0);
     const massDetail=d.massages.length>0?`<div style="margin-top:8px"><div class="pro-sub" style="text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Masajes</div>`+d.massages.map(m=>`<div class="d-row"><span>· ${m.t?m.t+" · ":""}${m.nameBG||m.name} (${m.duration})${m.cn?" · "+m.cn:""}${m.nc===true?" 🆕":""}</span><span>${m.price} €</span></div>`).join("")+(c.hasVat?`<div class="d-row"><span>− IVA ${c.vatRate}% → comisión ${c.commRate}%</span><span>${ef(d.commission)}</span></div>`:`<div class="d-row"><span>Comisión ${c.commRate}%</span><span>${ef(d.commission)}</span></div>`)+"</div>":"";
     const tipsH=d.tips>0?`<div class="d-row"><span>💵 Propina</span><span>${ef(d.tips)}</span></div>`:"";
-    const notesH=d.notes?`<div style="margin-top:7px;font-size:11px;color:var(--muted)">📝 ${d.notes}</div>`:"";
+    const notesH=d.notes?`<div style="margin-top:7px;font-size:calc(11px*var(--fs));color:var(--muted)">📝 ${d.notes}</div>`:"";
     return`<div class="day-card${d.holiday?" holiday-day":""}"><div class="day-hdr" onclick="toggleDetail('${d.date}')"><div><div class="day-date-txt">${fmtDate(d.date)} <span class="day-dow">· ${dow(d.date)}${d.holiday?" 🎉":""}</span></div><div class="day-meta-txt">${d.entry}→${d.exit} · ${fmtH(d.workedH)} · ${d.massages.length} masaje${d.massages.length!==1?"s":""}</div></div><div><div class="day-total-txt">${ef(d.dayTotal)}</div><div class="day-eph-txt">${eph.toFixed(2)} €/h ▼</div></div></div><div class="day-detail" id="detail-${d.date}">${c.hasSalary?`<div class="d-row"><span>💶 Por horas${d.holiday?" (×2)":""}</span><span>${ef(d.hourlyPay)}</span></div>`:""}<div class="d-row"><span>💆 Comisión</span><span>${ef(d.commission)}</span></div>${tipsH}<div class="d-row" style="color:var(--gold);font-weight:700"><span>📈 €/hora real</span><span>${eph.toFixed(2)} €/h</span></div>${massDetail}${notesH}<div class="action-btns"><button class="edit-btn" onclick="editDay('${d.date}')">✏️ Editar</button><button class="wa-btn" onclick="shareDay('${d.date}')">📱 Compartir</button><div id="delzone-${d.date}"><button class="del-btn" onclick="showConfirm('${d.date}')">🗑</button></div></div></div></div>`;
   }).join("");
 }
@@ -1268,7 +1364,7 @@ function renderCalendar(){
   const mH=days.filter(d=>d.date.startsWith(mStr)).reduce((s,d)=>s+d.workedH,0);
   const mMass=days.filter(d=>d.date.startsWith(mStr)).reduce((s,d)=>s+d.massages.length,0);
   const hols=[];for(let d=1;d<=dIM;d++){const ds=mStr+"-"+String(d).padStart(2,"0");if(c.hasHolidays&&isHoliday(ds))hols.push(ds);}
-  el.innerHTML=`<div class="card"><div class="cal-header"><button class="cal-nav" onclick="calPrev()">‹</button><div class="cal-title">${monthName(calMonth)} ${calYear}</div><button class="cal-nav" onclick="calNext()">›</button></div><div class="cal-grid">${["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"].map(d=>`<div class="cal-dow">${d}</div>`).join("")}${cells}</div><div class="cal-legend"><div class="cal-legend-item"><div class="cal-legend-dot" style="background:#0a2010;border:1px solid #1a5030"></div>Trabajado</div><div class="cal-legend-item"><div class="cal-legend-dot" style="background:#1a0a0a;border:1px solid #3a1010"></div>Libre</div>${c.hasHolidays?`<div class="cal-legend-item"><div class="cal-legend-dot" style="background:#2a1800;border:1px solid #5a3000"></div>Feriado</div>`:""}${hols.length?`<div style="margin-top:8px;font-size:11px;color:var(--dim);width:100%">${hols.map(h=>`<span class="holiday-tag">🎉 ${fmtDate(h)} ${getHolidayName(h)}</span>`).join("")}</div>`:""}</div></div>
+  el.innerHTML=`<div class="card"><div class="cal-header"><button class="cal-nav" onclick="calPrev()">‹</button><div class="cal-title">${monthName(calMonth)} ${calYear}</div><button class="cal-nav" onclick="calNext()">›</button></div><div class="cal-grid">${["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"].map(d=>`<div class="cal-dow">${d}</div>`).join("")}${cells}</div><div class="cal-legend"><div class="cal-legend-item"><div class="cal-legend-dot" style="background:#0a2010;border:1px solid #1a5030"></div>Trabajado</div><div class="cal-legend-item"><div class="cal-legend-dot" style="background:#1a0a0a;border:1px solid #3a1010"></div>Libre</div>${c.hasHolidays?`<div class="cal-legend-item"><div class="cal-legend-dot" style="background:#2a1800;border:1px solid #5a3000"></div>Feriado</div>`:""}${hols.length?`<div style="margin-top:8px;font-size:calc(11px*var(--fs));color:var(--dim);width:100%">${hols.map(h=>`<span class="holiday-tag">🎉 ${fmtDate(h)} ${getHolidayName(h)}</span>`).join("")}</div>`:""}</div></div>
   <div class="card"><div class="card-title">📊 ${monthName(calMonth)} · ${c.name}</div>${c.hasSalary?`<div class="pro-row"><span>Días laborales</span><div class="pro-val">${workDays}</div></div><div class="pro-row"><span>Tarifa/hora</span><div class="pro-val gold">${rate.toFixed(2)} €/h</div></div>`:""}${c.hasSalary?`<div class="pro-row"><span>Días trabajados</span><div class="pro-val">${days.filter(d=>d.date.startsWith(mStr)).length}</div></div>`:""}<div class="pro-row"><span>Horas trabajadas</span><div class="pro-val">${fmtH(mH)}</div></div><div class="pro-row"><span>Masajes</span><div class="pro-val">${mMass}</div></div><div class="pro-row"><span>Total del mes</span><div class="pro-val gold">${ef(mTotal)}</div></div></div>`;
 }
 function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
@@ -1337,17 +1433,17 @@ function renderPro(){
     else if(goal>0&&proj<goal*0.8)ins.push({t:`Proyección de ${ef(proj)}. Necesitas más actividad para ${ef(goal)}.`,c:"warn"});
     if(weekH>=cCfg().fatigueHours)ins.push({t:`Llevas ${fmtH(weekH)} esta semana. Considera descansar.`,c:"dead"});
   }
-  const goalHTML=goal>0?`<div class="card"><div class="card-title">🎯 Meta del Mes</div><div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:3px"><span>${ef(mTotal)}</span><span>Meta: ${ef(goal)}</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:${goalPct}%"></div></div><div class="goal-labels"><span>${goalPct.toFixed(0)}%</span><span>Proyección: ${ef(proj)}</span></div></div>`:"";
+  const goalHTML=goal>0?`<div class="card"><div class="card-title">🎯 Meta del Mes</div><div style="display:flex;justify-content:space-between;font-size:calc(12px*var(--fs));color:#888;margin-bottom:3px"><span>${ef(mTotal)}</span><span>Meta: ${ef(goal)}</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:${goalPct}%"></div></div><div class="goal-labels"><span>${goalPct.toFixed(0)}%</span><span>Proyección: ${ef(proj)}</span></div></div>`:"";
 
-  el.innerHTML=`<div class="card"><div class="card-title">📊 Acumulado · ${c.name}</div><div class="stat-grid"><div class="stat-box"><div class="stat-val">${days.length}</div><div class="stat-lbl">Días</div></div><div class="stat-box"><div class="stat-val">${tot.ms}</div><div class="stat-lbl">Masajes</div></div><div class="stat-box"><div class="stat-val" style="font-size:15px">${fmtH(tot.h)}</div><div class="stat-lbl">Horas</div></div><div class="stat-box"><div class="stat-val gold">${ef(tot.tt)}</div><div class="stat-lbl">Total</div></div></div>${c.hasSalary?`<div class="pro-row"><span>💶 Por horas</span><div class="pro-val">${ef(tot.hp)}</div></div>`:""}<div class="pro-row"><span>💆 Comisiones</span><div class="pro-val">${ef(tot.cm)}</div></div>${tot.tp>0?`<div class="pro-row"><span>💵 Propinas</span><div class="pro-val">${ef(tot.tp)}</div></div>`:""}<div class="pro-row"><span>🎫 Ticket promedio</span><div class="pro-val">${ef(avgTicket)}</div></div><div class="pro-row"><span>💆 Promedio masajes/día</span><div class="pro-val">${avgMassPerDay.toFixed(1)}</div></div><div class="pro-row"><span>📈 €/hora real global</span><div class="pro-val gold">${globalEPH.toFixed(2)} €/h</div></div>${prevTotal>0?`<div class="pro-row"><span>📅 Mes anterior</span><div class="pro-val">${ef(prevTotal)}</div></div>`:""}</div>
+  el.innerHTML=`<div class="card"><div class="card-title">📊 Acumulado · ${c.name}</div><div class="stat-grid"><div class="stat-box"><div class="stat-val">${days.length}</div><div class="stat-lbl">Días</div></div><div class="stat-box"><div class="stat-val">${tot.ms}</div><div class="stat-lbl">Masajes</div></div><div class="stat-box"><div class="stat-val" style="font-size:calc(15px*var(--fs))">${fmtH(tot.h)}</div><div class="stat-lbl">Horas</div></div><div class="stat-box"><div class="stat-val gold">${ef(tot.tt)}</div><div class="stat-lbl">Total</div></div></div>${c.hasSalary?`<div class="pro-row"><span>💶 Por horas</span><div class="pro-val">${ef(tot.hp)}</div></div>`:""}<div class="pro-row"><span>💆 Comisiones</span><div class="pro-val">${ef(tot.cm)}</div></div>${tot.tp>0?`<div class="pro-row"><span>💵 Propinas</span><div class="pro-val">${ef(tot.tp)}</div></div>`:""}<div class="pro-row"><span>🎫 Ticket promedio</span><div class="pro-val">${ef(avgTicket)}</div></div><div class="pro-row"><span>💆 Promedio masajes/día</span><div class="pro-val">${avgMassPerDay.toFixed(1)}</div></div><div class="pro-row"><span>📈 €/hora real global</span><div class="pro-val gold">${globalEPH.toFixed(2)} €/h</div></div>${prevTotal>0?`<div class="pro-row"><span>📅 Mes anterior</span><div class="pro-val">${ef(prevTotal)}</div></div>`:""}</div>
   ${goalHTML}
-  <div class="card"><div class="card-title">🎯 Meta mensual</div><div style="display:flex;gap:9px;align-items:flex-end"><div style="flex:1"><label class="lbl">Meta en €</label><input type="number" id="goal-input" value="${goal||""}" placeholder="Ej: 500" min="0"></div><button onclick="saveGoal()" style="background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:9px;color:#0d0d0d;padding:10px 13px;font-size:13px;font-weight:700;cursor:pointer;font-family:Georgia,serif;flex-shrink:0">Guardar</button></div></div>
+  <div class="card"><div class="card-title">🎯 Meta mensual</div><div style="display:flex;gap:9px;align-items:flex-end"><div style="flex:1"><label class="lbl">Meta en €</label><input type="number" id="goal-input" value="${goal||""}" placeholder="Ej: 500" min="0"></div><button onclick="saveGoal()" style="background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:9px;color:#0d0d0d;padding:10px 13px;font-size:calc(13px*var(--fs));font-weight:700;cursor:pointer;font-family:Georgia,serif;flex-shrink:0">Guardar</button></div></div>
   <div class="card"><div class="card-title">📈 Ingresos por Semana</div>${chartHTML}</div>
   <div class="card"><div class="card-title">📆 Año ${new Date().getFullYear()} — mes a mes</div>${annualHTML}${totTransport>0?`<div class="pro-row" style="margin-top:8px"><span>🚌 Gasto transporte acumulado</span><div class="pro-val" style="color:var(--red)">− ${ef(totTransport)}</div></div><div class="pro-row"><span>💰 Ganancia neta (− transporte)</span><div class="pro-val gold">${ef(tot.tt-totTransport)}</div></div>`:""}${totClients>0?`<div class="pro-row"><span>👥 Clientes atendidos (total)</span><div class="pro-val">${totClients}</div></div><div class="pro-row"><span>👥 Promedio clientes/día</span><div class="pro-val">${(totClients/days.length).toFixed(1)}</div></div>`:""}${totNewClients>0?`<div class="pro-row"><span>🆕 Clientes nuevos captados</span><div class="pro-val gold">${totNewClients}</div></div>`:""}</div>
   <div class="card"><div class="card-title">⭐ Récords · ${c.name}</div><div class="record-box"><div><div class="record-label">💰 Mejor día</div><div class="record-date">${fmtDate(bestDay.date)}</div></div><div class="record-val">${ef(bestDay.dayTotal)}</div></div><div class="record-box"><div><div class="record-label">📅 Mejor semana</div><div class="record-date">${bestWeekEntry?fmtDate(bestWeekEntry[0]):"-"}</div></div><div class="record-val">${bestWeekEntry?ef(bestWeekEntry[1]):"-"}</div></div><div class="record-box"><div><div class="record-label">💆 Más masajes en un día</div><div class="record-date">${fmtDate(bestMassDay.date)}</div></div><div class="record-val">${bestMassDay.massages.length}</div></div><div class="record-box"><div><div class="record-label">🔥 Racha actual</div></div><div class="record-val">${streak} día${streak!==1?"s":""}</div></div><div class="record-box"><div><div class="record-label">⏱ Horas esta semana</div></div><div class="record-val" style="color:${weekH>=cCfg().fatigueHours?"var(--red)":"var(--gold)"}">${fmtH(weekH)}</div></div></div>
   ${ins.length?`<div class="card"><div class="card-title">🧠 Inteligencia Operativa</div>${ins.map(i=>`<div class="insight ${i.c}"><span>${ICONS[i.c]}</span><span>${i.t}</span></div>`).join("")}</div>`:""}
   ${ranking.length?`<div class="card"><div class="card-title">🏆 Ranking de Masajes</div>${ranking.map((r,i)=>`<div class="rank-row"><div class="rank-left"><span class="rank-medal">${MEDAL[i]||"·"}</span><div><div class="rank-name">${r.nameBG||r.name}</div><div class="rank-sub">${r.nameBG?r.name+" · ":""}×${r.count} · ${ef(r.revenue)} facturado</div></div></div><div class="rank-right"><div class="rank-earn">${ef(r.commission)}</div><div class="rank-earn-sub">comisión</div></div></div>`).join("")}</div>`:""}
-  <div class="card"><div class="card-title">📅 Desglose por Día</div>${[...days].reverse().map(d=>`<div class="pro-row"><div><div style="font-size:12px;color:var(--text)">${fmtDate(d.date)} <span style="color:var(--dim)">· ${dow(d.date)}${d.holiday?" 🎉":""}</span></div><div class="pro-sub">${fmtH(d.workedH)} · ${d.massages.length} masaje${d.massages.length!==1?"s":""}</div></div><div class="pro-val gold">${ef(d.dayTotal)}</div></div>`).join("")}<div style="display:flex;justify-content:space-between;padding:9px 0 0;font-weight:700"><span style="font-size:13px;color:var(--text)">TOTAL ACUMULADO</span><span style="font-size:16px;color:var(--gold)">${ef(tot.tt)}</span></div></div>`;
+  <div class="card"><div class="card-title">📅 Desglose por Día</div>${[...days].reverse().map(d=>`<div class="pro-row"><div><div style="font-size:calc(12px*var(--fs));color:var(--text)">${fmtDate(d.date)} <span style="color:var(--dim)">· ${dow(d.date)}${d.holiday?" 🎉":""}</span></div><div class="pro-sub">${fmtH(d.workedH)} · ${d.massages.length} masaje${d.massages.length!==1?"s":""}</div></div><div class="pro-val gold">${ef(d.dayTotal)}</div></div>`).join("")}<div style="display:flex;justify-content:space-between;padding:9px 0 0;font-weight:700"><span style="font-size:calc(13px*var(--fs));color:var(--text)">TOTAL ACUMULADO</span><span style="font-size:calc(16px*var(--fs));color:var(--gold)">${ef(tot.tt)}</span></div></div>`;
 }
 function saveGoal(){cData().goal=parseFloat(document.getElementById("goal-input").value)||0;saveData();renderPro();}
 
@@ -1358,7 +1454,7 @@ function renderSim(){
   const mTotal=mDays.reduce((s,d)=>s+d.dayTotal,0),mH=mDays.reduce((s,d)=>s+d.workedH,0),mMass=mDays.reduce((s,d)=>s+d.massages.length,0);
   const daysLeft=new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate()-new Date().getDate();
   const rate=c.hasSalary?getHourlyRate(td):0;const goal=cGoal();
-  document.getElementById("sim-content").innerHTML=`<div class="card"><div class="card-title">🎯 Simulador · ${c.name}</div><div style="font-size:12px;color:var(--dim);margin-bottom:11px">Quedan ${daysLeft} días en el mes. Llevas ${ef(mTotal)}.</div><label class="lbl">Horas extra planeadas</label><input type="number" id="sim-h" min="0" placeholder="Ej: 20" oninput="calcSim()"><div style="margin-top:9px"><label class="lbl">Masajes extra planeados</label><input type="number" id="sim-m" min="0" placeholder="Ej: 5" oninput="calcSim()"></div><div style="margin-top:9px"><label class="lbl">Precio promedio por masaje (€)</label><input type="number" id="sim-p" min="0" placeholder="Ej: 60" value="${c.massages.length>0?Math.round(c.massages.reduce((s,m)=>s+m.price,0)/c.massages.length):60}" oninput="calcSim()"></div><div id="sim-result" class="sim-result" style="display:none"></div></div>
+  document.getElementById("sim-content").innerHTML=`<div class="card"><div class="card-title">🎯 Simulador · ${c.name}</div><div style="font-size:calc(12px*var(--fs));color:var(--dim);margin-bottom:11px">Quedan ${daysLeft} días en el mes. Llevas ${ef(mTotal)}.</div><label class="lbl">Horas extra planeadas</label><input type="number" id="sim-h" min="0" placeholder="Ej: 20" oninput="calcSim()"><div style="margin-top:9px"><label class="lbl">Masajes extra planeados</label><input type="number" id="sim-m" min="0" placeholder="Ej: 5" oninput="calcSim()"></div><div style="margin-top:9px"><label class="lbl">Precio promedio por masaje (€)</label><input type="number" id="sim-p" min="0" placeholder="Ej: 60" value="${c.massages.length>0?Math.round(c.massages.reduce((s,m)=>s+m.price,0)/c.massages.length):60}" oninput="calcSim()"></div><div id="sim-result" class="sim-result" style="display:none"></div></div>
   <div class="card"><div class="card-title">📊 Situación Actual</div><div class="pro-row"><span>Días trabajados</span><div class="pro-val">${mDays.length}</div></div><div class="pro-row"><span>Horas</span><div class="pro-val">${fmtH(mH)}</div></div><div class="pro-row"><span>Masajes</span><div class="pro-val">${mMass}</div></div><div class="pro-row"><span>Total hasta hoy</span><div class="pro-val gold">${ef(mTotal)}</div></div>${goal>0?`<div class="pro-row"><span>Falta para meta</span><div class="pro-val" style="color:${mTotal>=goal?"var(--green)":"var(--red)"}">${mTotal>=goal?"✅ Meta superada":ef(Math.max(0,goal-mTotal))}</div></div>`:""}</div>`;
 }
 function calcSim(){
@@ -1369,7 +1465,7 @@ function calcSim(){
   const ms=getMonthStart(),mTotal=cDays().filter(d=>d.date>=ms&&d.date<=td).reduce((s,d)=>s+d.dayTotal,0);
   const total=mTotal+extra,goal=cGoal();
   const el=document.getElementById("sim-result");
-  el.innerHTML=`${c.hasSalary?`<div class="sim-line"><span>💶 Extra por ${fmtH(h)}</span><span>${ef(extraH)}</span></div>`:""}<div class="sim-line"><span>💆 Comisión ${m} masajes × ${p} €</span><span>${ef(extraComm)}</span></div><div class="sim-line"><span>📈 Extra total</span><span>${ef(extra)}</span></div><div class="sim-total"><span>MES ESTIMADO</span><span>${ef(total)}</span></div>${goal>0?`<div style="font-size:12px;color:${total>=goal?"var(--green)":"var(--red)"};margin-top:7px;text-align:center">${total>=goal?"✅ ¡Alcanzarías tu meta de "+ef(goal)+"!":"⚠️ Te faltarían "+ef(goal-total)+" para la meta."}</div>`:""}`; el.style.display="block";
+  el.innerHTML=`${c.hasSalary?`<div class="sim-line"><span>💶 Extra por ${fmtH(h)}</span><span>${ef(extraH)}</span></div>`:""}<div class="sim-line"><span>💆 Comisión ${m} masajes × ${p} €</span><span>${ef(extraComm)}</span></div><div class="sim-line"><span>📈 Extra total</span><span>${ef(extra)}</span></div><div class="sim-total"><span>MES ESTIMADO</span><span>${ef(total)}</span></div>${goal>0?`<div style="font-size:calc(12px*var(--fs));color:${total>=goal?"var(--green)":"var(--red)"};margin-top:7px;text-align:center">${total>=goal?"✅ ¡Alcanzarías tu meta de "+ef(goal)+"!":"⚠️ Te faltarían "+ef(goal-total)+" para la meta."}</div>`:""}`; el.style.display="block";
 }
 
 // ═══════════════ PAGOS ═══════════════
@@ -1393,7 +1489,7 @@ function renderPagos(){
     <button class="btn-green" onclick="addPayment()">✅ Registrar Pago</button>
   </div>
   ${monthRows?`<div class="card"><div class="card-title">📅 Historial Mensual</div>${monthRows}</div>`:""}
-  ${payments.length?`<div class="card"><div class="card-title">📋 Pagos Recibidos</div>${[...payments].reverse().map(p=>`<div class="pay-item"><div><div class="pay-date">${p.dateFrom?fmtDate(p.dateFrom)+" → "+fmtDate(p.dateTo):fmtDate(p.date)}</div>${p.note?`<div class="pay-note">${p.note}</div>`:""}</div><div style="display:flex;align-items:center;gap:7px"><div class="pay-amount">+${ef(p.amount)}</div><button class="pay-del" onclick="deletePayment('${p.id}')">×</button></div></div>`).join("")}<div style="display:flex;justify-content:space-between;padding:9px 0 0;font-weight:700;font-size:13px"><span style="color:var(--text)">TOTAL COBRADO</span><span style="color:var(--green)">${ef(totalPaid)}</span></div></div>`:""}`;
+  ${payments.length?`<div class="card"><div class="card-title">📋 Pagos Recibidos</div>${[...payments].reverse().map(p=>`<div class="pay-item"><div><div class="pay-date">${p.dateFrom?fmtDate(p.dateFrom)+" → "+fmtDate(p.dateTo):fmtDate(p.date)}</div>${p.note?`<div class="pay-note">${p.note}</div>`:""}</div><div style="display:flex;align-items:center;gap:7px"><div class="pay-amount">+${ef(p.amount)}</div><button class="pay-del" onclick="deletePayment('${p.id}')">×</button></div></div>`).join("")}<div style="display:flex;justify-content:space-between;padding:9px 0 0;font-weight:700;font-size:calc(13px*var(--fs))"><span style="color:var(--text)">TOTAL COBRADO</span><span style="color:var(--green)">${ef(totalPaid)}</span></div></div>`:""}`;
   setTimeout(calcPayAmount, 50);
 }
 function calcPayAmount(){
@@ -1408,12 +1504,12 @@ function calcPayAmount(){
   const prev=document.getElementById("pay-calc-preview");
   if(!prev)return;
   if(filtered.length===0){
-    prev.innerHTML=`<div style="background:var(--bg);border:1px solid #3a2800;border-radius:8px;padding:9px 12px;font-size:12px;color:#bf8a2a">⚠️ No hay días registrados en ese período.</div>`;
+    prev.innerHTML=`<div style="background:var(--bg);border:1px solid #3a2800;border-radius:8px;padding:9px 12px;font-size:calc(12px*var(--fs));color:#bf8a2a">⚠️ No hay días registrados en ese período.</div>`;
     prev.style.display="block";
     document.getElementById("pay-amount").value="";
     return;
   }
-  prev.innerHTML=`<div style="background:var(--bg);border:1px solid #1a5030;border-radius:8px;padding:9px 12px;font-size:12px;color:var(--muted)">
+  prev.innerHTML=`<div style="background:var(--bg);border:1px solid #1a5030;border-radius:8px;padding:9px 12px;font-size:calc(12px*var(--fs));color:var(--muted)">
     <div style="display:flex;justify-content:space-between;padding:3px 0"><span>${filtered.length} días · ${fmtH(totalH)} · ${totalMass} masajes</span></div>
     <div style="display:flex;justify-content:space-between;padding:3px 0"><span>Tu parte calculada:</span><span style="color:var(--green);font-weight:700">${ef(total)}</span></div>
   </div>`;
@@ -1434,12 +1530,12 @@ function deletePayment(id){cData().payments=cPayments().filter(p=>p.id!==id);sav
 function renderExport(){
   const now=today(),ms=getMonthStart(),mon=getMonday(),c=currentCenter();
   document.getElementById("export-content").innerHTML=`<div class="card"><div class="card-title">📤 Exportar · ${c.name}</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:7px">Período</div>
+    <div style="font-size:calc(12px*var(--fs));color:var(--muted);margin-bottom:7px">Período</div>
     <div class="period-btns"><button class="period-btn ${exportPeriod==="week"?"active":""}" onclick="setPeriod('week')">Esta semana</button><button class="period-btn ${exportPeriod==="month"?"active":""}" onclick="setPeriod('month')">Este mes</button><button class="period-btn ${exportPeriod==="custom"?"active":""}" onclick="setPeriod('custom')">Personalizado</button></div>
-    ${exportPeriod==="custom"?`<div class="row2" style="margin-bottom:10px"><div><label class="lbl">Desde</label><input type="date" id="exp-from" value="${ms}"></div><div><label class="lbl">Hasta</label><input type="date" id="exp-to" value="${now}"></div></div>`:`<div style="font-size:12px;color:var(--dim);margin-bottom:10px">${exportPeriod==="week"?fmtDate(mon)+" → "+fmtDate(now):fmtDate(ms)+" → "+fmtDate(now)}</div>`}
-    <div style="font-size:12px;color:var(--muted);margin-bottom:7px">Idioma</div>
+    ${exportPeriod==="custom"?`<div class="row2" style="margin-bottom:10px"><div><label class="lbl">Desde</label><input type="date" id="exp-from" value="${ms}"></div><div><label class="lbl">Hasta</label><input type="date" id="exp-to" value="${now}"></div></div>`:`<div style="font-size:calc(12px*var(--fs));color:var(--dim);margin-bottom:10px">${exportPeriod==="week"?fmtDate(mon)+" → "+fmtDate(now):fmtDate(ms)+" → "+fmtDate(now)}</div>`}
+    <div style="font-size:calc(12px*var(--fs));color:var(--muted);margin-bottom:7px">Idioma</div>
     <div class="period-btns" style="margin-bottom:10px"><button class="period-btn ${exportLang==="es"?"active":""}" onclick="setLang('es')">🇪🇸 Español</button><button class="period-btn ${exportLang==="bg"?"active":""}" onclick="setLang('bg')">🇧🇬 Búlgaro</button></div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:7px">Tipo de reporte</div>
+    <div style="font-size:calc(12px*var(--fs));color:var(--muted);margin-bottom:7px">Tipo de reporte</div>
     <div class="period-btns" style="margin-bottom:12px"><button class="period-btn ${exportType==="detail"?"active":""}" onclick="setType('detail')">Detallado</button><button class="period-btn ${exportType==="summary"?"active":""}" onclick="setType('summary')">Resumen</button></div>
     <button class="btn-copy" onclick="generateReport()">📋 Generar y Copiar</button>
     <button class="btn-blue" onclick="prepareEmail()" style="margin-top:8px">📧 Enviar por Email</button>
@@ -1557,29 +1653,29 @@ function renderPortfolio(){
 
   // Monthly breakdown
   const monthMap={};filtered.forEach(d=>{const mk=d.date.slice(0,7);if(!monthMap[mk])monthMap[mk]={revenue:0,mass:0,days:0,hours:0};monthMap[mk].revenue+=d.massages.reduce((s,m)=>s+m.price,0);monthMap[mk].mass+=d.massages.length;monthMap[mk].days++;monthMap[mk].hours+=d.workedH;});
-  const monthRows=Object.entries(monthMap).sort((a,b)=>a[0].localeCompare(b[0])).map(([mk,mv])=>{const[y,m]=mk.split("-");return`<div class="pro-row"><div><div style="font-size:13px;color:var(--text)">${monthName(parseInt(m)-1)} ${y}</div><div class="pro-sub">${mv.days} días · ${fmtH(mv.hours)} · ${mv.mass} masajes</div></div><div class="pro-val gold">${ef(mv.revenue)}</div></div>`;}).join("");
+  const monthRows=Object.entries(monthMap).sort((a,b)=>a[0].localeCompare(b[0])).map(([mk,mv])=>{const[y,m]=mk.split("-");return`<div class="pro-row"><div><div style="font-size:calc(13px*var(--fs));color:var(--text)">${monthName(parseInt(m)-1)} ${y}</div><div class="pro-sub">${mv.days} días · ${fmtH(mv.hours)} · ${mv.mass} masajes</div></div><div class="pro-val gold">${ef(mv.revenue)}</div></div>`;}).join("");
 
   el.innerHTML=`
   <div class="card">
     <div class="card-title">🏆 Mi Valor Profesional · ${c.name}</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Estadísticas del servicio que generas — sin datos personales de cobro</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:7px">Período</div>
+    <div style="font-size:calc(12px*var(--fs));color:var(--muted);margin-bottom:10px">Estadísticas del servicio que generas — sin datos personales de cobro</div>
+    <div style="font-size:calc(12px*var(--fs));color:var(--muted);margin-bottom:7px">Período</div>
     <div class="period-btns">
       <button class="period-btn ${pfPeriod==="week"?"active":""}" onclick="setPfPeriod('week')">Semana</button>
       <button class="period-btn ${pfPeriod==="month"?"active":""}" onclick="setPfPeriod('month')">Mes</button>
       <button class="period-btn ${pfPeriod==="all"?"active":""}" onclick="setPfPeriod('all')">Histórico</button>
       <button class="period-btn ${pfPeriod==="custom"?"active":""}" onclick="setPfPeriod('custom')">Personalizado</button>
     </div>
-    ${pfPeriod==="custom"?`<div class="row2" style="margin-bottom:10px"><div><label class="lbl">Desde</label><input type="date" id="pf-from" value="${pfCustomFrom}" onchange="setPfDates()"></div><div><label class="lbl">Hasta</label><input type="date" id="pf-to" value="${pfCustomTo}" onchange="setPfDates()"></div></div>`:`<div style="font-size:12px;color:var(--dim);margin-bottom:10px">${fmtDate(from)} → ${fmtDate(to)}</div>`}
+    ${pfPeriod==="custom"?`<div class="row2" style="margin-bottom:10px"><div><label class="lbl">Desde</label><input type="date" id="pf-from" value="${pfCustomFrom}" onchange="setPfDates()"></div><div><label class="lbl">Hasta</label><input type="date" id="pf-to" value="${pfCustomTo}" onchange="setPfDates()"></div></div>`:`<div style="font-size:calc(12px*var(--fs));color:var(--dim);margin-bottom:10px">${fmtDate(from)} → ${fmtDate(to)}</div>`}
   </div>
 
   ${filtered.length===0?`<div class="empty">No hay datos en ese período.</div>`:`
   <div class="card">
     <div class="card-title">📊 Producción del Spa</div>
     <div class="stat-grid">
-      <div class="stat-box"><div class="stat-val gold" style="font-size:16px">${ef(totalRevenue)}</div><div class="stat-lbl">Facturado para el spa</div></div>
+      <div class="stat-box"><div class="stat-val gold" style="font-size:calc(16px*var(--fs))">${ef(totalRevenue)}</div><div class="stat-lbl">Facturado para el spa</div></div>
       <div class="stat-box"><div class="stat-val">${totalMass}</div><div class="stat-lbl">Sesiones realizadas</div></div>
-      <div class="stat-box"><div class="stat-val" style="font-size:15px">${fmtH(totalH)}</div><div class="stat-lbl">Horas de servicio</div></div>
+      <div class="stat-box"><div class="stat-val" style="font-size:calc(15px*var(--fs))">${fmtH(totalH)}</div><div class="stat-lbl">Horas de servicio</div></div>
       <div class="stat-box"><div class="stat-val">${totalDays}</div><div class="stat-lbl">Días trabajados</div></div>
     </div>
     <div class="pro-row"><span>💆 Ticket promedio por sesión</span><div class="pro-val gold">${ef(avgPerSession)}</div></div>
@@ -1596,8 +1692,8 @@ function renderPortfolio(){
 
   <div class="card">
     <div class="card-title">📤 Exportar Portafolio</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Genera un reporte profesional para mostrar a managers o adjuntar a tu currículum</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:7px">Idioma</div>
+    <div style="font-size:calc(12px*var(--fs));color:var(--muted);margin-bottom:10px">Genera un reporte profesional para mostrar a managers o adjuntar a tu currículum</div>
+    <div style="font-size:calc(12px*var(--fs));color:var(--muted);margin-bottom:7px">Idioma</div>
     <div class="period-btns" style="margin-bottom:10px">
       <button class="period-btn ${(window._pfLang||"es")==="es"?"active":""}" onclick="window._pfLang='es';renderPortfolio()">🇪🇸 Español</button>
       <button class="period-btn ${(window._pfLang||"es")==="bg"?"active":""}" onclick="window._pfLang='bg';renderPortfolio()">🇧🇬 Búlgaro</button>
@@ -1605,7 +1701,7 @@ function renderPortfolio(){
     <button class="btn-copy" onclick="exportPortfolio()">📋 Copiar Reporte Profesional</button>
     <button class="btn-blue" onclick="emailPortfolio()" style="margin-top:8px">📧 Enviar por Email</button>
     <button class="btn-gold" onclick="printPortfolioPDF()" style="margin-top:8px">📄 Descargar PDF con diseño</button>
-    <div style="font-size:11px;color:var(--dim);margin-top:6px">El PDF se abre en una pestaña nueva — en el diálogo de impresión elige "Guardar como PDF".</div>
+    <div style="font-size:calc(11px*var(--fs));color:var(--dim);margin-top:6px">El PDF se abre en una pestaña nueva — en el diálogo de impresión elige "Guardar como PDF".</div>
   </div>
   `}`;
 }
@@ -1763,13 +1859,13 @@ function renderCompare(){
       <button class="period-btn ${cmpPeriod==="month"?"active":""}" onclick="window._cmpPeriod='month';renderCompare()">Mes</button>
       <button class="period-btn ${cmpPeriod==="all"?"active":""}" onclick="window._cmpPeriod='all';renderCompare()">Histórico</button>
     </div>
-    <div style="font-size:12px;color:var(--dim);margin-bottom:4px">Ordenado por €/hora neta (descontando transporte) · ${periodLabel}</div>
+    <div style="font-size:calc(12px*var(--fs));color:var(--dim);margin-bottom:4px">Ordenado por €/hora neta (descontando transporte) · ${periodLabel}</div>
   </div>
   ${rows.length===0?`<div class="empty">Sin datos en este período.</div>`:rows.map((r,i)=>`
   <div class="card" style="border-color:${r.ct.color}44">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px">
-      <div style="font-size:15px;font-weight:700;color:${r.ct.color}">${MEDAL[i]||"·"} ${r.ct.icon} ${r.ct.name}</div>
-      <div style="font-size:17px;font-weight:700;color:${r.ct.color}">${r.ephNet.toFixed(2)} €/h</div>
+      <div style="font-size:calc(15px*var(--fs));font-weight:700;color:${r.ct.color}">${MEDAL[i]||"·"} ${r.ct.icon} ${r.ct.name}</div>
+      <div style="font-size:calc(17px*var(--fs));font-weight:700;color:${r.ct.color}">${r.ephNet.toFixed(2)} €/h</div>
     </div>
     <div class="pro-row"><span>Total generado</span><div class="pro-val gold">${ef(r.total)}</div></div>
     <div class="pro-row"><span>Gasto transporte</span><div class="pro-val" style="color:${r.transport>0?"var(--red)":"var(--dim)"}">${r.transport>0?"− "+ef(r.transport):"—"}</div></div>
@@ -1779,7 +1875,7 @@ function renderCompare(){
     <div class="pro-row"><span>Actividad</span><div class="pro-val"><span class="pro-sub">${r.daysN} días · ${fmtH(r.hours)} · ${r.mass} masajes</span></div></div>
   </div>`).join("")}
   <div class="card"><div class="card-title">💶 Minuto del masaje más vendido</div>
-    <div style="font-size:11px;color:var(--dim);margin-bottom:6px">Cuánto factura por minuto el best-seller de cada centro</div>
+    <div style="font-size:calc(11px*var(--fs));color:var(--dim);margin-bottom:6px">Cuánto factura por minuto el best-seller de cada centro</div>
     ${CENTERS.map(ct=>{const d=allData[ct.key];if(!d||!d.days.length)return"";
       const cnt={};d.days.forEach(dd=>dd.massages.forEach(m=>{cnt[m.id]=(cnt[m.id]||0)+1;}));
       const topId=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0];if(!topId)return"";
@@ -1789,16 +1885,16 @@ function renderCompare(){
     }).join("")}
   </div>
   <div class="card"><div class="card-title">📋 Mismo masaje, distinto centro</div>
-    <div style="font-size:11px;color:var(--dim);margin-bottom:6px">Rango de precios por categoría en cada catálogo</div>
+    <div style="font-size:calc(11px*var(--fs));color:var(--dim);margin-bottom:6px">Rango de precios por categoría en cada catálogo</div>
     ${[{k:"Tejido profundo",re:/дълбокот|tejido/i},{k:"Miofascial",re:/мио ?фа|miofasc/i},{k:"Drenaje linfático",re:/лимф|drenaje|linf|детокс|леки крака/i},{k:"Combinado",re:/комбин|combinado|рестарт|синергия|sinergia|reinicio/i},{k:"Anticelulítico",re:/антицел|целулит|anticel|изваяни|esculpid/i}].map(cat=>{
       const lines=CENTERS.map(ct=>{
         const hits=ct.massages.filter(m=>cat.re.test(m.name)||cat.re.test(m.nameBG||""));
         if(!hits.length)return null;
         const ps=hits.map(m=>m.price);const mn=Math.min(...ps),mx=Math.max(...ps);
         const ppms=hits.map(m=>m.price/(parseInt(m.duration)||60));const bestPpm=Math.max(...ppms);
-        return`<div class="pro-row"><span style="color:${ct.color};font-size:12px">${ct.icon} ${ct.nameShort}</span><div class="pro-val" style="font-size:12px">${mn===mx?mn+" €":mn+"–"+mx+" €"}<div class="pro-sub">hasta ${bestPpm.toFixed(2)} €/min</div></div></div>`;
+        return`<div class="pro-row"><span style="color:${ct.color};font-size:calc(12px*var(--fs))">${ct.icon} ${ct.nameShort}</span><div class="pro-val" style="font-size:calc(12px*var(--fs))">${mn===mx?mn+" €":mn+"–"+mx+" €"}<div class="pro-sub">hasta ${bestPpm.toFixed(2)} €/min</div></div></div>`;
       }).filter(Boolean).join("");
-      return lines?`<div style="margin-top:8px"><div style="font-size:13px;color:var(--gold);font-weight:700;margin-bottom:2px">${cat.k}</div>${lines}</div>`:"";
+      return lines?`<div style="margin-top:8px"><div style="font-size:calc(13px*var(--fs));color:var(--gold);font-weight:700;margin-bottom:2px">${cat.k}</div>${lines}</div>`:"";
     }).join("")}
   </div>
   ${rows.length>1?`<div class="card"><div class="card-title">💡 Conclusión</div><div class="insight good"><span>✅</span><span>Tu centro más rentable por hora neta ${periodLabel} es <strong style="color:${rows[0].ct.color}">${rows[0].ct.name}</strong> con ${rows[0].ephNet.toFixed(2)} €/h.</span></div>${rows[rows.length-1].ephNet<rows[0].ephNet*0.6?`<div class="insight warn"><span>⚠️</span><span>${rows[rows.length-1].ct.name} rinde ${((1-rows[rows.length-1].ephNet/rows[0].ephNet)*100).toFixed(0)}% menos por hora que ${rows[0].ct.name}.</span></div>`:""}</div>`:""}`;
@@ -1831,11 +1927,14 @@ function renderCerebro(){
 
   // ── AGENTE VENTAS ──
   const byType={};
-  c.massages.forEach(m=>{byType[m.id]={name:m.name,nameBG:m.nameBG,price:m.price,duration:m.duration,count:0,revenue:0,last:null};});
-  sMass.forEach(m=>{if(!byType[m.id])byType[m.id]={name:m.name,nameBG:m.nameBG,price:m.price,duration:m.duration,count:0,revenue:0,last:null};byType[m.id].count++;byType[m.id].revenue+=m.price;});
+  c.massages.forEach(m=>{byType[m.id]={id:m.id,name:m.name,nameBG:m.nameBG,price:m.price,duration:m.duration,count:0,revenue:0,last:null};});
+  sMass.forEach(m=>{if(!byType[m.id])byType[m.id]={id:m.id,name:m.name,nameBG:m.nameBG,price:m.price,duration:m.duration,count:0,revenue:0,last:null};byType[m.id].count++;byType[m.id].revenue+=m.price;});
   const lastSold={};allMass.forEach(m=>{if(!lastSold[m.id]||m.date>lastSold[m.id])lastSold[m.id]=m.date;});
   const sold=Object.values(byType).filter(x=>x.count>0).sort((a,b)=>b.count-a.count);
-  const top=sold[0],bottom=sold.length>1?sold[sold.length-1]:null;
+  // Minis y complementos no cuentan como "menos vendido" ni entran en paquetes
+  const catM=id=>c.massages.find(x=>x.id===id)||{};
+  const soldCore=sold.filter(x=>!catM(x.id).mini&&!catM(x.id).addonOf);
+  const top=sold[0],topCore=soldCore[0],bottom=soldCore.length>1?soldCore[soldCore.length-1]:null;
   const unsold30=c.massages.filter(m=>{
     if(spanDays<30)return false;
     const l=lastSold[m.id];
@@ -1860,25 +1959,32 @@ function renderCerebro(){
   const SRC_LABELS={google:"Google/Maps",recepcion:"Recepción",recomendado:"Recomendado",redes:"Redes",otro:"Otro"};
   const srcCounts={};sMass.filter(m=>m.nc===true).forEach(m=>{const k=m.src||"sin marcar";srcCounts[k]=(srcCounts[k]||0)+1;});
   // Retención: nuevos con nombre que volvieron después
-  const namedNew={};sMass.forEach(m=>{if(m.nc===true&&m.cn)namedNew[m.cn.toLowerCase()]=namedNew[m.cn.toLowerCase()]||m.date;});
+  const namedNew={};sMass.forEach(m=>{if(m.nc===true&&m.cn)namedNew[normCN(m.cn)]=namedNew[normCN(m.cn)]||m.date;});
   let returned=0;const newNames=Object.keys(namedNew);
-  newNames.forEach(n=>{if(allMass.some(m=>m.cn&&m.cn.toLowerCase()===n&&m.date>namedNew[n]))returned++;});
+  newNames.forEach(n=>{if(allMass.some(m=>m.cn&&normCN(m.cn)===n&&m.date>namedNew[n]))returned++;});
   const retPct=newNames.length>0?returned/newNames.length*100:null;
   const ppmList=c.massages.map(m=>({name:m.name,nameBG:m.nameBG,duration:m.duration,price:m.price,ppm:m.price/(parseInt(m.duration)||60)})).sort((a,b)=>b.ppm-a.ppm);
 
   // ── CEREBRO: recomendaciones cruzadas ──
   const recs=[];
-  unsold30.forEach(u=>{
-    const mini=Math.round(u.price*0.65);
-    const miniDur=Math.round((parseInt(u.duration)||60)*0.6);
-    let r="«"+(u.nameBG||u.name)+"» "+(u.count===0?"nunca se ha vendido":"lleva 30+ días sin venderse")+". Opciones concretas: ";
+  const nmM=u=>u.nameBG||u.name;
+  // Masajes principales sin ventas: mini solo si dura ≥45 min y SIEMPRE con €/min
+  // superior al original y nunca por debajo de 1,20 €/min (regla del Proyecto 10K)
+  unsold30.filter(u=>!u.mini&&!u.addonOf).forEach(u=>{
+    const D=parseInt(u.duration)||60,ppmO=u.price/D;
+    let r="«"+nmM(u)+"» "+(!lastSold[u.id]?"nunca se ha vendido":"lleva 30+ días sin venderse")+". Opciones concretas: ";
     const opts=[];
-    opts.push("versión mini de "+miniDur+" min a "+mini+" € para que lo prueben");
-    if(top&&top.name!==u.name)opts.push("paquete con tu estrella «"+(top.nameBG||top.name)+"» con 10-15% de descuento");
+    const exMini=c.massages.find(x=>x.miniOf===u.id);
+    if(exMini)opts.push("ya existe su versión corta «"+nmM(exMini)+"» ("+exMini.duration+" · "+exMini.price+" €): úsala como puerta de entrada y propón el completo en la siguiente visita");
+    else if(D>=45){const md=Math.max(20,Math.round(D*0.6/5)*5);const mp=Math.ceil(Math.max(u.price*0.65,md*Math.max(1.2,ppmO*1.05)));opts.push("versión mini de "+md+" min a "+mp+" € ("+(mp/md).toFixed(2).replace(".",",")+" €/min, más que el original) para que lo prueben");}
+    if(topCore&&topCore.id!==u.id)opts.push("paquete con tu estrella «"+nmM(topCore)+"» con 10-15% de descuento");
     if(bestDow)opts.push("proponerlo en recepción los "+bestDow.dow+" (tu mejor día)");
-    opts.push("ofrecerlo como extensión de +"+Math.round(u.price*0.5)+" € al terminar otro masaje");
     recs.push({t:r+opts.join("; ")+".",c:"warn",a:"💊 Ventas+Precios"});
   });
+  const uMini=unsold30.filter(u=>u.mini);
+  if(uMini.length)recs.push({t:"Minis sin ventas en 30+ días: "+uMini.map(u=>"«"+nmM(u)+"»").join(", ")+". Solo se ofrecen de lunes a jueves, de 16:00 a 21:00: pide a recepción que los propongan a quien llama esas tardes con poco tiempo.",c:"info",a:"💊 Ventas"});
+  const uAdd=unsold30.filter(u=>u.addonOf);
+  if(uAdd.length){const base=catM(uAdd[0].addonOf);recs.push({t:"Complementos sin ventas en 30+ días: "+uAdd.map(u=>"«"+nmM(u)+"» (+"+((parseInt(u.duration)||0)-(parseInt(base.duration)||0))+" min · +"+(u.price-base.price)+" €)").join(", ")+". Ofrécelos en el momento de reservar «"+nmM(base)+"».",c:"info",a:"💊 Ventas"});}
   if(top)recs.push({t:"Tu producto estrella es «"+(top.nameBG||top.name)+"» ("+top.count+" ventas, "+ef(top.revenue)+"). Pide a recepción que lo ofrezca primero a clientes nuevos: es tu mejor carta de fidelización.",c:"good",a:"📈 Ventas"});
   if(bestDow&&worstDow&&bestDow.dow!==worstDow.dow&&bestDow.avg>worstDow.avg*1.5)recs.push({t:"Los "+bestDow.dow+" rindes "+ef(bestDow.avg)+"/día de media vs "+ef(worstDow.avg)+" los "+worstDow.dow+" — un "+Math.round((bestDow.avg/worstDow.avg-1)*100)+"% más. Prioriza pedir turnos de "+bestDow.dow+".",c:"info",a:"📅 Tiempo"});
   recs.push({t:"Trabajas mejor por las "+bestSlot+" ("+ef(bestSlot==="mañanas"?mornRev:aftRev)+" vs "+ef(bestSlot==="mañanas"?aftRev:mornRev)+"). Al negociar horarios, defiende ese bloque.",c:"info",a:"📅 Tiempo"});
@@ -1887,17 +1993,17 @@ function renderCerebro(){
     else if(pctNew>60)recs.push({t:"El "+pctNew.toFixed(0)+"% de tus masajes son clientes nuevos pero pocos repiten. Refuerza la retención: al terminar, agenda directamente la próxima sesión y explica el plan de tratamiento (\"con 4 sesiones más resolvemos esta contractura\").",c:"warn",a:"👥 Clientes"});
     else recs.push({t:"Buen equilibrio: "+pctNew.toFixed(0)+"% clientes nuevos, "+(100-pctNew).toFixed(0)+"% habituales. Mantén las dos palancas activas.",c:"good",a:"👥 Clientes"});
   } else recs.push({t:"Marca 🆕/🔁 en cada masaje que registres — con esos datos el agente de clientes podrá darte análisis de captación y retención precisos.",c:"info",a:"👥 Clientes"});
-  if(top&&bottom&&top.name!==bottom.name&&bestDow)recs.push({t:"Jugada combinada del Cerebro: los "+bestDow.dow+" (máximo tráfico) ofrece el paquete «"+(top.nameBG||top.name)+" + "+(bottom.nameBG||bottom.name)+"» — usas tu día fuerte y tu producto fuerte para arrastrar al débil.",c:"good",a:"🧠 Cerebro"});
+  if(topCore&&bottom&&topCore.id!==bottom.id&&bestDow)recs.push({t:"Jugada combinada del Cerebro: los "+bestDow.dow+" (máximo tráfico) ofrece el paquete «"+(topCore.nameBG||topCore.name)+" + "+(bottom.nameBG||bottom.name)+"» — usas tu día fuerte y tu producto fuerte para arrastrar al débil.",c:"good",a:"🧠 Cerebro"});
 
   el.innerHTML=`
   <div class="card"><div class="card-title">🧠 Cerebro PRO · ${c.name}</div>
-    <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:9px">Cuatro agentes analizan tus datos y cruzan conclusiones. Cuantos más días, horas y 🆕 registres, más preciso es.</div>
+    <div style="font-size:calc(12px*var(--fs));color:var(--muted);line-height:1.6;margin-bottom:9px">Cuatro agentes analizan tus datos y cruzan conclusiones. Cuantos más días, horas y 🆕 registres, más preciso es.</div>
     <div class="period-btns" style="margin-bottom:4px">
       <button class="period-btn ${per==="mes"?"active":""}" onclick="window._cerPeriod='mes';renderCerebro()">Este mes</button>
       <button class="period-btn ${per==="prev"?"active":""}" onclick="window._cerPeriod='prev';renderCerebro()">Mes anterior</button>
       <button class="period-btn ${per==="all"?"active":""}" onclick="window._cerPeriod='all';renderCerebro()">Histórico</button>
     </div>
-    ${sDays.length===0?`<div style="font-size:12px;color:#bf8a2a">⚠️ Sin registros en ${scopeLabel}.</div>`:`<div style="font-size:11px;color:var(--dim)">Los 4 agentes analizando: <b style="color:var(--gold)">${scopeLabel}</b> (${sDays.length} días)</div>`}
+    ${sDays.length===0?`<div style="font-size:calc(12px*var(--fs));color:#bf8a2a">⚠️ Sin registros en ${scopeLabel}.</div>`:`<div style="font-size:calc(11px*var(--fs));color:var(--dim)">Los 4 agentes analizando: <b style="color:var(--gold)">${scopeLabel}</b> (${sDays.length} días)</div>`}
   </div>
   <div class="card"><div class="card-title">👥 Agente Clientes · ${scopeLabel}</div>
     <div class="stat-grid">
@@ -1907,18 +2013,18 @@ function renderCerebro(){
       <div class="stat-box"><div class="stat-val">${trackedNC>0?pctNew.toFixed(0)+"%":"—"}</div><div class="stat-lbl">% nuevos</div></div>
     </div>
     ${per==="mes"?`<div style="margin-top:4px">
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:3px"><span>🎯 Meta semanal de captación</span><span>${ncGoal>0?newWeek+" / "+ncGoal+" nuevos":"sin meta"}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:calc(12px*var(--fs));color:#888;margin-bottom:3px"><span>🎯 Meta semanal de captación</span><span>${ncGoal>0?newWeek+" / "+ncGoal+" nuevos":"sin meta"}</span></div>
       ${ncGoal>0?`<div class="goal-bar-wrap"><div class="goal-bar" style="width:${Math.min(100,newWeek/ncGoal*100)}%;background:linear-gradient(90deg,#2a8f5a,#4abf7a)"></div></div>`:""}
       <div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px">
         <div style="flex:1"><label class="lbl">Clientes nuevos por semana</label><input type="number" id="nc-goal-input" value="${ncGoal||""}" placeholder="Ej: 5" min="0"></div>
-        <button onclick="saveNcGoal()" style="background:linear-gradient(135deg,#4abf7a,#2a8f5a);border:none;border-radius:9px;color:#0d0d0d;padding:10px 13px;font-size:13px;font-weight:700;cursor:pointer;font-family:Georgia,serif;flex-shrink:0">Guardar</button>
+        <button onclick="saveNcGoal()" style="background:linear-gradient(135deg,#4abf7a,#2a8f5a);border:none;border-radius:9px;color:#0d0d0d;padding:10px 13px;font-size:calc(13px*var(--fs));font-weight:700;cursor:pointer;font-family:Georgia,serif;flex-shrink:0">Guardar</button>
       </div>
     </div>`:""}
     ${Object.keys(srcCounts).length?`<div style="margin-top:10px"><div class="pro-sub" style="text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">📣 Origen de los nuevos</div>${Object.entries(srcCounts).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="pro-row"><span>${SRC_LABELS[k]||k}</span><div class="pro-val">${v}</div></div>`).join("")}</div>`:""}
     ${retPct!==null?`<div class="pro-row"><span>🔁 Retención de nuevos (con nombre)</span><div class="pro-val ${retPct>=40?"gold":""}">${returned} de ${newNames.length} (${retPct.toFixed(0)}%)</div></div>`:""}
   </div>
   <div class="card"><div class="card-title">💶 Precio por Minuto del Catálogo</div>
-    <div style="font-size:11px;color:var(--dim);margin-bottom:6px">Qué masaje paga mejor tu tiempo (precio ÷ duración)</div>
+    <div style="font-size:calc(11px*var(--fs));color:var(--dim);margin-bottom:6px">Qué masaje paga mejor tu tiempo (precio ÷ duración)</div>
     ${ppmList.map((p,i)=>`<div class="pro-row"><span>${i===0?"🥇 ":i===ppmList.length-1?"🐢 ":""}${p.nameBG||p.name}<div class="pro-sub">${p.nameBG?p.name+" · ":""}${p.duration} · ${p.price} €</div></span><div class="pro-val ${i===0?"gold":""}">${p.ppm.toFixed(2)} €/min</div></div>`).join("")}
   </div>
   <div class="card"><div class="card-title">📈 Agente Ventas · ${scopeLabel}</div>
@@ -1933,10 +2039,10 @@ function renderCerebro(){
     <div class="pro-row"><span>🔥 Ocupación real</span><div class="pro-val ${occ>=80?"gold":""}" style="${occ<50?"color:var(--red)":""}">${occ.toFixed(0)}%<div class="pro-sub">${Math.round(massMin/60)}h masajeando de ${Math.round(workMin/60)}h</div></div></div>
   </div>
   <div class="card"><div class="card-title">🧠 Recomendaciones del Cerebro</div>
-    ${recs.map(r=>`<div class="insight ${r.c}"><span>${ICONS[r.c]}</span><span><b style="color:var(--gold);font-size:11px">${r.a}</b><br>${r.t}</span></div>`).join("")}
+    ${recs.map(r=>`<div class="insight ${r.c}"><span>${ICONS[r.c]}</span><span><b style="color:var(--gold);font-size:calc(11px*var(--fs))">${r.a}</b><br>${r.t}</span></div>`).join("")}
   </div>
   <div class="card"><div class="card-title">📤 Informes Mensuales · Proyecto 10K</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:9px;line-height:1.5">Genera los dos informes a inicio de cada mes y súbelos a tu Proyecto en Claude para el análisis estratégico mensual.</div>
+    <div style="font-size:calc(12px*var(--fs));color:var(--muted);margin-bottom:9px;line-height:1.5">Genera los dos informes a inicio de cada mes y súbelos a tu Proyecto en Claude para el análisis estratégico mensual.</div>
     <div class="period-btns"><button class="period-btn ${(window._repMonth||"prev")==="prev"?"active":""}" onclick="window._repMonth='prev';renderCerebro()">Mes anterior</button><button class="period-btn ${(window._repMonth||"prev")==="cur"?"active":""}" onclick="window._repMonth='cur';renderCerebro()">Mes actual</button></div>
     <button class="btn-gold" onclick="exportCerebroReport()">🧠 Informe del Cerebro — copiar</button>
     <button class="btn-blue" onclick="exportFinReport()" style="margin-top:8px">💰 Informe Financiero — copiar</button>
@@ -1979,9 +2085,9 @@ function exportCerebroReport(){
   const SRC2={google:"Google/Maps",recepcion:"Recepción",recomendado:"Recomendado",redes:"Redes",otro:"Otro"};
   const srcC={};allM.filter(m=>m.nc===true).forEach(m=>{const k=m.src||"sin marcar";srcC[k]=(srcC[k]||0)+1;});
   if(Object.keys(srcC).length){o+="ORIGEN DE CLIENTES NUEVOS\n";Object.entries(srcC).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>o+="  "+(SRC2[k]||k)+": "+v+"\n");o+="\n";}
-  const nn={};allM.forEach(m=>{if(m.nc===true&&m.cn)nn[m.cn.toLowerCase()]=nn[m.cn.toLowerCase()]||m.date;});
+  const nn={};allM.forEach(m=>{if(m.nc===true&&m.cn)nn[normCN(m.cn)]=nn[normCN(m.cn)]||m.date;});
   const nnk=Object.keys(nn);
-  if(nnk.length){let ret=0;nnk.forEach(n=>{if(cDays().flatMap(d=>d.massages.map(x=>({...x,date:d.date}))).some(m=>m.cn&&m.cn.toLowerCase()===n&&m.date>nn[n]))ret++;});
+  if(nnk.length){let ret=0;nnk.forEach(n=>{if(cDays().flatMap(d=>d.massages.map(x=>({...x,date:d.date}))).some(m=>m.cn&&normCN(m.cn)===n&&m.date>nn[n]))ret++;});
   o+="RETENCIÓN: "+ret+" de "+nnk.length+" nuevos volvieron ("+(ret/nnk.length*100).toFixed(0)+"%)\n\n";}
   o+="PRECIO POR MINUTO (mejor → peor)\n";ppm.forEach(x=>o+="  "+x.n+": "+x.p.toFixed(2)+" €/min\n");
   o+="\n"+S+"\nPara Claude: analiza este mes contra el plan del Proyecto 10K, detecta cuellos de botella y dame las 3 acciones de mayor impacto para el próximo mes.\n"+S;
@@ -2025,7 +2131,11 @@ function exportFinReport(){
 
 function renderConfig(){
   const cfg=cCfg(),c=currentCenter();
+  const fsNow=(localStorage.getItem("gp_fs")||getComputedStyle(document.documentElement).getPropertyValue("--fs")||"1.5").trim();
   document.getElementById("config-content").innerHTML=`
+  <div class="card"><div class="card-title">🔠 Tamaño del texto</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${["1","1.25","1.5","1.75","2"].map(v=>`<button onclick="setFontScale('${v}')" style="flex:1;min-width:56px;padding:10px 4px;border-radius:9px;cursor:pointer;font-family:Georgia,serif;font-size:calc(15px*var(--fs));border:1px solid ${fsNow===v?"var(--gold)":"#333"};background:${fsNow===v?"#2a2008":"var(--bg3)"};color:${fsNow===v?"var(--gold)":"var(--muted)"}">${Math.round(v*100)}%</button>`).join("")}</div>
+  </div>
   <div class="card"><div class="card-title">⚙️ ${c.name}</div>
     ${c.hasSalary?`<div class="config-row"><div><div class="config-label">Salario mensual base</div><div class="config-sub">Dividido entre días laborales del mes</div></div><input class="config-input" type="number" id="cfg-salary" value="${c.salary}" step="0.01"></div>`:""}
     ${c.hasVat?`<div class="config-row"><div><div class="config-label">IVA (%)</div><div class="config-sub">Se deduce antes de la comisión</div></div><input class="config-input" type="number" id="cfg-vat" value="${c.vatRate}" min="0" max="50"></div>`:""}
@@ -2038,10 +2148,11 @@ function renderConfig(){
     <div class="config-row"><div><div class="config-label">Límite horas semanales</div><div class="config-sub">Para alerta de agotamiento</div></div><input class="config-input" type="number" id="cfg-fatigue" value="${cfg.fatigueHours}" min="20" max="80"></div>
     <button class="btn-ghost" style="display:block;margin-top:8px" onclick="openModal('pin-modal')">🔐 Cambiar PIN</button>
   </div>
-  ${c.hasHolidays?`<div class="card"><div class="card-title">📅 Feriados Búlgaros ${new Date().getFullYear()}</div><div style="font-size:12px;color:var(--muted);margin-bottom:9px;line-height:1.6">Aplicados automáticamente con pago doble:</div>${[...BG_FIXED.map(d=>({ds:"2026-"+d,n:HOLIDAY_NAMES[d]||d})),...(BG_SPECIAL["2026"]||[]).map(d=>({ds:d,n:HOLIDAY_NAMES[d]||d}))].sort((a,b)=>a.ds.localeCompare(b.ds)).map(x=>`<span class="holiday-tag">🎉 ${fmtDate(x.ds)} ${x.n}</span>`).join("")}</div>`:""}
+  ${c.hasHolidays?`<div class="card"><div class="card-title">📅 Feriados Búlgaros ${new Date().getFullYear()}</div><div style="font-size:calc(12px*var(--fs));color:var(--muted);margin-bottom:9px;line-height:1.6">Aplicados automáticamente con pago doble:</div>${[...BG_FIXED.map(d=>({ds:"2026-"+d,n:HOLIDAY_NAMES[d]||d})),...(BG_SPECIAL["2026"]||[]).map(d=>({ds:d,n:HOLIDAY_NAMES[d]||d}))].sort((a,b)=>a.ds.localeCompare(b.ds)).map(x=>`<span class="holiday-tag">🎉 ${fmtDate(x.ds)} ${x.n}</span>`).join("")}</div>`:""}
   <div class="card"><div class="card-title">💾 Copia de Seguridad</div>
-    <button class="btn-blue" onclick="exportBackup()">📥 Exportar todos los datos</button>
-    <div style="margin-top:10px"><label class="lbl">Restaurar backup</label><input type="file" id="backup-file" accept=".json" onchange="importBackup(this)" style="font-size:12px;padding:7px"></div>
+    <div style="font-size:calc(12px*var(--fs));color:var(--muted);margin-bottom:8px">Última copia: ${(()=>{const lb=localStorage.getItem("gp_last_backup");return lb?fmtDate(lb):"nunca";})()}</div>
+    <button class="btn-blue" onclick="exportBackup();renderConfig()">📥 Exportar todos los datos</button>
+    <div style="margin-top:10px"><label class="lbl">Restaurar backup</label><input type="file" id="backup-file" accept=".json" onchange="importBackup(this)" style="font-size:calc(12px*var(--fs));padding:7px"></div>
   </div>`;
 }
 function saveConfig(){
@@ -2057,7 +2168,7 @@ function saveConfig(){
 }
 
 // ═══════════════ BACKUP ═══════════════
-function exportBackup(){const data=JSON.stringify({version:SCHEMA_VERSION,data:allData},null,2);const blob=new Blob([data],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="guidopro_backup_"+today()+".json";a.click();URL.revokeObjectURL(url);}
+function exportBackup(){try{localStorage.setItem("gp_last_backup",today());}catch(e){}const data=JSON.stringify({version:SCHEMA_VERSION,data:allData},null,2);const blob=new Blob([data],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="guidopro_backup_"+today()+".json";a.click();URL.revokeObjectURL(url);try{renderDashboard();}catch(e){}}
 function importBackup(input){
   const file=input.files[0];if(!file)return;
   const reader=new FileReader();
@@ -2103,7 +2214,7 @@ function checkUnregistered(){
   const yest=yesterday(),td=today(),days=cDays();
   const hasYest=days.some(d=>d.date===yest),hasToday=days.some(d=>d.date===td);
   const el=document.getElementById("notice-unreg");
-  if(!hasYest&&days.length>0&&!hasToday){el.innerHTML=`⚠️ No registraste el ${fmtDate(yest)}. <button onclick="prefillDate('${yest}')" style="background:none;border:none;color:var(--gold);cursor:pointer;font-family:Georgia,serif;font-size:13px;text-decoration:underline">Añadir ahora</button>`;el.style.display="block";}
+  if(!hasYest&&days.length>0&&!hasToday){el.innerHTML=`⚠️ No registraste el ${fmtDate(yest)}. <button onclick="prefillDate('${yest}')" style="background:none;border:none;color:var(--gold);cursor:pointer;font-family:Georgia,serif;font-size:calc(13px*var(--fs));text-decoration:underline">Añadir ahora</button>`;el.style.display="block";}
   else el.style.display="none";
 }
 function prefillDate(date){document.getElementById("f-date").value=date;onDateChange();document.getElementById("notice-unreg").style.display="none";window.scrollTo(0,0);}
