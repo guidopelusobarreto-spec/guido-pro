@@ -447,6 +447,7 @@ input, select, textarea { max-width: 100%; }
       <div id="instances-list"></div>
       <button class="btn-gold" style="margin-top:10px" onclick="scheduleAll()">🔔 Todos al calendario (con descansos)</button>
       <button class="btn-blue" style="margin-top:8px" onclick="autoExit(true)">🚪 Salida automática (último masaje + 20 min)</button>
+      <button class="btn-ghost" style="margin-top:8px" onclick="clearDayCalendar()">🗑 Borrar este día del calendario</button>
       <div id="ics-result"></div>
     </div>
     <div class="card" id="tips-card">
@@ -464,6 +465,7 @@ input, select, textarea { max-width: 100%; }
     </div>
     <button class="btn-gold" id="save-btn" disabled onclick="saveDay()">💾 Guardar Día</button>
     <button class="btn-ghost" id="cancel-edit-btn" onclick="cancelEdit()">✕ Cancelar edición</button>
+    <button class="btn-ghost" onclick="clearForm()">🧹 Limpiar y empezar un día nuevo</button>
   </div>
   <div class="panel" id="panel-2"><div id="history-list"></div></div>
   <div class="panel" id="panel-3"><div id="calendar-content"></div></div>
@@ -604,7 +606,7 @@ const ICONS={good:"✅",warn:"⚠️",dead:"🔴",info:"💡"};
 const PAGE_NAMES=["Dashboard","Añadir día","Historial","Calendario","Análisis PRO","Simulador","Pagos","Exportar","Mi Valor Profesional","Configuración","Comparar Centros","Cerebro PRO"];
 const DEFAULT_CFG={lockMinutes:10,fatigueHours:45};
 // Versión visible de la app — mantener sincronizada con CACHE_NAME de sw.js
-const APP_VERSION="v44";
+const APP_VERSION="v46";
 document.addEventListener("DOMContentLoaded",()=>{const v=document.getElementById("gp-version");if(v)v.textContent="Guido PRO · "+APP_VERSION;});
 
 let allData={};  // { hotel5: {days,payments,goal,cfg}, aleksa: {...}, sanatorium: {...} }
@@ -663,7 +665,10 @@ function normalizeMassage(m,center){
 function normalizeDay(d,center){
   const c=center||currentCenter();
   const massages=(d.massages||[]).map(m=>normalizeMassage(m,c));
-  const workedH=d.workedH!==undefined?d.workedH:calcH(d.entry||"",d.exit||"",c);
+  // En centros a comisión (lunch:false) las horas se recalculan SIEMPRE desde
+  // entrada/salida: así el histórico y las copias restauradas no arrastran la
+  // hora de almuerzo que ya no se descuenta.
+  const workedH=(c.lunch===false&&d.entry&&d.exit)?calcH(d.entry,d.exit,c):(d.workedH!==undefined?d.workedH:calcH(d.entry||"",d.exit||"",c));
   const calc=calcDayTotal(workedH,massages,d.tips||0,d.date,c);
   return{date:d.date,entry:d.entry||"",exit:d.exit||"",massages,workedH,hourlyPay:calc.hourlyPay,commission:calc.commission,tips:d.tips||0,notes:d.notes||"",dayTotal:calc.dayTotal,holiday:calc.holiday||false,clients:d.clients||0,transport:d.transport||0};
 }
@@ -945,7 +950,7 @@ function gpTask(ymd,uid,txt,absMins,lm){
   let a="";
   for(const [abs,lab] of absMins)if(abs>=0&&abs<1440){a+=icsAlarm(":P0DT"+Math.floor(abs/60)+"H"+(abs%60)+"M0S",lab);}
   if(!a)return "";
-  return "BEGIN:VTODO\r\nSUMMARY:"+icsEsc(txt)+"\r\nUID:"+uid+"\r\nX-FOSSIFY-CATEGORY-COLOR:-24081\r\nCATEGORIES:AVISOS\r\nLAST-MODIFIED:"+lm+"\r\nDTSTART;VALUE=DATE:"+ymd+"\r\nDTSTAMP:"+lm+"\r\n"+a+"END:VTODO\r\n";
+  return "BEGIN:VTODO\r\nSUMMARY:"+icsEsc(txt)+"\r\nUID:"+uid+"\r\nX-FOSSIFY-CATEGORY-COLOR:-24081\r\nCATEGORIES:AVISOS\r\nSTATUS:CONFIRMED\r\nLAST-MODIFIED:"+lm+"\r\nDTSTART;VALUE=DATE:"+ymd+"\r\nDTSTAMP:"+lm+"\r\n"+a+"END:VTODO\r\n";
 }
 // Puntos de aviso dentro del masaje (minutos desde el inicio):
 // · anticelulíticos (zonas10): cambio de zona cada 10 min;
@@ -991,15 +996,15 @@ function buildEventBlock(ins,ds,individual,end10,lm){
   desc.push((zones?"🔄 ":"⏱ ")+tl.map(e=>hm(S+e[0])+" "+e[1]).join(" · "));
   // Evento principal: alarmas 10 min antes y al inicio (las que Fossify respeta en eventos)
   const title="💆 "+nm+" ("+m.duration+") · "+c.nameShort;
-  const uidE="gp-"+ymd+"-"+ins.u+"@guidopro";
+  const keyE=ins.u+"|ev",uidE=gpTakeUid(keyE,"ev");
   const now=new Date(),fl=gpTS(localISO(now),now.getHours()*60+now.getMinutes());
-  const ev="BEGIN:VEVENT\r\nUID:"+uidE+"\r\nDTSTAMP:"+fl+"\r\nLAST-MODIFIED:"+lm+"\r\nDTSTART:"+gpTS(ds,S)+"\r\nDTEND:"+gpTS(ds,S+D)+"\r\nSUMMARY:"+icsEsc(title)+"\r\nX-FOSSIFY-CATEGORY-COLOR:-8715009\r\nCATEGORIES:MASAJES\r\n"
+  const ev="BEGIN:VEVENT\r\nUID:"+uidE+"\r\nDTSTAMP:"+fl+"\r\nLAST-MODIFIED:"+lm+"\r\nDTSTART:"+gpTS(ds,S)+"\r\nDTEND:"+gpTS(ds,S+D)+"\r\nSUMMARY:"+icsEsc(title)+"\r\nX-FOSSIFY-CATEGORY-COLOR:-8715009\r\nCATEGORIES:MASAJES\r\nSTATUS:CONFIRMED\r\n"
     +"DESCRIPTION:"+desc.map(icsEsc).join("\\n")+"\r\n"
     +"LOCATION:"+icsEsc(c.name+" · "+c.location)+"\r\n"
     +icsAlarm(":-P0DT0H10M0S","⏰ Masaje en 10 minutos")
     +icsAlarm(":-P0DT0H0M0S","▶️ Comienza el masaje")
     +"END:VEVENT\r\n";
-  reg[uidE]={k:"ev",s:gpTS(ds,S),e:gpTS(ds,S+D),t:title,...own};
+  reg[keyE]={uid:uidE,k:"ev",s:gpTS(ds,S),e:gpTS(ds,S+D),t:title,...own};
   // Tareas de avisos intermedios (máx. 3 por tarea)
   let chk="";
   const lastZ=zones&&has10&&lim%10===0?zones[lim/10]:null;
@@ -1008,18 +1013,18 @@ function buildEventBlock(ins,ds,individual,end10,lm){
     let ttl=part.map(p=>zones?hm(S+p.t)+" "+shortZ(p.lab):p.sym+" "+hm(S+p.t)).join(" · ");
     if(lastZ&&(j+1)*3>=cps.length)ttl+=" · "+hm(S+lim)+" "+shortZ(lastZ)+" (aviso 10 min)";
     ttl=(zones?"🔄 ":"")+ttl+" — "+nm+" ("+ins.t+")";
-    const uid=hex32(ymd+"|"+ins.u+"|cp"+j);
+    const keyC=ins.u+"|cp"+j,uid=gpTakeUid(keyC,"todo");
     const t=gpTask(ymd,uid,ttl,part.map(p=>[S+p.t,p.sym+" "+p.lab+" · "+hm(S+p.t)]),lm);
-    if(t){chk+=t;reg[uid]={k:"todo",t:ttl,...own};}
+    if(t){chk+=t;reg[keyC]={uid:uid,k:"todo",t:ttl,...own};}
   }
   if(individual){
     const fal=[];let ft="";
     if(has10){fal.push([S+lim,"⏳ Quedan 10 minutos"]);ft="⏳ "+hm(S+lim)+(lastZ?" "+shortZ(lastZ):" quedan 10")+" · ";}
     fal.push([S+D,"✅ Fin del masaje"]);
     const ttl=ft+"✅ "+hm(S+D)+" fin — "+nm+" ("+ins.t+")";
-    const uid=hex32(ymd+"|"+ins.u+"|fin");
+    const keyF=ins.u+"|fin",uid=gpTakeUid(keyF,"todo");
     const t=gpTask(ymd,uid,ttl,fal,lm);
-    if(t){chk+=t;reg[uid]={k:"todo",t:ttl,...own};}
+    if(t){chk+=t;reg[keyF]={uid:uid,k:"todo",t:ttl,...own};}
   }
   return {ev:ev,chk:chk,reg:reg};
 }
@@ -1084,10 +1089,46 @@ function gpRegSave(ds,obj){
     Object.keys(localStorage).filter(k=>k.startsWith("gp_ics_")&&k.slice(-10)<lim).forEach(k=>localStorage.removeItem(k));
   }catch(e){}
 }
+// Los identificadores de los eventos que dejan de usarse NO se tiran: se
+// guardan en un almacén y el siguiente masaje que se exporta reutiliza uno.
+// Así Fossify actualiza un evento que ya existía en vez de crear otro, y el
+// número de eventos no crece con el uso.
+const gpPoolKey=()=>"gp_ics_pool_"+currentCenter().key;
+function gpPool(){try{const p=JSON.parse(localStorage.getItem(gpPoolKey()));return (p&&p.ev)?p:{ev:[],todo:[]};}catch(e){return{ev:[],todo:[]};}}
+function gpPoolSave(p){try{localStorage.setItem(gpPoolKey(),JSON.stringify({ev:(p.ev||[]).slice(-300),todo:(p.todo||[]).slice(-300)}));}catch(e){}}
+let gpCtx=null;
+// Entradas del registro en cualquiera de los dos formatos (clave=UID antiguo,
+// clave=función nueva).
+const gpEntries=r=>Object.entries(r.items||{}).map(([k,v])=>Object.assign({},v,{uid:v.uid||k}));
+function gpCtxInit(ds){
+  const r=gpReg(ds),pool=gpPool();
+  let prev=r.items||{},dirty=false;
+  if(Object.values(prev).some(v=>!v.uid)){
+    // Registro de una versión anterior: sus UIDs pasan al almacén y se
+    // reutilizan en esta misma exportación (no se duplica nada).
+    gpEntries(r).forEach(it=>{const k=it.k==="todo"?"todo":"ev";if(pool[k].indexOf(it.uid)<0)pool[k].push(it.uid);});
+    prev={};dirty=true;
+  }
+  gpCtx={ds:ds,prev:prev,pool:pool,dirty:dirty};
+}
+function gpTakeUid(key,kind){
+  const p=gpCtx.prev[key];
+  if(p&&p.uid)return p.uid;
+  const arr=gpCtx.pool[kind]||(gpCtx.pool[kind]=[]);
+  if(arr.length){gpCtx.dirty=true;return arr.shift();}
+  return kind==="ev"?("gp-"+gpCtx.ds.replace(/-/g,"")+"-"+newU()+"@guidopro"):hex32(gpCtx.ds+"|"+key+"|"+newU());
+}
+function gpRelease(uid,kind){const k=kind==="todo"?"todo":"ev",arr=gpCtx.pool[k]||(gpCtx.pool[k]=[]);if(arr.indexOf(uid)<0){arr.push(uid);gpCtx.dirty=true;}}
+function gpCtxSave(items,full){if(gpCtx.dirty)gpPoolSave(gpCtx.pool);gpRegSave(gpCtx.ds,{full:full,items:items});}
+// Un .ics no puede borrar eventos. Los restos se reenvían al 01/01/2000,
+// cancelados y sin alarmas: desaparecen de la semana de trabajo sin tocar nada.
+// (Fossify actualiza por UID y guarda la nueva fecha; STATUS solo los tacha,
+// por eso además se mueven de fecha.)
+const GP_TRASH="20000101";
 function gpNeutral(ds,uid,it,lm){
-  const t="🗑 BORRAR — "+String(it.t||"").replace(/^🗑 BORRAR — /,"");
-  if(it.k==="todo")return "BEGIN:VTODO\r\nSUMMARY:"+icsEsc(t)+"\r\nUID:"+uid+"\r\nX-FOSSIFY-CATEGORY-COLOR:-24081\r\nCATEGORIES:AVISOS\r\nLAST-MODIFIED:"+lm+"\r\nDTSTART;VALUE=DATE:"+ds.replace(/-/g,"")+"\r\nDTSTAMP:"+lm+"\r\nEND:VTODO\r\n";
-  return "BEGIN:VEVENT\r\nUID:"+uid+"\r\nDTSTAMP:"+it.s+"\r\nLAST-MODIFIED:"+lm+"\r\nDTSTART:"+it.s+"\r\nDTEND:"+it.e+"\r\nSUMMARY:"+icsEsc(t)+"\r\nX-FOSSIFY-CATEGORY-COLOR:-24081\r\nCATEGORIES:AVISOS\r\nTRANSP:TRANSPARENT\r\nEND:VEVENT\r\n";
+  const t="🗑 Libre — "+String(it.t||"").replace(/^🗑[^—]*—\s*/,"");
+  if(it.k==="todo")return "BEGIN:VTODO\r\nSUMMARY:"+icsEsc(t)+"\r\nUID:"+uid+"\r\nX-FOSSIFY-CATEGORY-COLOR:-8355712\r\nCATEGORIES:PAPELERA\r\nSTATUS:COMPLETED\r\nLAST-MODIFIED:"+lm+"\r\nDTSTART;VALUE=DATE:"+GP_TRASH+"\r\nDTSTAMP:"+lm+"\r\nEND:VTODO\r\n";
+  return "BEGIN:VEVENT\r\nUID:"+uid+"\r\nDTSTAMP:"+lm+"\r\nLAST-MODIFIED:"+lm+"\r\nDTSTART:"+GP_TRASH+"T000000\r\nDTEND:"+GP_TRASH+"T001000\r\nSUMMARY:"+icsEsc(t)+"\r\nX-FOSSIFY-CATEGORY-COLOR:-8355712\r\nCATEGORIES:PAPELERA\r\nSTATUS:CANCELLED\r\nTRANSP:TRANSPARENT\r\nEND:VEVENT\r\n";
 }
 // Si el formulario se rehízo desde cero, un masaje del mismo tipo y a la
 // misma hora que uno ya exportado hereda su identificador → se actualiza
@@ -1101,7 +1142,7 @@ function gpAdopt(ds,list){
     if(cand){ins.u=cand.o;used.add(cand.o);}
   });
 }
-const gpStaleMsg=n=>"🗑 "+n+" aviso(s) antiguo(s) ya no corresponden: quedan silenciados y aparecen en Fossify como «🗑 BORRAR». Bórralos a mano.";
+const gpStaleMsg=n=>"🗑 "+n+" evento(s) que ya no corresponden salen de tu semana: quedan vacíos en el calendario PAPELERA (01/01/2000) y la app los reutilizará en la próxima exportación, así no se acumulan. Para borrarlos del todo: Fossify → Ajustes → Gestionar calendarios → mantén pulsado PAPELERA → papelera → «Eliminar los eventos afectados».";
 function scheduleMassage(i){
   const ins=instances[i];if(!ins)return;
   const ds=document.getElementById("f-date").value;
@@ -1112,21 +1153,38 @@ function scheduleMassage(i){
   if(gpReg(ds).full){scheduleAll("🔄 Este día ya estaba completo en el calendario: se ha actualizado el día entero.");return;}
   if(!ins.u)ins.u=newU();
   gpAdopt(ds,[ins]);
+  gpCtxInit(ds);
   const lm=utcStamp(),b=buildEventBlock(ins,ds,true,true,lm);
-  const r=gpReg(ds);
+  const items=Object.assign({},gpCtx.prev);
   // Sobrantes: avisos anteriores de ESTE masaje que ya no existen, o de un
   // masaje igual (mismo tipo y hora) creado de nuevo en el formulario.
-  const stale=Object.keys(r.items).filter(u=>!b.reg[u]&&(r.items[u].o===ins.u||(r.items[u].o!=="day"&&r.items[u].mid===ins.mid&&r.items[u].st===ins.t)));
-  let neut="";stale.forEach(u=>{neut+=gpNeutral(ds,u,r.items[u],lm);delete r.items[u];});
-  Object.assign(r.items,b.reg);r.full=false;gpRegSave(ds,r);
-  downloadICS(b.ev+b.chk+neut,"masaje_"+ds+"_"+ins.t.replace(":","")+".ics").then(n=>showIcsResult(n,stale.length?[gpStaleMsg(stale.length)]:[]));
+  const stale=Object.keys(items).filter(k=>!b.reg[k]&&(items[k].o===ins.u||(items[k].o!=="day"&&items[k].mid===ins.mid&&items[k].st===ins.t)));
+  let neut="";stale.forEach(k=>{neut+=gpNeutral(ds,items[k].uid,items[k],lm);gpRelease(items[k].uid,items[k].k);delete items[k];});
+  Object.assign(items,b.reg);gpCtxSave(items,false);
+  const msgs1=stale.length?[gpStaleMsg(stale.length)]:[];
+  if(!cDays().some(d=>d.date===ds))msgs1.push("💾 Este día todavía NO está guardado en la app: cuando termines, pulsa «Guardar Día».");
+  downloadICS(b.ev+b.chk+neut,"masaje_"+ds+"_"+ins.t.replace(":","")+".ics").then(n=>showIcsResult(n,msgs1));
+}
+// Anula en Fossify TODO lo que la app exportó para ese día y guarda sus
+// identificadores para reutilizarlos.
+function clearDayCalendar(){
+  const ds=document.getElementById("f-date").value;
+  if(!ds){alert("Selecciona primero la fecha del día.");return;}
+  const ents=gpEntries(gpReg(ds));
+  if(!ents.length){alert("El "+fmtDate(ds)+" no tiene nada exportado al calendario desde esta app.");return;}
+  if(!confirm("¿Quitar del calendario los "+ents.length+" evento(s) y aviso(s) que la app exportó para el "+fmtDate(ds)+"?\n\nSe descarga un archivo: ábrelo en Fossify para aplicarlo.\nNo se borra nada de la app."))return;
+  gpCtxInit(ds);
+  const lm=utcStamp();let body="";
+  ents.forEach(it=>{body+=gpNeutral(ds,it.uid,it,lm);gpRelease(it.uid,it.k);});
+  gpCtxSave({},false);
+  downloadICS(body,"borrar_"+ds+".ics").then(n=>showIcsResult(n,["🗑 Al abrir este archivo en Fossify, los "+ents.length+" evento(s) del "+fmtDate(ds)+" se vacían y pasan al calendario PAPELERA (01/01/2000). La app reutilizará esos huecos en la próxima exportación."]));
 }
 function buildAuxBlock(ds,startMin,endMin,title,alarmTxt,alarm0Txt,uid,lm){
   let al=alarmTxt?icsAlarm(":-P0DT0H10M0S",alarmTxt):"";
   // Recordatorio "al inicio" del bloque = suena justo al FIN del masaje
   // anterior (los bloques empiezan cuando termina el masaje).
   if(alarm0Txt)al+=icsAlarm(":-P0DT0H0M0S",alarm0Txt);
-  return "BEGIN:VEVENT\r\nUID:"+uid+"\r\nDTSTAMP:"+gpTS(ds,startMin)+"\r\nLAST-MODIFIED:"+lm+"\r\nDTSTART:"+gpTS(ds,startMin)+"\r\nDTEND:"+gpTS(ds,endMin)+"\r\nSUMMARY:"+icsEsc(title)+"\r\nX-FOSSIFY-CATEGORY-COLOR:-24081\r\nCATEGORIES:AVISOS\r\nCOLOR:gray\r\nTRANSP:TRANSPARENT\r\n"+al+"END:VEVENT\r\n";
+  return "BEGIN:VEVENT\r\nUID:"+uid+"\r\nDTSTAMP:"+gpTS(ds,startMin)+"\r\nLAST-MODIFIED:"+lm+"\r\nDTSTART:"+gpTS(ds,startMin)+"\r\nDTEND:"+gpTS(ds,endMin)+"\r\nSUMMARY:"+icsEsc(title)+"\r\nX-FOSSIFY-CATEGORY-COLOR:-24081\r\nCATEGORIES:AVISOS\r\nSTATUS:CONFIRMED\r\nCOLOR:gray\r\nTRANSP:TRANSPARENT\r\n"+al+"END:VEVENT\r\n";
 }
 function scheduleAll(pre){
   const ds=document.getElementById("f-date").value;
@@ -1135,6 +1193,7 @@ function scheduleAll(pre){
   if(withTime.length===0){alert("Pon la hora de inicio de al menos un masaje.");return;}
   withTime.forEach(x=>{if(!x.u)x.u=newU();});
   gpAdopt(ds,withTime);
+  gpCtxInit(ds);
   const ymd=ds.replace(/-/g,""),lm=utcStamp(),reg={},overlap=[];
   let body="",avisos="";
   withTime.forEach((ins,i)=>{
@@ -1144,7 +1203,7 @@ function scheduleAll(pre){
     const b=buildEventBlock(ins,ds,false,ok10,lm);
     body+=b.ev;avisos+=b.chk;Object.assign(reg,b.reg);
   });
-  const aux=(key,s,e,title,a10,a0)=>{const uid="gp-"+ymd+"-"+key+"@guidopro";body+=buildAuxBlock(ds,s,e,title,a10,a0,uid,lm);reg[uid]={k:"ev",s:gpTS(ds,s),e:gpTS(ds,e),t:title,o:"day"};};
+  const aux=(key,s,e,title,a10,a0)=>{const k="day|"+key,uid=gpTakeUid(k,"ev");body+=buildAuxBlock(ds,s,e,title,a10,a0,uid,lm);reg[k]={uid:uid,k:"ev",s:gpTS(ds,s),e:gpTS(ds,e),t:title,o:"day"};};
   // Preparación 15 min antes del primer masaje
   const firstStart=t2min(withTime[0].t);
   aux("prep",firstStart-15,firstStart,"🧴 Preparación (15 min)","⏰ Preparación en 10 minutos");
@@ -1153,22 +1212,28 @@ function scheduleAll(pre){
   for(let i=0;i<withTime.length-1;i++){
     const end=t2min(withTime[i].t)+insDur(withTime[i]);
     const next=t2min(withTime[i+1].t);
-    if(next>end)aux("rest-"+withTime[i].u,end,next,"☕ Descanso ("+(next-end)+" min)","☕ Descanso en 10 minutos","✅ Fin del masaje — comienza el descanso");
+    if(next>end){
+      const gap=next-end;
+      // Huecos de más de 30 min: bloque corto, para no pintar un "descanso" de horas
+      if(gap<=30)aux("rest-"+withTime[i].u,end,next,"☕ Descanso ("+gap+" min)","☕ Descanso en 10 minutos","✅ Fin del masaje — comienza el descanso");
+      else aux("rest-"+withTime[i].u,end,end+20,"☕ Fin del masaje · libre hasta "+min2t(next),"☕ Descanso en 10 minutos","✅ Fin del masaje — tienes "+gap+" min libres");
+    }
   }
   // Limpieza y cierre 20 min tras el último masaje
   const lastEnd=Math.max(...withTime.map(x=>t2min(x.t)+insDur(x)));
   aux("clean",lastEnd,lastEnd+20,"🧹 Limpieza y cierre (20 min)","⏰ Limpieza y cierre en 10 minutos","✅ Fin del último masaje — limpieza");
   // Sobrantes de una exportación anterior de este día
-  const prev=gpReg(ds);
-  const stale=Object.keys(prev.items).filter(u=>!reg[u]);
-  const lostM=stale.filter(u=>prev.items[u].k==="ev"&&prev.items[u].o!=="day").map(u=>"· "+String(prev.items[u].t).replace(/^💆 /,""));
-  if(lostM.length&&!confirm("Estos masajes ya estaban en el calendario y no están en la lista:\n"+lostM.join("\n")+"\n\nSe silenciarán y aparecerán como «🗑 BORRAR». ¿Continuar?"))return;
-  let neut="";stale.forEach(u=>neut+=gpNeutral(ds,u,prev.items[u],lm));
-  gpRegSave(ds,{full:true,items:reg});
+  const prev=gpCtx.prev;
+  const stale=Object.keys(prev).filter(k=>!reg[k]);
+  const lostM=stale.filter(k=>prev[k].k==="ev"&&prev[k].o!=="day").map(k=>"· "+String(prev[k].t).replace(/^💆 /,""));
+  if(lostM.length&&!confirm("Estos masajes ya estaban en el calendario y no están en la lista:\n"+lostM.join("\n")+"\n\nSe quitarán del calendario. ¿Continuar?"))return;
+  let neut="";stale.forEach(k=>{neut+=gpNeutral(ds,prev[k].uid,prev[k],lm);gpRelease(prev[k].uid,prev[k].k);});
+  gpCtxSave(reg,true);
   // UN solo archivo: los avisos (CATEGORIES:AVISOS) van al final y Fossify
   // los asigna a su tipo automáticamente al importar.
   const msgs=[];
   if(typeof pre==="string"&&pre)msgs.push(pre);
+  if(!cDays().some(d=>d.date===ds))msgs.push("💾 Este día todavía NO está guardado en la app: cuando termines, pulsa «Guardar Día».");
   if(withTime.length<instances.length)msgs.push("⚠️ "+(instances.length-withTime.length)+" masaje(s) sin hora quedaron fuera del archivo.");
   if(overlap.length)msgs.push("⚠️ Masaje que empieza antes de que termine el anterior: "+overlap.join(", ")+". Revisa las horas.");
   if(stale.length)msgs.push(gpStaleMsg(stale.length));
@@ -1236,6 +1301,8 @@ function saveDay(){
   const calc=calcDayTotal(workedH,massages,tips,ds,c);
   const rec={date:ds,entry:en,exit:ex,massages,workedH,hourlyPay:calc.hourlyPay,commission:calc.commission,tips,notes,dayTotal:calc.dayTotal,holiday:calc.holiday,clients,transport};
   const idx=cDays().findIndex(d=>d.date===ds);
+  if(idx>=0&&editingDate!==ds){const prev=cDays()[idx];
+    if(!confirm("Ya tienes registrado el "+fmtDate(ds)+" ("+(prev.massages||[]).length+" masaje(s) · "+ef(prev.dayTotal||0)+").\n\n¿Sobrescribirlo con lo que hay en el formulario?"))return;}
   if(idx>=0)cData().days[idx]=rec;else{cData().days.push(rec);cData().days.sort((a,b)=>a.date.localeCompare(b.date));}
   saveData();updateHeader();
   const wasEdit=!!editingDate;editingDate=null;resetForm();
@@ -1248,6 +1315,21 @@ function resetForm(keepDraft){if(!keepDraft)clearDraft();["f-date","f-entry","f-
 function showNotice(id,msg){const el=document.getElementById(id);if(!el)return;el.textContent=msg;el.style.display="block";setTimeout(()=>el.style.display="none",3000);}
 
 function editDay(ds){const day=cDays().find(d=>d.date===ds);if(!day)return;editingDate=ds;document.getElementById("f-date").value=day.date;document.getElementById("f-entry").value=day.entry;document.getElementById("f-exit").value=day.exit;document.getElementById("f-tips").value=day.tips||"";document.getElementById("f-notes").value=day.notes||"";document.getElementById("f-clients").value=day.clients||"";document.getElementById("f-transport").value=day.transport||"";qty={};instances=day.massages.map(m=>({mid:m.id,t:m.t||"",nc:m.nc===true?true:m.nc===false?false:null,cn:m.cn||"",src:m.src||"",u:m.u||newU(),p:m.price,d:m.duration,dBG:m.durationBG}));day.massages.forEach(m=>{qty[m.id]=(qty[m.id]||0)+1;});currentCenter().massages.forEach(m=>{const el=document.getElementById("qty-"+m.id);if(el)el.textContent=qty[m.id]||0;});renderInstances();onDateChange();document.getElementById("save-btn").textContent="💾 Actualizar Día";document.getElementById("notice-edit").style.display="block";document.getElementById("cancel-edit-btn").style.display="block";showTab(1);window.scrollTo(0,0);}
+// Vacía el formulario sin tocar lo ya guardado (útil tras hacer pruebas)
+function clearForm(){
+  const ds=document.getElementById("f-date").value;
+  if(instances.length||ds||document.getElementById("f-entry").value){
+    const exported=!!(ds&&Object.keys(gpReg(ds).items).length);
+    const saved=!!(ds&&cDays().some(d=>d.date===ds));
+    const m=(exported&&!saved)
+      ? "⚠️ El "+fmtDate(ds)+" está en el calendario pero NO lo has guardado en la app.\n\n¿Borrar igualmente lo apuntado y empezar un día nuevo?"
+      : "¿Borrar lo apuntado y empezar un día nuevo?\n\nNo se borra nada de lo ya guardado.";
+    if(!confirm(m))return;
+  }
+  editingDate=null;resetForm();gpEditUI(false);
+  const r=document.getElementById("ics-result");if(r)r.innerHTML="";
+  gpToast("🧹 Formulario vacío — listo para un día nuevo");
+}
 function cancelEdit(){editingDate=null;resetForm();document.getElementById("save-btn").textContent="💾 Guardar Día";document.getElementById("notice-edit").style.display="none";document.getElementById("cancel-edit-btn").style.display="none";}
 function deleteDay(ds){cData().days=cDays().filter(d=>d.date!==ds);saveData();updateHeader();renderHistory();}
 
@@ -1292,6 +1374,14 @@ function renderDashboard(){
 
   // Alerts
   let alerts="";
+  // Día apuntado en el formulario y todavía sin guardar (p. ej. exportado al
+  // calendario pero sin pulsar Guardar Día)
+  try{const dr=JSON.parse(localStorage.getItem("gp_draft_"+c.key)||"null");
+    if(dr&&dr.ds&&(dr.ins||[]).length&&!days.some(d=>d.date===dr.ds)){
+      const enCal=Object.keys(gpReg(dr.ds).items||{}).length>0;
+      const lnk='style="background:none;border:none;color:var(--gold);cursor:pointer;font-family:Georgia,serif;font-size:calc(13px*var(--fs));text-decoration:underline"';
+      alerts+=`<div class="notice amber" style="display:block">📝 Día sin guardar: <b>${fmtDate(dr.ds)}</b> · ${dr.ins.length} masaje(s)${enCal?" · ya está en el calendario":""}. <button onclick="showTab(1)" ${lnk}>Abrir</button> · <button onclick="clearForm();renderDashboard()" ${lnk}>Limpiar</button></div>`;
+    }}catch(e){}
   // Recordatorio informes mensuales (primeros 7 días del mes)
   {const now=new Date();const prevKey=localISO(new Date(now.getFullYear(),now.getMonth()-1,1)).slice(0,7);
    if(now.getDate()<=7&&days.length>0&&(localStorage.getItem("gp_rep_cerebro_"+c.key)!==prevKey||localStorage.getItem("gp_rep_fin_"+c.key)!==prevKey)){
