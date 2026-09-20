@@ -438,6 +438,11 @@ input, select, textarea { max-width: 100%; }
       <div class="preview-box" id="hours-preview" style="display:none">⏱ <span id="hours-val"></span></div>
     </div>
     <div class="card">
+      <div class="card-title">📅 Calendario de este día</div>
+      <div id="cal-day-state" style="font-size:calc(12px*var(--fs));color:var(--muted);margin-bottom:8px"></div>
+      <button class="btn-ghost" onclick="clearDayCalendar()">🗑 Borrar este día del calendario</button>
+    </div>
+    <div class="card">
       <div class="card-title" id="massage-card-title">💆 Masajes Realizados</div>
       <div id="massage-list"></div>
     </div>
@@ -447,7 +452,6 @@ input, select, textarea { max-width: 100%; }
       <div id="instances-list"></div>
       <button class="btn-gold" style="margin-top:10px" onclick="scheduleAll()">🔔 Todos al calendario (con descansos)</button>
       <button class="btn-blue" style="margin-top:8px" onclick="autoExit(true)">🚪 Salida automática (último masaje + 20 min)</button>
-      <button class="btn-ghost" style="margin-top:8px" onclick="clearDayCalendar()">🗑 Borrar este día del calendario</button>
       <div id="ics-result"></div>
     </div>
     <div class="card" id="tips-card">
@@ -606,7 +610,7 @@ const ICONS={good:"✅",warn:"⚠️",dead:"🔴",info:"💡"};
 const PAGE_NAMES=["Dashboard","Añadir día","Historial","Calendario","Análisis PRO","Simulador","Pagos","Exportar","Mi Valor Profesional","Configuración","Comparar Centros","Cerebro PRO"];
 const DEFAULT_CFG={lockMinutes:10,fatigueHours:45};
 // Versión visible de la app — mantener sincronizada con CACHE_NAME de sw.js
-const APP_VERSION="v46";
+const APP_VERSION="v47";
 document.addEventListener("DOMContentLoaded",()=>{const v=document.getElementById("gp-version");if(v)v.textContent="Guido PRO · "+APP_VERSION;});
 
 let allData={};  // { hotel5: {days,payments,goal,cfg}, aleksa: {...}, sanatorium: {...} }
@@ -758,6 +762,7 @@ function applyCenter(){
     gpFormCenter=c.key;
     buildMassageList();
     restoreDraft(c.key);
+    renderCalDayState();
   }else buildMassageList();
   updateHeader();
   checkUnregistered();
@@ -814,7 +819,7 @@ function showTab(i){
   document.querySelectorAll(".drawer-item").forEach((b,j)=>b.classList.toggle("active",j===i));
   document.getElementById("page-name").textContent=PAGE_NAMES[i];
   closeDrawer();
-  if(i===0)renderDashboard();if(i===2)renderHistory();if(i===3)renderCalendar();
+  if(i===0)renderDashboard();if(i===1)renderCalDayState();if(i===2)renderHistory();if(i===3)renderCalendar();
   if(i===4)renderPro();if(i===5)renderSim();if(i===6)renderPagos();if(i===7)renderExport();if(i===8)renderPortfolio();if(i===9)renderConfig();if(i===10)renderCompare();if(i===11)renderCerebro();
 }
 
@@ -881,6 +886,32 @@ function gpClients(){
   return idx;
 }
 // Visitas ANTERIORES a la fecha del formulario (sin fecha: todas)
+// Corrige el nombre de un cliente en TODOS sus registros del centro. Si el
+// nombre corregido ya existe, une las dos fichas (una misma persona escrita
+// de dos formas: "asia" y "Asya") y deja como "nuevo" solo su primera visita.
+function renameClient(key){
+  const cl=gpClients(),o=cl[key];
+  if(!o)return;
+  const nv=prompt("Nombre correcto de «"+o.name+"» ("+o.v.length+" visita(s)):",o.name);
+  if(nv===null)return;
+  const nn=String(nv).trim().replace(/\s+/g," ");
+  if(!nn){alert("El nombre no puede quedar vacío.");return;}
+  if(nn===o.name)return;
+  const nk=normCN(nn),target=cl[nk];
+  if(target&&nk!==key&&!confirm("«"+target.name+"» ya existe con "+target.v.length+" visita(s).\n\n¿Unir las dos fichas? La persona quedará con "+(target.v.length+o.v.length)+" visitas."))return;
+  let n=0;
+  const hit=v=>v&&(normCN(v)===key||normCN(v)===nk);
+  cDays().forEach(d=>d.massages.forEach(m=>{if(hit(m.cn)&&m.cn!==nn){m.cn=nn;n++;}}));
+  instances.forEach(x=>{if(hit(x.cn))x.cn=nn;});
+  // Una sola "primera visita": las posteriores marcadas 🆕 pasan a 🔁
+  const all=[];
+  cDays().forEach(d=>d.massages.forEach(m=>{if(m.cn&&normCN(m.cn)===nk)all.push({d:d.date,m:m});}));
+  all.sort((a,b)=>a.d.localeCompare(b.d));
+  let fixed=0;
+  all.forEach((x,i)=>{if(i>0&&x.m.nc===true){x.m.nc=false;fixed++;}});
+  saveData();renderConfig();renderInstances();
+  gpToast("✅ "+n+" registro(s) con el nombre «"+nn+"»"+(fixed?" · "+fixed+" marcados como habitual":""));
+}
 function gpPastVisits(cn,cl){const o=(cl||gpClients())[normCN(cn)];if(!o)return[];const ds=document.getElementById("f-date").value;return o.v.filter(x=>!ds||x.date<ds);}
 function setInsName(i,v){
   if(!instances[i])return;
@@ -1160,7 +1191,7 @@ function scheduleMassage(i){
   // masaje igual (mismo tipo y hora) creado de nuevo en el formulario.
   const stale=Object.keys(items).filter(k=>!b.reg[k]&&(items[k].o===ins.u||(items[k].o!=="day"&&items[k].mid===ins.mid&&items[k].st===ins.t)));
   let neut="";stale.forEach(k=>{neut+=gpNeutral(ds,items[k].uid,items[k],lm);gpRelease(items[k].uid,items[k].k);delete items[k];});
-  Object.assign(items,b.reg);gpCtxSave(items,false);
+  Object.assign(items,b.reg);gpCtxSave(items,false);renderCalDayState();
   const msgs1=stale.length?[gpStaleMsg(stale.length)]:[];
   if(!cDays().some(d=>d.date===ds))msgs1.push("💾 Este día todavía NO está guardado en la app: cuando termines, pulsa «Guardar Día».");
   downloadICS(b.ev+b.chk+neut,"masaje_"+ds+"_"+ins.t.replace(":","")+".ics").then(n=>showIcsResult(n,msgs1));
@@ -1171,12 +1202,12 @@ function clearDayCalendar(){
   const ds=document.getElementById("f-date").value;
   if(!ds){alert("Selecciona primero la fecha del día.");return;}
   const ents=gpEntries(gpReg(ds));
-  if(!ents.length){alert("El "+fmtDate(ds)+" no tiene nada exportado al calendario desde esta app.");return;}
+  if(!ents.length){alert("El "+fmtDate(ds)+" no tiene nada exportado al calendario desde esta app.");renderCalDayState();return;}
   if(!confirm("¿Quitar del calendario los "+ents.length+" evento(s) y aviso(s) que la app exportó para el "+fmtDate(ds)+"?\n\nSe descarga un archivo: ábrelo en Fossify para aplicarlo.\nNo se borra nada de la app."))return;
   gpCtxInit(ds);
   const lm=utcStamp();let body="";
   ents.forEach(it=>{body+=gpNeutral(ds,it.uid,it,lm);gpRelease(it.uid,it.k);});
-  gpCtxSave({},false);
+  gpCtxSave({},false);renderCalDayState();
   downloadICS(body,"borrar_"+ds+".ics").then(n=>showIcsResult(n,["🗑 Al abrir este archivo en Fossify, los "+ents.length+" evento(s) del "+fmtDate(ds)+" se vacían y pasan al calendario PAPELERA (01/01/2000). La app reutilizará esos huecos en la próxima exportación."]));
 }
 function buildAuxBlock(ds,startMin,endMin,title,alarmTxt,alarm0Txt,uid,lm){
@@ -1228,7 +1259,7 @@ function scheduleAll(pre){
   const lostM=stale.filter(k=>prev[k].k==="ev"&&prev[k].o!=="day").map(k=>"· "+String(prev[k].t).replace(/^💆 /,""));
   if(lostM.length&&!confirm("Estos masajes ya estaban en el calendario y no están en la lista:\n"+lostM.join("\n")+"\n\nSe quitarán del calendario. ¿Continuar?"))return;
   let neut="";stale.forEach(k=>{neut+=gpNeutral(ds,prev[k].uid,prev[k],lm);gpRelease(prev[k].uid,prev[k].k);});
-  gpCtxSave(reg,true);
+  gpCtxSave(reg,true);renderCalDayState();
   // UN solo archivo: los avisos (CATEGORIES:AVISOS) van al final y Fossify
   // los asigna a su tipo automáticamente al importar.
   const msgs=[];
@@ -1241,9 +1272,17 @@ function scheduleAll(pre){
 }
 
 // ═══════════════ DATE CHANGE ═══════════════
+// Estado del día en el calendario (cuántos eventos exportó la app)
+function renderCalDayState(){
+  const el=document.getElementById("cal-day-state");if(!el)return;
+  const ds=document.getElementById("f-date").value;
+  if(!ds){el.textContent="Elige una fecha para ver qué hay exportado.";return;}
+  const n=gpEntries(gpReg(ds)).length;
+  el.textContent=n?fmtDate(ds)+": "+n+" evento(s) y aviso(s) exportados desde la app.":fmtDate(ds)+": nada exportado desde la app.";
+}
 function onDateChange(){
   const ds=document.getElementById("f-date").value;
-  renderInstances();
+  renderInstances();renderCalDayState();
   if(!ds){document.getElementById("notice-holiday").style.display="none";updatePreview();return;}
   const c=currentCenter();
   if(c.hasHolidays&&isHoliday(ds)){
@@ -2225,6 +2264,13 @@ function renderConfig(){
   document.getElementById("config-content").innerHTML=`
   <div class="card"><div class="card-title">🔠 Tamaño del texto</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">${["1","1.25","1.5","1.75","2"].map(v=>`<button onclick="setFontScale('${v}')" style="flex:1;min-width:56px;padding:10px 4px;border-radius:9px;cursor:pointer;font-family:Georgia,serif;font-size:calc(15px*var(--fs));border:1px solid ${fsNow===v?"var(--gold)":"#333"};background:${fsNow===v?"#2a2008":"var(--bg3)"};color:${fsNow===v?"var(--gold)":"var(--muted)"}">${Math.round(v*100)}%</button>`).join("")}</div>
+  </div>
+  <div class="card"><div class="card-title">👥 Clientes de ${c.nameShort}</div>
+    <div style="font-size:calc(11px*var(--fs));color:var(--dim);margin-bottom:8px;line-height:1.5">Corrige un nombre mal escrito y, si ya existe el correcto, une las dos fichas en una sola persona.</div>
+    ${(()=>{const cl=gpClients(),ks=Object.keys(cl).sort((a,b)=>cl[b].last.localeCompare(cl[a].last));
+      if(!ks.length)return `<div style="font-size:calc(12px*var(--fs));color:var(--muted)">Todavía no has registrado ningún cliente con nombre.</div>`;
+      return `<div style="max-height:340px;overflow-y:auto">`+ks.map(k=>`<div class="config-row"><div><div class="config-label">${cl[k].name}</div><div class="config-sub">${cl[k].v.length} visita(s) · última ${fmtDate(cl[k].last)}</div></div>
+        <button onclick="renameClient('${k.replace(/'/g,"\\'")}')" style="background:var(--bg3);border:1px solid #333;border-radius:9px;color:var(--gold);padding:8px 12px;cursor:pointer;font-family:Georgia,serif;font-size:calc(13px*var(--fs))">✏️</button></div>`).join("")+`</div>`;})()}
   </div>
   <div class="card"><div class="card-title">⚙️ ${c.name}</div>
     ${c.hasSalary?`<div class="config-row"><div><div class="config-label">Salario mensual base</div><div class="config-sub">Dividido entre días laborales del mes</div></div><input class="config-input" type="number" id="cfg-salary" value="${c.salary}" step="0.01"></div>`:""}
