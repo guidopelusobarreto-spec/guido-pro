@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#0d0d0d">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Guido PRO">
@@ -440,7 +443,7 @@ input, select, textarea { max-width: 100%; }
     <div class="card">
       <div class="card-title">📅 Calendario de este día</div>
       <div id="cal-day-state" style="font-size:calc(12px*var(--fs));color:var(--muted);margin-bottom:8px"></div>
-      <button class="btn-ghost" onclick="clearDayCalendar()">🗑 Borrar este día del calendario</button>
+      <button class="btn-ghost" style="display:block" onclick="clearDayCalendar()">🗑 Borrar este día del calendario</button>
     </div>
     <div class="card">
       <div class="card-title" id="massage-card-title">💆 Masajes Realizados</div>
@@ -469,7 +472,7 @@ input, select, textarea { max-width: 100%; }
     </div>
     <button class="btn-gold" id="save-btn" disabled onclick="saveDay()">💾 Guardar Día</button>
     <button class="btn-ghost" id="cancel-edit-btn" onclick="cancelEdit()">✕ Cancelar edición</button>
-    <button class="btn-ghost" onclick="clearForm()">🧹 Limpiar y empezar un día nuevo</button>
+    <button class="btn-ghost" style="display:block" onclick="clearForm()">🧹 Limpiar y empezar un día nuevo</button>
   </div>
   <div class="panel" id="panel-2"><div id="history-list"></div></div>
   <div class="panel" id="panel-3"><div id="calendar-content"></div></div>
@@ -610,7 +613,7 @@ const ICONS={good:"✅",warn:"⚠️",dead:"🔴",info:"💡"};
 const PAGE_NAMES=["Dashboard","Añadir día","Historial","Calendario","Análisis PRO","Simulador","Pagos","Exportar","Mi Valor Profesional","Configuración","Comparar Centros","Cerebro PRO"];
 const DEFAULT_CFG={lockMinutes:10,fatigueHours:45};
 // Versión visible de la app — mantener sincronizada con CACHE_NAME de sw.js
-const APP_VERSION="v47";
+const APP_VERSION="v50";
 document.addEventListener("DOMContentLoaded",()=>{const v=document.getElementById("gp-version");if(v)v.textContent="Guido PRO · "+APP_VERSION;});
 
 let allData={};  // { hotel5: {days,payments,goal,cfg}, aleksa: {...}, sanatorium: {...} }
@@ -971,7 +974,10 @@ function removeIns(i){
 // El aviso "10 min antes de terminar" y el fin los dan, en el día completo,
 // el bloque siguiente (descanso/limpieza) o el masaje encadenado; en el
 // masaje suelto, una tarea de fin. Regla: una sola alarma por minuto.
-const utcStamp=()=>{const n=new Date(),p=x=>String(x).padStart(2,"0");return n.getUTCFullYear()+p(n.getUTCMonth()+1)+p(n.getUTCDate())+"T"+p(n.getUTCHours())+p(n.getUTCMinutes())+p(n.getUTCSeconds())+"Z";};
+// +6 h de margen: Fossify ignora una actualización si la fecha guardada es
+// mayor o igual, y las versiones v38–v40 grabaron hora local como UTC (+3 h),
+// por lo que sus tareas de avisos se quedaban con las alarmas antiguas.
+const utcStamp=()=>{const n=new Date(Date.now()+6*3600000),p=x=>String(x).padStart(2,"0");return n.getUTCFullYear()+p(n.getUTCMonth()+1)+p(n.getUTCDate())+"T"+p(n.getUTCHours())+p(n.getUTCMinutes())+p(n.getUTCSeconds())+"Z";};
 const gpTS=(ds,x)=>{const [y,mo,d]=ds.split("-");const dt=new Date(+y,mo-1,+d,0,x);return dt.getFullYear()+String(dt.getMonth()+1).padStart(2,"0")+String(dt.getDate()).padStart(2,"0")+"T"+String(dt.getHours()).padStart(2,"0")+String(dt.getMinutes()).padStart(2,"0")+"00";};
 const hex32=k=>{let o="";for(let r=0;r<4;r++){let h=(0x811c9dc5^Math.imul(r+1,0x9e3779b1))>>>0;for(let i=0;i<k.length;i++){h^=k.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}o+=h.toString(16).padStart(8,"0");}return o;};
 const icsEsc=s=>String(s).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\r?\n/g,"\\n");
@@ -1245,8 +1251,9 @@ function scheduleAll(pre){
     const next=t2min(withTime[i+1].t);
     if(next>end){
       const gap=next-end;
-      // Huecos de más de 30 min: bloque corto, para no pintar un "descanso" de horas
-      if(gap<=30)aux("rest-"+withTime[i].u,end,next,"☕ Descanso ("+gap+" min)","☕ Descanso en 10 minutos","✅ Fin del masaje — comienza el descanso");
+      // Hasta 90 min el descanso se dibuja entero (sin huecos vacíos);
+      // por encima, marca corta para no pintar un "descanso" de horas
+      if(gap<=90)aux("rest-"+withTime[i].u,end,next,"☕ Descanso ("+(gap>=60?Math.floor(gap/60)+"h"+(gap%60?" "+(gap%60)+"min":""):gap+" min")+")","☕ Descanso en 10 minutos","✅ Fin del masaje — comienza el descanso");
       else aux("rest-"+withTime[i].u,end,end+20,"☕ Fin del masaje · libre hasta "+min2t(next),"☕ Descanso en 10 minutos","✅ Fin del masaje — tienes "+gap+" min libres");
     }
   }
@@ -2359,9 +2366,10 @@ function prefillDate(date){document.getElementById("f-date").value=date;onDateCh
 window.addEventListener("beforeinstallprompt",ev=>{ev.preventDefault();deferredPrompt=ev;document.getElementById("install-banner").classList.add("show");});
 function installApp(){if(!deferredPrompt)return;deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null;document.getElementById("install-banner").classList.remove("show");});}
 window.addEventListener("appinstalled",()=>document.getElementById("install-banner").classList.remove("show"));
-if("serviceWorker"in navigator){navigator.serviceWorker.register('/sw.js').then(reg=>{reg.update().catch(()=>{});}).catch(()=>{});}
-const mf={name:"Guido PRO",short_name:"Guido PRO",start_url:".",display:"standalone",background_color:"#0d0d0d",theme_color:"#0d0d0d",icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230d0d0d'/><text y='72' x='50' font-size='60' text-anchor='middle' fill='%23c9a84c'>✦</text></svg>",sizes:"192x192",type:"image/svg+xml"}]};
-const mb=new Blob([JSON.stringify(mf)],{type:"application/json"});const ml=document.createElement("link");ml.rel="manifest";ml.href=URL.createObjectURL(mb);document.head.appendChild(ml);
+if("serviceWorker"in navigator){navigator.serviceWorker.register('./sw.js').then(reg=>{reg.update().catch(()=>{});}).catch(()=>{});}
+// El manifiesto y los iconos son archivos reales del repositorio
+// (manifest.json, icon-192.png, icon-512.png, icon-maskable-512.png):
+// solo así Android instala una app de verdad, con opción de desinstalar.
 
 // ═══════════════ INIT ═══════════════
 loadData();
