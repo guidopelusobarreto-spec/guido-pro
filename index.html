@@ -613,7 +613,7 @@ const ICONS={good:"✅",warn:"⚠️",dead:"🔴",info:"💡"};
 const PAGE_NAMES=["Dashboard","Añadir día","Historial","Calendario","Análisis PRO","Simulador","Pagos","Exportar","Mi Valor Profesional","Configuración","Comparar Centros","Cerebro PRO"];
 const DEFAULT_CFG={lockMinutes:10,fatigueHours:45};
 // Versión visible de la app — mantener sincronizada con CACHE_NAME de sw.js
-const APP_VERSION="v52";
+const APP_VERSION="v53";
 document.addEventListener("DOMContentLoaded",()=>{const v=document.getElementById("gp-version");if(v)v.textContent="Guido PRO · "+APP_VERSION;});
 
 let allData={};  // { hotel5: {days,payments,goal,cfg}, aleksa: {...}, sanatorium: {...} }
@@ -1003,6 +1003,13 @@ function gpCheckpoints(m,D,has10){
   }
   return out;
 }
+// Portador de avisos: evento 00:00 → 00:00 del día siguiente (barra superior)
+// con hasta 3 alarmas a hora absoluta del día (trigger positivo desde 00:00).
+function gpCarrier(ds,uid,title,absMins,lm){
+  let a="";
+  absMins.slice(0,3).forEach(m=>{if(m>=0&&m<1440)a+=icsAlarm(":P0DT"+Math.floor(m/60)+"H"+(m%60)+"M0S",title);});
+  return "BEGIN:VEVENT\r\nUID:"+uid+"\r\nDTSTAMP:"+gpTS(ds,0)+"\r\nLAST-MODIFIED:"+lm+"\r\nDTSTART:"+gpTS(ds,0)+"\r\nDTEND:"+gpTS(ds,1440)+"\r\nSUMMARY:"+icsEsc(title)+"\r\nX-FOSSIFY-CATEGORY-COLOR:-24081\r\nCATEGORIES:AVISOS\r\nSTATUS:CONFIRMED\r\nTRANSP:TRANSPARENT\r\n"+a+"END:VEVENT\r\n";
+}
 // Aviso suelto: evento de 1 minuto, transparente, con alarma al empezar.
 function gpMiniEvent(ds,uid,startMin,title,lm){
   return "BEGIN:VEVENT\r\nUID:"+uid+"\r\nDTSTAMP:"+gpTS(ds,startMin)+"\r\nLAST-MODIFIED:"+lm+"\r\nDTSTART:"+gpTS(ds,startMin)+"\r\nDTEND:"+gpTS(ds,startMin+1)+"\r\nSUMMARY:"+icsEsc(title)+"\r\nX-FOSSIFY-CATEGORY-COLOR:-24081\r\nCATEGORIES:AVISOS\r\nSTATUS:CONFIRMED\r\nTRANSP:TRANSPARENT\r\n"+icsAlarm(":-P0DT0H0M0S",title)+"END:VEVENT\r\n";
@@ -1046,30 +1053,31 @@ function buildEventBlock(ins,ds,individual,end10,lm){
     +icsAlarm(":-P0DT0H0M0S","▶️ Comienza el masaje")
     +"END:VEVENT\r\n";
   reg[keyE]={uid:uidE,k:"ev",s:gpTS(ds,S),e:gpTS(ds,S+D),t:title,...own};
-  // Avisos intermedios = EVENTOS de 1 minuto con alarma al empezar.
-  // NO se usan tareas de todo el día: Fossify solo programa el recordatorio de
-  // una tarea si la busca antes de su medianoche (consulta start_ts <= hasta
-  // AND end_ts >= desde, y en las tareas fuerza fin = inicio), así que al
-  // importar el mismo día esas alarmas nunca llegaban a sonar.
+  // Avisos intermedios en la BARRA SUPERIOR de Fossify: eventos con hora de
+  // 00:00 a 00:00 del día siguiente, con hasta 3 alarmas "después del inicio"
+  // (hora absoluta del día). Comprobado en el código de Fossify:
+  //  · cruzan la medianoche → van a la barra superior (opción por defecto) y,
+  //    al terminar justo a medianoche, solo se dibujan en su día;
+  //  · su fin real es la medianoche (las tareas y los eventos de todo el día
+  //    terminan antes), así que Fossify puede programar y REPROGRAMAR sus
+  //    alarmas durante todo el día, también al reexportar un cambio de hora.
   let chk="";
   const lastZ=zones&&has10&&lim%10===0?zones[lim/10]:null;
-  cps.forEach((p,j)=>{
-    const ttl=(zones?"🔄 "+p.lab:p.sym+" "+p.lab+" del masaje")+" — "+nm;
-    const keyA=ins.u+"|a"+j,uid=gpTakeUid(keyA,"ev");
-    chk+=gpMiniEvent(ds,uid,S+p.t,ttl,lm);
-    reg[keyA]={uid:uid,k:"ev",s:gpTS(ds,S+p.t),e:gpTS(ds,S+p.t+1),t:ttl,...own};
-  });
+  for(let j=0;j*3<cps.length;j++){
+    const part=cps.slice(j*3,j*3+3);
+    const ttl=(zones?"🔄 ":"")+part.map(p=>zones?hm(S+p.t)+" "+shortZ(p.lab):p.sym+" "+hm(S+p.t)).join(" · ")+" — "+nm+" ("+ins.t+")";
+    const keyC=ins.u+"|c"+j,uid=gpTakeUid(keyC,"ev");
+    chk+=gpCarrier(ds,uid,ttl,part.map(p=>S+p.t),lm);
+    reg[keyC]={uid:uid,k:"ev",s:gpTS(ds,0),e:gpTS(ds,1440),t:ttl,...own};
+  }
   if(individual){
-    if(has10){
-      const ttl="⏳ Quedan 10 min"+(lastZ?" · última zona: "+lastZ:"")+" — "+nm;
-      const keyW=ins.u+"|w10",uid=gpTakeUid(keyW,"ev");
-      chk+=gpMiniEvent(ds,uid,S+lim,ttl,lm);
-      reg[keyW]={uid:uid,k:"ev",s:gpTS(ds,S+lim),e:gpTS(ds,S+lim+1),t:ttl,...own};
-    }
-    const ttlF="✅ Fin del masaje — "+nm;
-    const keyF=ins.u+"|end",uid=gpTakeUid(keyF,"ev");
-    chk+=gpMiniEvent(ds,uid,S+D,ttlF,lm);
-    reg[keyF]={uid:uid,k:"ev",s:gpTS(ds,S+D),e:gpTS(ds,S+D+1),t:ttlF,...own};
+    const al=[],parts=[];
+    if(has10){al.push(S+lim);parts.push("⏳ "+hm(S+lim)+(lastZ?" "+shortZ(lastZ):" quedan 10"));}
+    al.push(S+D);parts.push("✅ "+hm(S+D)+" fin");
+    const ttl=parts.join(" · ")+" — "+nm+" ("+ins.t+")";
+    const keyF=ins.u+"|cf",uid=gpTakeUid(keyF,"ev");
+    chk+=gpCarrier(ds,uid,ttl,al,lm);
+    reg[keyF]={uid:uid,k:"ev",s:gpTS(ds,0),e:gpTS(ds,1440),t:ttl,...own};
   }
 
   return {ev:ev,chk:chk,reg:reg};
