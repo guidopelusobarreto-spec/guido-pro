@@ -613,7 +613,7 @@ const ICONS={good:"✅",warn:"⚠️",dead:"🔴",info:"💡"};
 const PAGE_NAMES=["Dashboard","Añadir día","Historial","Calendario","Análisis PRO","Simulador","Pagos","Exportar","Mi Valor Profesional","Configuración","Comparar Centros","Cerebro PRO"];
 const DEFAULT_CFG={lockMinutes:10,fatigueHours:45};
 // Versión visible de la app — mantener sincronizada con CACHE_NAME de sw.js
-const APP_VERSION="v50";
+const APP_VERSION="v52";
 document.addEventListener("DOMContentLoaded",()=>{const v=document.getElementById("gp-version");if(v)v.textContent="Guido PRO · "+APP_VERSION;});
 
 let allData={};  // { hotel5: {days,payments,goal,cfg}, aleksa: {...}, sanatorium: {...} }
@@ -1003,6 +1003,10 @@ function gpCheckpoints(m,D,has10){
   }
   return out;
 }
+// Aviso suelto: evento de 1 minuto, transparente, con alarma al empezar.
+function gpMiniEvent(ds,uid,startMin,title,lm){
+  return "BEGIN:VEVENT\r\nUID:"+uid+"\r\nDTSTAMP:"+gpTS(ds,startMin)+"\r\nLAST-MODIFIED:"+lm+"\r\nDTSTART:"+gpTS(ds,startMin)+"\r\nDTEND:"+gpTS(ds,startMin+1)+"\r\nSUMMARY:"+icsEsc(title)+"\r\nX-FOSSIFY-CATEGORY-COLOR:-24081\r\nCATEGORIES:AVISOS\r\nSTATUS:CONFIRMED\r\nTRANSP:TRANSPARENT\r\n"+icsAlarm(":-P0DT0H0M0S",title)+"END:VEVENT\r\n";
+}
 function buildEventBlock(ins,ds,individual,end10,lm){
   if(end10===undefined)end10=true;
   lm=lm||utcStamp();
@@ -1042,27 +1046,32 @@ function buildEventBlock(ins,ds,individual,end10,lm){
     +icsAlarm(":-P0DT0H0M0S","▶️ Comienza el masaje")
     +"END:VEVENT\r\n";
   reg[keyE]={uid:uidE,k:"ev",s:gpTS(ds,S),e:gpTS(ds,S+D),t:title,...own};
-  // Tareas de avisos intermedios (máx. 3 por tarea)
+  // Avisos intermedios = EVENTOS de 1 minuto con alarma al empezar.
+  // NO se usan tareas de todo el día: Fossify solo programa el recordatorio de
+  // una tarea si la busca antes de su medianoche (consulta start_ts <= hasta
+  // AND end_ts >= desde, y en las tareas fuerza fin = inicio), así que al
+  // importar el mismo día esas alarmas nunca llegaban a sonar.
   let chk="";
   const lastZ=zones&&has10&&lim%10===0?zones[lim/10]:null;
-  for(let j=0;j*3<cps.length;j++){
-    const part=cps.slice(j*3,j*3+3);
-    let ttl=part.map(p=>zones?hm(S+p.t)+" "+shortZ(p.lab):p.sym+" "+hm(S+p.t)).join(" · ");
-    if(lastZ&&(j+1)*3>=cps.length)ttl+=" · "+hm(S+lim)+" "+shortZ(lastZ)+" (aviso 10 min)";
-    ttl=(zones?"🔄 ":"")+ttl+" — "+nm+" ("+ins.t+")";
-    const keyC=ins.u+"|cp"+j,uid=gpTakeUid(keyC,"todo");
-    const t=gpTask(ymd,uid,ttl,part.map(p=>[S+p.t,p.sym+" "+p.lab+" · "+hm(S+p.t)]),lm);
-    if(t){chk+=t;reg[keyC]={uid:uid,k:"todo",t:ttl,...own};}
-  }
+  cps.forEach((p,j)=>{
+    const ttl=(zones?"🔄 "+p.lab:p.sym+" "+p.lab+" del masaje")+" — "+nm;
+    const keyA=ins.u+"|a"+j,uid=gpTakeUid(keyA,"ev");
+    chk+=gpMiniEvent(ds,uid,S+p.t,ttl,lm);
+    reg[keyA]={uid:uid,k:"ev",s:gpTS(ds,S+p.t),e:gpTS(ds,S+p.t+1),t:ttl,...own};
+  });
   if(individual){
-    const fal=[];let ft="";
-    if(has10){fal.push([S+lim,"⏳ Quedan 10 minutos"]);ft="⏳ "+hm(S+lim)+(lastZ?" "+shortZ(lastZ):" quedan 10")+" · ";}
-    fal.push([S+D,"✅ Fin del masaje"]);
-    const ttl=ft+"✅ "+hm(S+D)+" fin — "+nm+" ("+ins.t+")";
-    const keyF=ins.u+"|fin",uid=gpTakeUid(keyF,"todo");
-    const t=gpTask(ymd,uid,ttl,fal,lm);
-    if(t){chk+=t;reg[keyF]={uid:uid,k:"todo",t:ttl,...own};}
+    if(has10){
+      const ttl="⏳ Quedan 10 min"+(lastZ?" · última zona: "+lastZ:"")+" — "+nm;
+      const keyW=ins.u+"|w10",uid=gpTakeUid(keyW,"ev");
+      chk+=gpMiniEvent(ds,uid,S+lim,ttl,lm);
+      reg[keyW]={uid:uid,k:"ev",s:gpTS(ds,S+lim),e:gpTS(ds,S+lim+1),t:ttl,...own};
+    }
+    const ttlF="✅ Fin del masaje — "+nm;
+    const keyF=ins.u+"|end",uid=gpTakeUid(keyF,"ev");
+    chk+=gpMiniEvent(ds,uid,S+D,ttlF,lm);
+    reg[keyF]={uid:uid,k:"ev",s:gpTS(ds,S+D),e:gpTS(ds,S+D+1),t:ttlF,...own};
   }
+
   return {ev:ev,chk:chk,reg:reg};
 }
 // Entrega del .ics: Chrome en Android NO permite compartir archivos .ics
@@ -1253,13 +1262,16 @@ function scheduleAll(pre){
       const gap=next-end;
       // Hasta 90 min el descanso se dibuja entero (sin huecos vacíos);
       // por encima, marca corta para no pintar un "descanso" de horas
-      if(gap<=90)aux("rest-"+withTime[i].u,end,next,"☕ Descanso ("+(gap>=60?Math.floor(gap/60)+"h"+(gap%60?" "+(gap%60)+"min":""):gap+" min")+")","☕ Descanso en 10 minutos","✅ Fin del masaje — comienza el descanso");
-      else aux("rest-"+withTime[i].u,end,end+20,"☕ Fin del masaje · libre hasta "+min2t(next),"☕ Descanso en 10 minutos","✅ Fin del masaje — tienes "+gap+" min libres");
+      const zz=insM(withTime[i]).zonas10,lz=zz&&zz.length&&(insDur(withTime[i])-10)%10===0?zz[(insDur(withTime[i])-10)/10]:null;
+      const sufijo=lz?" · última zona: "+lz:"";
+      if(gap<=90)aux("rest-"+withTime[i].u,end,next,"☕ Descanso ("+(gap>=60?Math.floor(gap/60)+"h"+(gap%60?" "+(gap%60)+"min":""):gap+" min")+")"+sufijo,"☕ Descanso en 10 minutos","✅ Fin del masaje — comienza el descanso");
+      else aux("rest-"+withTime[i].u,end,end+20,"☕ Fin del masaje · libre hasta "+min2t(next)+sufijo,"☕ Descanso en 10 minutos","✅ Fin del masaje — tienes "+gap+" min libres");
     }
   }
   // Limpieza y cierre 20 min tras el último masaje
   const lastEnd=Math.max(...withTime.map(x=>t2min(x.t)+insDur(x)));
-  aux("clean",lastEnd,lastEnd+20,"🧹 Limpieza y cierre (20 min)","⏰ Limpieza y cierre en 10 minutos","✅ Fin del último masaje — limpieza");
+  const lastIns=withTime[withTime.length-1],lz2=(()=>{const z=insM(lastIns).zonas10,d=insDur(lastIns);return z&&z.length&&(d-10)%10===0?z[(d-10)/10]:null;})();
+  aux("clean",lastEnd,lastEnd+20,"🧹 Limpieza y cierre (20 min)"+(lz2?" · última zona: "+lz2:""),"⏰ Limpieza y cierre en 10 minutos","✅ Fin del último masaje — limpieza");
   // Sobrantes de una exportación anterior de este día
   const prev=gpCtx.prev;
   const stale=Object.keys(prev).filter(k=>!reg[k]);
@@ -1283,9 +1295,17 @@ function scheduleAll(pre){
 function renderCalDayState(){
   const el=document.getElementById("cal-day-state");if(!el)return;
   const ds=document.getElementById("f-date").value;
-  if(!ds){el.textContent="Elige una fecha para ver qué hay exportado.";return;}
-  const n=gpEntries(gpReg(ds)).length;
-  el.textContent=n?fmtDate(ds)+": "+n+" evento(s) y aviso(s) exportados desde la app.":fmtDate(ds)+": nada exportado desde la app.";
+  if(!ds){el.innerHTML="Elige una fecha para ver qué hay exportado.";return;}
+  const ents=gpEntries(gpReg(ds));
+  if(!ents.length){el.innerHTML=fmtDate(ds)+": nada exportado desde la app.";return;}
+  // Lista exacta de lo que la app controla en Fossify para ese día: sirve para
+  // detectar avisos huérfanos de versiones antiguas (los que estén en Fossify
+  // y NO aparezcan aquí no los actualiza la app y hay que borrarlos a mano).
+  el.innerHTML=fmtDate(ds)+": <b>"+ents.length+"</b> evento(s) exportados desde la app (masajes, descansos y avisos)."
+    +`<details style="margin-top:6px"><summary style="cursor:pointer;color:var(--gold)">Ver qué controla la app</summary>
+      <div style="margin-top:6px;line-height:1.5">`
+    +ents.map(x=>`<div style="padding:3px 0;border-bottom:1px solid #1a1a18">${String(x.t||"").replace(/</g,"&lt;")}</div>`).join("")
+    +`<div style="margin-top:7px;color:var(--dim)">Si en Fossify ves avisos de este día que no están en esta lista, son de una versión antigua de la app: bórralos a mano, porque la app no puede actualizarlos.</div></div></details>`;
 }
 function onDateChange(){
   const ds=document.getElementById("f-date").value;
