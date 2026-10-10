@@ -451,7 +451,7 @@ input, select, textarea { max-width: 100%; }
     </div>
     <div class="card" id="instances-card" style="display:none">
       <div class="card-title">🕐 Hora y Cliente por Masaje</div>
-      <div style="font-size:calc(11px*var(--fs));color:var(--dim);margin-bottom:6px;line-height:1.5">La lista se ordena sola por hora. ⏭ empieza al terminar el anterior · ⇩ desplaza en cadena todos los siguientes · ✕ quita ese masaje · 🔔 manda el día entero al calendario con los descansos (avisos ¼ ½ ¾, o cambio de zona cada 10 min en anticelulíticos). Reexportar actualiza los eventos: no duplica.</div>
+      <div style="font-size:calc(11px*var(--fs));color:var(--dim);margin-bottom:6px;line-height:1.5">La lista se ordena sola por hora. ⏭ empieza al terminar el anterior · ⇩ retrasa los siguientes solo si se pisarían (al cambiar una hora se hace solo) · ✕ quita ese masaje · 🔔 manda el día entero al calendario con los descansos (avisos ¼ ½ ¾, o cambio de zona cada 10 min en anticelulíticos). Reexportar actualiza los eventos: no duplica.</div>
       <div id="instances-list"></div>
       <button class="btn-gold" style="margin-top:10px" onclick="scheduleAll()">🔔 Todos al calendario (con descansos)</button>
       <button class="btn-blue" style="margin-top:8px" onclick="autoExit(true)">🚪 Salida automática (último masaje + 20 min)</button>
@@ -613,7 +613,7 @@ const ICONS={good:"✅",warn:"⚠️",dead:"🔴",info:"💡"};
 const PAGE_NAMES=["Dashboard","Añadir día","Historial","Calendario","Análisis PRO","Simulador","Pagos","Exportar","Mi Valor Profesional","Configuración","Comparar Centros","Cerebro PRO"];
 const DEFAULT_CFG={lockMinutes:10,fatigueHours:45};
 // Versión visible de la app — mantener sincronizada con CACHE_NAME de sw.js
-const APP_VERSION="v54";
+const APP_VERSION="v55";
 document.addEventListener("DOMContentLoaded",()=>{const v=document.getElementById("gp-version");if(v)v.textContent="Guido PRO · "+APP_VERSION;});
 
 let allData={};  // { hotel5: {days,payments,goal,cfg}, aleksa: {...}, sanatorium: {...} }
@@ -880,7 +880,21 @@ function renderInstances(){
   }).join("");
   saveDraft();
 }
-function setInsTime(i,v){if(instances[i])instances[i].t=v;autoExit(false);renderInstances();updatePreview();}
+function setInsTime(i,v){if(instances[i])instances[i].t=v;gpNoOverlap();autoExit(false);renderInstances();updatePreview();}
+// v54: nunca un masaje encima de otro. Ordena por hora y, si un masaje
+// empezaría antes de que termine el anterior, lo retrasa SOLO lo justo
+// (se come el descanso, no lo borra si no hace falta). Avisa de lo movido.
+function gpNoOverlap(){
+  instances.sort((a,b)=>{if(a.t&&b.t)return t2min(a.t)-t2min(b.t);if(a.t)return -1;if(b.t)return 1;return 0;});
+  const moved=[];let prevEnd=null;
+  instances.forEach(x=>{
+    if(!x.t)return;
+    if(prevEnd!==null&&t2min(x.t)<prevEnd){const m=currentCenter().massages.find(z=>z.id===x.mid);moved.push((m?m.nameBG||m.name:"")+" "+x.t+" → "+min2t(prevEnd));x.t=min2t(prevEnd);}
+    prevEnd=t2min(x.t)+insDur(x);
+  });
+  if(moved.length)gpToast("⇩ Movido para no solaparse: "+moved.join(" · "));
+  return moved;
+}
 // Clientes del centro actual: nombre normalizado → visitas ordenadas por fecha
 function gpClients(){
   const idx={};
@@ -933,13 +947,14 @@ function chainFrom(i){
   const prev=instances[i-1];
   if(!prev||!prev.t){alert("El masaje anterior no tiene hora.");return;}
   instances[i].t=min2t(t2min(prev.t)+insDur(prev));
+  gpNoOverlap();
   renderInstances();autoExit(false);
 }
 function pushFrom(i){
   if(!instances[i]||!instances[i].t)return;
-  for(let j=i+1;j<instances.length;j++){
-    instances[j].t=min2t(t2min(instances[j-1].t)+insDur(instances[j-1]));
-  }
+  // v54: solo se mueven los que se solaparían (antes se pegaban todos y
+  // desaparecían los descansos)
+  gpNoOverlap();
   renderInstances();autoExit(true);
 }
 function autoExit(force){
