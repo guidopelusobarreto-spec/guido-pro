@@ -451,7 +451,7 @@ input, select, textarea { max-width: 100%; }
     </div>
     <div class="card" id="instances-card" style="display:none">
       <div class="card-title">🕐 Hora y Cliente por Masaje</div>
-      <div style="font-size:calc(11px*var(--fs));color:var(--dim);margin-bottom:6px;line-height:1.5">La lista se ordena sola por hora. ⏭ empieza al terminar el anterior · ⇩ desplaza en cadena todos los siguientes · ✕ quita ese masaje · 🔔 solo este masaje al calendario (avisos ¼ ½ ¾, o cambio de zona cada 10 min en anticelulíticos). Reexportar actualiza los eventos: no duplica.</div>
+      <div style="font-size:calc(11px*var(--fs));color:var(--dim);margin-bottom:6px;line-height:1.5">La lista se ordena sola por hora. ⏭ empieza al terminar el anterior · ⇩ desplaza en cadena todos los siguientes · ✕ quita ese masaje · 🔔 manda el día entero al calendario con los descansos (avisos ¼ ½ ¾, o cambio de zona cada 10 min en anticelulíticos). Reexportar actualiza los eventos: no duplica.</div>
       <div id="instances-list"></div>
       <button class="btn-gold" style="margin-top:10px" onclick="scheduleAll()">🔔 Todos al calendario (con descansos)</button>
       <button class="btn-blue" style="margin-top:8px" onclick="autoExit(true)">🚪 Salida automática (último masaje + 20 min)</button>
@@ -613,7 +613,7 @@ const ICONS={good:"✅",warn:"⚠️",dead:"🔴",info:"💡"};
 const PAGE_NAMES=["Dashboard","Añadir día","Historial","Calendario","Análisis PRO","Simulador","Pagos","Exportar","Mi Valor Profesional","Configuración","Comparar Centros","Cerebro PRO"];
 const DEFAULT_CFG={lockMinutes:10,fatigueHours:45};
 // Versión visible de la app — mantener sincronizada con CACHE_NAME de sw.js
-const APP_VERSION="v53";
+const APP_VERSION="v54";
 document.addEventListener("DOMContentLoaded",()=>{const v=document.getElementById("gp-version");if(v)v.textContent="Guido PRO · "+APP_VERSION;});
 
 let allData={};  // { hotel5: {days,payments,goal,cfg}, aleksa: {...}, sanatorium: {...} }
@@ -1202,9 +1202,9 @@ function scheduleMassage(i){
   const ds=document.getElementById("f-date").value;
   if(!ds){alert("Selecciona primero la fecha del día.");return;}
   if(!ins.t){alert("Pon la hora de inicio de este masaje.");return;}
-  // Si el día ya está completo en el calendario, se actualiza entero
-  // (recalcula descansos y avisos del nuevo masaje sin duplicar).
-  if(gpReg(ds).full){scheduleAll("🔄 Este día ya estaba completo en el calendario: se ha actualizado el día entero.");return;}
+  // v54: el 🔔 de un masaje actualiza SIEMPRE el día entero, así los
+  // descansos y la limpieza se recalculan con cada cambio y nunca faltan.
+  scheduleAll("🔄 Se ha actualizado el día entero (masajes, descansos y limpieza).");return;
   if(!ins.u)ins.u=newU();
   gpAdopt(ds,[ins]);
   gpCtxInit(ds);
@@ -1268,12 +1268,12 @@ function scheduleAll(pre){
     const next=t2min(withTime[i+1].t);
     if(next>end){
       const gap=next-end;
-      // Hasta 90 min el descanso se dibuja entero (sin huecos vacíos);
-      // por encima, marca corta para no pintar un "descanso" de horas
+      // v54: el descanso se dibuja SIEMPRE entero, del fin del masaje al
+      // inicio del siguiente (antes, con huecos de más de 90 min, solo se
+      // ponía una marca de 20 min y el tiempo de descanso no aparecía)
       const zz=insM(withTime[i]).zonas10,lz=zz&&zz.length&&(insDur(withTime[i])-10)%10===0?zz[(insDur(withTime[i])-10)/10]:null;
       const sufijo=lz?" · última zona: "+lz:"";
-      if(gap<=90)aux("rest-"+withTime[i].u,end,next,"☕ Descanso ("+(gap>=60?Math.floor(gap/60)+"h"+(gap%60?" "+(gap%60)+"min":""):gap+" min")+")"+sufijo,"☕ Descanso en 10 minutos","✅ Fin del masaje — comienza el descanso");
-      else aux("rest-"+withTime[i].u,end,end+20,"☕ Fin del masaje · libre hasta "+min2t(next)+sufijo,"☕ Descanso en 10 minutos","✅ Fin del masaje — tienes "+gap+" min libres");
+      aux("rest-"+withTime[i].u,end,next,"☕ Descanso ("+(gap>=60?Math.floor(gap/60)+"h"+(gap%60?" "+(gap%60)+"min":""):gap+" min")+")"+sufijo,"☕ Descanso en 10 minutos","✅ Fin del masaje — comienza el descanso");
     }
   }
   // Limpieza y cierre 20 min tras el último masaje
