@@ -381,6 +381,7 @@ input, select, textarea { max-width: 100%; }
     <div class="drawer-item active" id="nav-0" onclick="showTab(0)"><span class="drawer-icon">🏠</span><span class="drawer-label">Dashboard</span></div>
     <div class="drawer-item" id="nav-1" onclick="showTab(1)"><span class="drawer-icon">➕</span><span class="drawer-label">Añadir día</span></div>
     <div class="drawer-item" id="nav-2" onclick="showTab(2)"><span class="drawer-icon">📋</span><span class="drawer-label">Historial</span></div>
+    <div class="drawer-item" id="nav-12" onclick="showTab(12)"><span class="drawer-icon">👥</span><span class="drawer-label">Clientes</span></div>
     <div class="drawer-item" id="nav-3" onclick="showTab(3)"><span class="drawer-icon">📅</span><span class="drawer-label">Calendario</span></div>
     <div class="drawer-section">Análisis</div>
     <div class="drawer-item" id="nav-4" onclick="showTab(4)"><span class="drawer-icon">📊</span><span class="drawer-label">Análisis PRO</span></div>
@@ -484,6 +485,7 @@ input, select, textarea { max-width: 100%; }
   <div class="panel" id="panel-9"><div id="config-content"></div></div>
   <div class="panel" id="panel-10"><div id="compare-content"></div></div>
   <div class="panel" id="panel-11"><div id="cerebro-content"></div></div>
+  <div class="panel" id="panel-12"><div id="clientes-content"></div></div>
 </div>
 
 <script>
@@ -610,10 +612,10 @@ const DOW_ES=["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
 const DOW_BG=["Нед","Пон","Вт","Ср","Чет","Пет","Съб"];
 const MEDAL=["🥇","🥈","🥉"];
 const ICONS={good:"✅",warn:"⚠️",dead:"🔴",info:"💡"};
-const PAGE_NAMES=["Dashboard","Añadir día","Historial","Calendario","Análisis PRO","Simulador","Pagos","Exportar","Mi Valor Profesional","Configuración","Comparar Centros","Cerebro PRO"];
+const PAGE_NAMES=["Dashboard","Añadir día","Historial","Calendario","Análisis PRO","Simulador","Pagos","Exportar","Mi Valor Profesional","Configuración","Comparar Centros","Cerebro PRO","Clientes"];
 const DEFAULT_CFG={lockMinutes:10,fatigueHours:45};
 // Versión visible de la app — mantener sincronizada con CACHE_NAME de sw.js
-const APP_VERSION="v55";
+const APP_VERSION="v56";
 document.addEventListener("DOMContentLoaded",()=>{const v=document.getElementById("gp-version");if(v)v.textContent="Guido PRO · "+APP_VERSION;});
 
 let allData={};  // { hotel5: {days,payments,goal,cfg}, aleksa: {...}, sanatorium: {...} }
@@ -818,12 +820,13 @@ function closeDrawer(){document.getElementById("drawer").classList.remove("open"
 
 // ═══════════════ TABS ═══════════════
 function showTab(i){
-  document.querySelectorAll(".panel").forEach((p,j)=>p.classList.toggle("active",j===i));
-  document.querySelectorAll(".drawer-item").forEach((b,j)=>b.classList.toggle("active",j===i));
+  // v56: por id, no por posición (el orden del menú no coincide con el de las pantallas)
+  document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("active",p.id==="panel-"+i));
+  document.querySelectorAll(".drawer-item").forEach(b=>b.classList.toggle("active",b.id==="nav-"+i));
   document.getElementById("page-name").textContent=PAGE_NAMES[i];
   closeDrawer();
   if(i===0)renderDashboard();if(i===1)renderCalDayState();if(i===2)renderHistory();if(i===3)renderCalendar();
-  if(i===4)renderPro();if(i===5)renderSim();if(i===6)renderPagos();if(i===7)renderExport();if(i===8)renderPortfolio();if(i===9)renderConfig();if(i===10)renderCompare();if(i===11)renderCerebro();
+  if(i===4)renderPro();if(i===5)renderSim();if(i===6)renderPagos();if(i===7)renderExport();if(i===8)renderPortfolio();if(i===9)renderConfig();if(i===10)renderCompare();if(i===11)renderCerebro();if(i===12)renderClientes();
 }
 
 // ═══════════════ MASSAGE LIST ═══════════════
@@ -927,7 +930,77 @@ function renameClient(key){
   let fixed=0;
   all.forEach((x,i)=>{if(i>0&&x.m.nc===true){x.m.nc=false;fixed++;}});
   saveData();renderConfig();renderInstances();
+  if(document.getElementById("panel-12").classList.contains("active"))renderClientes();
   gpToast("✅ "+n+" registro(s) con el nombre «"+nn+"»"+(fixed?" · "+fixed+" marcados como habitual":""));
+}
+// ═══════════════ CLIENTES (v56) ═══════════════
+// Resumen por cliente del centro actual: nº de masajes, desglose por tipo,
+// facturado, primera y última visita. Solo cuentan los masajes con nombre.
+const escH=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+function gpClientSummary(){
+  const c=currentCenter(),idx={};let sinNombre=0,total=0;
+  cDays().forEach(d=>d.massages.forEach(m=>{
+    total++;
+    const raw=String(m.cn||"").trim().replace(/\s+/g," ");
+    if(!raw){sinNombre++;return;}
+    const k=normCN(raw);
+    const o=idx[k]||(idx[k]={key:k,n:0,eur:0,first:d.date,last:d.date,types:{},raws:[]});
+    o.n++;o.eur+=m.price||0;
+    if(d.date<o.first)o.first=d.date;
+    if(d.date>o.last)o.last=d.date;
+    o.raws.push({date:d.date,raw:raw});
+    const ref=c.massages.find(x=>x.id===m.id)||{};
+    const t=o.types[m.id]||(o.types[m.id]={bg:m.nameBG||ref.nameBG||m.name||ref.name||"?",es:m.name||ref.name||"",n:0,eur:0});
+    t.n++;t.eur+=m.price||0;
+  }));
+  // Nombre a mostrar: la última escritura que empieza en mayúscula (igual que gpClients)
+  Object.values(idx).forEach(o=>{o.raws.sort((a,b)=>a.date.localeCompare(b.date));const cap=o.raws.filter(x=>/^\p{Lu}/u.test(x.raw));o.name=(cap.length?cap[cap.length-1]:o.raws[o.raws.length-1]).raw;});
+  return {list:Object.values(idx),sinNombre:sinNombre,total:total};
+}
+function renderClientes(){
+  const el=document.getElementById("clientes-content"),c=currentCenter(),s=gpClientSummary();
+  if(!s.list.length){el.innerHTML=`<div class="empty">Todavía no hay masajes con nombre de cliente en ${escH(c.name)}.<br>Escribe el nombre del cliente en cada masaje al registrar el día.</div>`;return;}
+  const ord=window._cliOrd||"n";
+  el.innerHTML=`<div class="card"><div class="card-title">👥 Clientes · ${escH(c.name)}</div>
+    <div style="font-size:calc(12px*var(--fs));color:var(--muted);line-height:1.5;margin-bottom:8px">${s.list.length} cliente${s.list.length!==1?"s":""} · ${s.total-s.sinNombre} de ${s.total} masajes con nombre${s.sinNombre===1?" (1 sin nombre no cuenta)":s.sinNombre?` (los ${s.sinNombre} sin nombre no cuentan)`:""}. Toca un cliente para ver el detalle.</div>
+    <input type="text" id="cli-q" placeholder="🔍 Buscar cliente" autocomplete="off" oninput="renderClientesList()" value="${escH(window._cliQ||"")}">
+    <div class="period-btns" style="margin:9px 0 0">
+      <button class="period-btn ${ord==="n"?"active":""}" onclick="window._cliOrd='n';renderClientes()">Más masajes</button>
+      <button class="period-btn ${ord==="last"?"active":""}" onclick="window._cliOrd='last';renderClientes()">Última visita</button>
+      <button class="period-btn ${ord==="eur"?"active":""}" onclick="window._cliOrd='eur';renderClientes()">Más facturado</button>
+    </div></div>
+  <div id="cli-list"></div>`;
+  renderClientesList();
+}
+function renderClientesList(){
+  const box=document.getElementById("cli-list");if(!box)return;
+  const qEl=document.getElementById("cli-q");window._cliQ=qEl?qEl.value:"";
+  // búsqueda sin tildes: «iva» encuentra «Iván»
+  const fold=x=>normCN(x).normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+  const q=fold(window._cliQ),ord=window._cliOrd||"n",td=today();
+  const L=gpClientSummary().list.filter(o=>!q||fold(o.key).includes(q));
+  L.sort((a,b)=>ord==="last"?(b.last.localeCompare(a.last)||b.n-a.n):ord==="eur"?(b.eur-a.eur||b.n-a.n):(b.n-a.n||b.last.localeCompare(a.last)));
+  if(!L.length){box.innerHTML=`<div class="empty">Ningún cliente coincide con «${escH(window._cliQ)}».</div>`;return;}
+  box.innerHTML=L.map(o=>{
+    const ts=Object.values(o.types).sort((a,b)=>b.n-a.n||b.eur-a.eur);
+    const ago=Math.round((new Date(td+"T12:00:00")-new Date(o.last+"T12:00:00"))/86400000);
+    const jk=escH(o.key.replace(/\\/g,"\\\\").replace(/'/g,"\\'"));
+    return `<details class="card" style="padding:12px 14px"><summary style="cursor:pointer;list-style:none">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div style="min-width:0;flex:1">
+          <div style="font-size:calc(15px*var(--fs));font-weight:700;color:var(--text);overflow-wrap:anywhere">${escH(o.name)} <span style="color:var(--dim);font-size:calc(11px*var(--fs));font-weight:400">▾</span></div>
+          <div style="font-size:calc(12px*var(--fs));color:var(--muted);margin-top:3px;line-height:1.5">${ts.map(t=>`<b style="color:var(--gold)">${t.n}</b> ${escH(t.bg)}`).join(" · ")}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0"><div style="font-size:calc(17px*var(--fs));font-weight:700;color:var(--gold)">${o.n}</div><div style="font-size:calc(10px*var(--fs));color:var(--dim)">masaje${o.n!==1?"s":""}</div></div>
+      </div></summary>
+      <div style="margin-top:9px;border-top:1px solid var(--bg3);padding-top:4px">
+        ${ts.map(t=>`<div class="pro-row" style="gap:12px"><span>${t.n} × ${escH(t.bg)}<div class="pro-sub">${escH(t.es)}</div></span><div class="pro-val">${ef(t.eur)}</div></div>`).join("")}
+        <div class="pro-row" style="font-weight:700;gap:12px"><span>Total facturado</span><div class="pro-val gold">${ef(o.eur)}</div></div>
+        <div class="pro-row"><span>Primera visita</span><div class="pro-val">${fmtDate(o.first)}</div></div>
+        <div class="pro-row" style="gap:12px"><span>Última visita</span><div class="pro-val">${fmtDate(o.last)}<div class="pro-sub">${ago<=0?"hoy":"hace "+ago+" día"+(ago!==1?"s":"")}</div></div></div>
+        <button class="btn-ghost" style="display:block" onclick="renameClient('${jk}')">✏️ Corregir o unir este nombre</button>
+      </div></details>`;
+  }).join("");
 }
 function gpPastVisits(cn,cl){const o=(cl||gpClients())[normCN(cn)];if(!o)return[];const ds=document.getElementById("f-date").value;return o.v.filter(x=>!ds||x.date<ds);}
 function setInsName(i,v){
