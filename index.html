@@ -627,7 +627,7 @@ const ICONS={good:"✅",warn:"⚠️",dead:"🔴",info:"💡"};
 const PAGE_NAMES=["Dashboard","Añadir día","Historial","Calendario","Análisis PRO","Simulador","Pagos","Exportar","Mi Valor Profesional","Configuración","Comparar Centros","Cerebro PRO","Clientes"];
 const DEFAULT_CFG={lockMinutes:10,fatigueHours:45};
 // Versión visible de la app — mantener sincronizada con CACHE_NAME de sw.js
-const APP_VERSION="v58";
+const APP_VERSION="v59";
 document.addEventListener("DOMContentLoaded",()=>{const v=document.getElementById("gp-version");if(v)v.textContent="Guido PRO · "+APP_VERSION;});
 
 let allData={};  // { hotel5: {days,payments,goal,cfg}, aleksa: {...}, sanatorium: {...} }
@@ -1008,29 +1008,31 @@ function gpClientSummary(){
   });
   return {list:Object.values(idx),sinNombre:sinNombre,total:total};
 }
-// v57 · Semáforo de retención. Visitas = DÍAS distintos (dos masajes el mismo día = 1 visita).
-//  · 2+ visitas: intervalo medio Δ = (última − primera) / (visitas − 1); dormido si lleva
-//    más de max(14, 1,5 × Δ) días sin venir (el mínimo de 14 evita falsas alarmas cuando
-//    vino dos veces en la misma semana).
-//  · 1 visita: dormido a los 30 días, salvo que solo hiciera masajes relajantes (Ritual),
-//    que no implican continuidad de tratamiento.
+// v57/v59 · Semáforo de retención. Visitas = DÍAS distintos (dos masajes el mismo día = 1 visita).
+//  · 2+ visitas: intervalo medio Δ = (última − primera) / (visitas − 1).
+//      ⏰ Fuera de su ritmo: lleva más de 1,5 × Δ sin venir pero aún no está dormido (rompió su cadencia: avisar ya).
+//      💤 Dormido: más de max(21, 1,5 × Δ) días (v59: suelo de 21, antes 14: un cliente de cada semana
+//         que falla una semana no está dormido).
+//  · 1 visita: dormido a los 30 días, salvo que solo hiciera masajes relajantes (Ritual).
+//  · v59: los dormidos se separan en 🔥 Para recuperar (hasta 75 días sin venir) y ❄️ Fríos (más de 75).
 function gpDormant(o,td,relax){
   const ds=Object.keys(o.dset).sort(),n=ds.length,D=(a,b)=>Math.round((new Date(b+"T12:00:00")-new Date(a+"T12:00:00"))/86400000);
   const since=D(ds[n-1],td);
-  let gap=null,thr=null;
-  if(n>=2){gap=Math.round(D(ds[0],ds[n-1])/(n-1));thr=Math.max(14,Math.round(1.5*gap));}
+  let gap=null,thr=null,late=false;
+  if(n>=2){gap=Math.round(D(ds[0],ds[n-1])/(n-1));thr=Math.max(21,Math.round(1.5*gap));late=since>Math.round(1.5*gap)&&since<=thr;}
   else if(!o.dset[ds[0]].every(id=>relax(id)))thr=30;
-  return {visits:n,gap:gap,thr:thr,since:since,dormant:thr!==null&&since>thr};
+  const dormant=thr!==null&&since>thr;
+  return {visits:n,gap:gap,thr:thr,since:since,dormant:dormant,late:late,temp:dormant?(since<=75?"hot":"cold"):null};
 }
 function renderClientes(){
   const el=document.getElementById("clientes-content"),c=currentCenter(),s=gpClientSummary();
   if(!s.list.length){el.innerHTML=`<div class="empty">Todavía no hay masajes con nombre de cliente en ${escH(c.name)}.<br>Escribe el nombre del cliente en cada masaje al registrar el día.</div>`;return;}
-  const ord=window._cliOrd||"n",st=window._cliSt||"all",nd=s.list.filter(o=>o.dormant).length;
+  const ord=window._cliOrd||"n",st=window._cliSt||"all",cnt=f=>s.list.filter(f).length;
   const sb=(v,l)=>`<button class="period-btn ${st===v?"active":""}" onclick="window._cliSt='${v}';renderClientes()">${l}</button>`;
   el.innerHTML=`<div class="card"><div class="card-title">👥 Clientes · ${escH(c.name)}</div>
     <div style="font-size:calc(12px*var(--fs));color:var(--muted);line-height:1.5;margin-bottom:8px">${s.list.length} cliente${s.list.length!==1?"s":""} · ${s.total-s.sinNombre} de ${s.total} masajes con nombre${s.sinNombre===1?" (1 sin nombre no cuenta)":s.sinNombre?` (los ${s.sinNombre} sin nombre no cuentan)`:""}. Toca un cliente para ver el detalle.</div>
     <input type="text" id="cli-q" placeholder="🔍 Buscar cliente" autocomplete="off" oninput="renderClientesList()" value="${escH(window._cliQ||"")}">
-    <div class="period-btns" style="margin:9px 0 0">${sb("all","Todos")}${sb("act","Activos")}${sb("dor","💤 Dormidos ("+nd+")")}</div>
+    <div class="period-btns" style="margin:9px 0 0">${sb("all","Todos")}${sb("act","Activos")}${sb("late","⏰ Fuera de ritmo ("+cnt(o=>o.late)+")")}${sb("hot","🔥 Recuperar ("+cnt(o=>o.temp==="hot")+")")}${sb("cold","❄️ Fríos ("+cnt(o=>o.temp==="cold")+")")}</div>
     <div class="period-btns" style="margin:7px 0 0">
       <button class="period-btn ${ord==="n"?"active":""}" onclick="window._cliOrd='n';renderClientes()">Más masajes</button>
       <button class="period-btn ${ord==="last"?"active":""}" onclick="window._cliOrd='last';renderClientes()">Última visita</button>
@@ -1045,7 +1047,7 @@ function renderClientesList(){
   // búsqueda sin tildes: «iva» encuentra «Iván»
   const fold=x=>normCN(x).normalize("NFD").replace(/[̀-ͯ]/g,"");
   const q=fold(window._cliQ),ord=window._cliOrd||"n",st=window._cliSt||"all",notes=gpNotes();
-  const L=gpClientSummary().list.filter(o=>(!q||fold(o.key).includes(q))&&(st==="all"||(st==="dor")===o.dormant));
+  const L=gpClientSummary().list.filter(o=>(!q||fold(o.key).includes(q))&&(st==="all"||(st==="act"&&!o.dormant)||(st==="late"&&o.late)||(st==="hot"&&o.temp==="hot")||(st==="cold"&&o.temp==="cold")));
   L.sort((a,b)=>ord==="last"?(b.last.localeCompare(a.last)||b.n-a.n):ord==="eur"?(b.eur-a.eur||b.n-a.n):(b.n-a.n||b.last.localeCompare(a.last)));
   if(!L.length){box.innerHTML=`<div class="empty">Ningún cliente coincide${window._cliQ?" con «"+escH(window._cliQ)+"»":""}.</div>`;return;}
   box.innerHTML=L.map((o,i)=>{
@@ -1057,7 +1059,7 @@ function renderClientesList(){
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
         <div style="min-width:0;flex:1">
           <div style="font-size:calc(15px*var(--fs));font-weight:700;color:var(--text);overflow-wrap:anywhere">${escH(o.name)} <span style="color:var(--dim);font-size:calc(11px*var(--fs));font-weight:400">▾</span></div>
-          ${o.dormant?`<div style="font-size:calc(12px*var(--fs));color:#e08a6a;margin-top:2px">💤 Dormido (hace ${o.since} días)</div>`:""}
+          ${o.temp==="hot"?`<div style="font-size:calc(12px*var(--fs));color:#e08a6a;margin-top:2px">🔥 Para recuperar (hace ${o.since} días)</div>`:o.temp==="cold"?`<div style="font-size:calc(12px*var(--fs));color:#8aa8c8;margin-top:2px">❄️ Frío (hace ${o.since} días)</div>`:o.late?`<div style="font-size:calc(12px*var(--fs));color:#d8b04a;margin-top:2px">⏰ Fuera de su ritmo (hace ${o.since} días · suele venir cada ${o.gap})</div>`:""}
           <div style="font-size:calc(12px*var(--fs));color:var(--muted);margin-top:3px;line-height:1.5">${fs.map(f=>`<b style="color:var(--gold)">${f.n}</b> ${escH(f.bg)}${f.nVar?` (${f.nVar} con variante)`:""}`).join(" · ")}</div>
         </div>
         <div style="text-align:right;flex-shrink:0"><div style="font-size:calc(17px*var(--fs));font-weight:700;color:var(--gold)">${o.n}</div><div style="font-size:calc(10px*var(--fs));color:var(--dim)">masaje${o.n!==1?"s":""}</div></div>
@@ -2680,8 +2682,11 @@ function gpReportV57(from,to,label){
   o+="  Top 5 por valor: "+(top5.length?top5.map(x=>gpIni(x.name)+" "+gpPl(x.n,"masaje","masajes")+" · "+ef(x.eur)+" / com. "+ef(x.com)).join(" | "):"—")+"\n";
   const rep=sum.filter(x=>x.first>=from&&x.first<=to&&x.visits>=2);
   o+="  Nuevos del periodo que ya repitieron: "+rep.length+(rep.length?" ("+rep.map(x=>gpIni(x.name)).join(", ")+")":"")+"\n";
-  const dor=sum.filter(x=>x.dormant).sort((a,b)=>b.eur-a.eur);
-  o+="  💤 Dormidos: "+dor.length+(dor.length?" · prioritarios: "+dor.slice(0,10).map(x=>gpIni(x.name)+" ("+(x.gap!==null?x.visits+" visitas, cada "+x.gap+" d":"1 visita")+", hace "+x.since+" d, "+ef(x.eur)+")").join(" | "):"")+"\n";
+  const fmtC=x=>gpIni(x.name)+" ("+(x.gap!==null?x.visits+" visitas, cada "+x.gap+" d":"1 visita")+", hace "+x.since+" d, "+ef(x.eur)+")";
+  const late=sum.filter(x=>x.late).sort((a,b)=>b.eur-a.eur),hot=sum.filter(x=>x.temp==="hot").sort((a,b)=>b.eur-a.eur),cold=sum.filter(x=>x.temp==="cold").sort((a,b)=>b.eur-a.eur);
+  o+="  ⏰ Fuera de su ritmo (aún no dormidos, avisar ya): "+late.length+(late.length?" · "+late.slice(0,10).map(fmtC).join(" | "):"")+"\n";
+  o+="  🔥 Para recuperar (dormidos hasta 75 días sin venir): "+hot.length+(hot.length?" · prioritarios por valor: "+hot.slice(0,10).map(fmtC).join(" | "):"")+"\n";
+  o+="  ❄️ Fríos (más de 75 días): "+cold.length+(cold.length?" · los de más valor: "+cold.slice(0,5).map(fmtC).join(" | "):"")+"\n";
   // Experimentos
   const ex=gpExps();
   o+="\n"+S+"\n🧪 EXPERIMENTOS\n";
