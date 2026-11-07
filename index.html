@@ -457,7 +457,7 @@ input, select, textarea { max-width: 100%; }
     </div>
     <div class="card" id="instances-card" style="display:none">
       <div class="card-title">🕐 Hora y Cliente por Masaje</div>
-      <div style="font-size:calc(11px*var(--fs));color:var(--dim);margin-bottom:6px;line-height:1.5">La lista se ordena sola por hora. ⏭ empieza al terminar el anterior · ⇩ retrasa los siguientes solo si se pisarían (al cambiar una hora se hace solo) · ✕ quita ese masaje · 📅 marca si el cliente reservó la siguiente sesión al pagar · 🔔 manda el día entero al calendario con los descansos (avisos ¼ ½ ¾, o cambio de zona cada 10 min en anticelulíticos). Reexportar actualiza los eventos: no duplica.</div>
+      <div style="font-size:calc(11px*var(--fs));color:var(--dim);margin-bottom:6px;line-height:1.5">La lista se ordena sola por hora. ⏭ empieza al terminar el anterior · ⇩ retrasa los siguientes solo si se pisarían (al cambiar una hora se hace solo) · ✕ quita ese masaje · 📅 ¿Reagendó? Sí/No: si el cliente reservó la siguiente sesión al pagar (sin tocar = sin dato, no cuenta) · 🔔 manda el día entero al calendario con los descansos (avisos ¼ ½ ¾, o cambio de zona cada 10 min en anticelulíticos). Reexportar actualiza los eventos: no duplica.</div>
       <div id="instances-list"></div>
       <button class="btn-gold" style="margin-top:10px" onclick="scheduleAll()">🔔 Todos al calendario (con descansos)</button>
       <button class="btn-blue" style="margin-top:8px" onclick="autoExit(true)">🚪 Salida automática (último masaje + 20 min)</button>
@@ -627,7 +627,7 @@ const ICONS={good:"✅",warn:"⚠️",dead:"🔴",info:"💡"};
 const PAGE_NAMES=["Dashboard","Añadir día","Historial","Calendario","Análisis PRO","Simulador","Pagos","Exportar","Mi Valor Profesional","Configuración","Comparar Centros","Cerebro PRO","Clientes"];
 const DEFAULT_CFG={lockMinutes:10,fatigueHours:45};
 // Versión visible de la app — mantener sincronizada con CACHE_NAME de sw.js
-const APP_VERSION="v57";
+const APP_VERSION="v58";
 document.addEventListener("DOMContentLoaded",()=>{const v=document.getElementById("gp-version");if(v)v.textContent="Guido PRO · "+APP_VERSION;});
 
 let allData={};  // { hotel5: {days,payments,goal,cfg}, aleksa: {...}, sanatorium: {...} }
@@ -876,7 +876,7 @@ function buildMassageList(){
   }).join("");
 }
 function adjQty(id,d){
-  if(d>0){instances.push({mid:id,t:"",nc:null,cn:"",src:"",u:newU(),rb:false});}
+  if(d>0){instances.push({mid:id,t:"",nc:null,cn:"",src:"",u:newU()}); /* v58: ¿Reagendó? nace sin dato */}
   else{for(let i=instances.length-1;i>=0;i--){if(instances[i].mid===id){instances.splice(i,1);break;}}}
   qty[id]=instances.filter(x=>x.mid===id).length;
   document.getElementById("qty-"+id).textContent=qty[id]||0;
@@ -912,7 +912,7 @@ function renderInstances(){
       <div style="display:flex;flex-wrap:wrap;gap:7px;align-items:center">
         <input type="time" value="${ins.t}" onchange="setInsTime(${i},this.value)" style="flex:1;padding:8px 10px;font-size:calc(14px*var(--fs))">
         ${i>0?`<button onclick="chainFrom(${i})" title="Empieza al terminar el anterior" style="flex-shrink:0;width:38px;height:36px;border-radius:8px;border:1px solid #2a4a2a;background:#0a1a0a;color:var(--green);font-size:calc(15px*var(--fs));cursor:pointer">⏭</button>`:""}${i<instances.length-1&&ins.t?`<button onclick="pushFrom(${i})" title="Desplazar todos los siguientes en cadena" style="flex-shrink:0;width:38px;height:36px;border-radius:8px;border:1px solid #4a3a10;background:#1a1200;color:#bf8a2a;font-size:calc(15px*var(--fs));cursor:pointer">⇩</button>`:""}
-        <button onclick="toggleRB(${i})" title="¿Reservó la siguiente sesión al pagar?" style="flex-shrink:0;padding:8px 10px;border-radius:8px;font-size:calc(12px*var(--fs));font-family:Georgia,serif;cursor:pointer;border:1px solid ${ins.rb===true?"#4abf7a":"#333"};background:${ins.rb===true?"#0a2a10":"var(--bg3)"};color:${ins.rb===true?"#4abf7a":"var(--dim)"}">${ins.rb===true?"📅 Reagendó ✓":"📅 ¿Reagendó?"}</button>
+        <span title="¿Reservó la siguiente sesión al pagar? Sin tocar = sin dato" style="display:inline-flex;align-items:center;gap:4px;flex-shrink:0"><span style="font-size:calc(12px*var(--fs));color:var(--dim)">📅 ¿Reagendó?</span><button onclick="setRB(${i},true)" style="padding:8px 10px;border-radius:8px;font-size:calc(12px*var(--fs));font-family:Georgia,serif;cursor:pointer;border:1px solid ${ins.rb===true?"#4abf7a":"#333"};background:${ins.rb===true?"#0a2a10":"var(--bg3)"};color:${ins.rb===true?"#4abf7a":"var(--dim)"}">Sí</button><button onclick="setRB(${i},false)" style="padding:8px 10px;border-radius:8px;font-size:calc(12px*var(--fs));font-family:Georgia,serif;cursor:pointer;border:1px solid ${ins.rb===false?"#bf6a4a":"#333"};background:${ins.rb===false?"#2a120a":"var(--bg3)"};color:${ins.rb===false?"#e0906a":"var(--dim)"}">No</button></span>
         <button onclick="toggleNC(${i})" style="flex-shrink:0;padding:8px 10px;border-radius:8px;font-size:calc(12px*var(--fs));font-family:Georgia,serif;cursor:pointer;border:1px solid ${ins.nc===true?"#4abf7a":ins.nc===false?"#4a8fbf":"#333"};background:${ins.nc===true?"#0a2a10":ins.nc===false?"#0a1a2a":"var(--bg3)"};color:${ins.nc===true?"#4abf7a":ins.nc===false?"#6a9fd0":"var(--muted)"}">${ins.nc===true?"🆕 Nuevo":ins.nc===false?"🔁 Habitual":"👤 Cliente…"}</button>
         <button onclick="scheduleMassage(${i})" title="Añadir a calendario con alertas" style="flex-shrink:0;width:38px;height:36px;border-radius:8px;border:1px solid #5a4a10;background:#1a1400;color:var(--gold);font-size:calc(16px*var(--fs));cursor:pointer">🔔</button>
       </div>
@@ -1082,7 +1082,8 @@ function gpNotes(){try{return JSON.parse(localStorage.getItem(gpNotesKey()))||{}
 function gpNoteGet(cn){return gpNotes()[normCN(cn)]||"";}
 function gpNoteSet(key,txt){const n=gpNotes(),t=String(txt||"").trim().replace(/\s+/g," ").slice(0,300);if(t)n[key]=t;else delete n[key];try{localStorage.setItem(gpNotesKey(),JSON.stringify(n));}catch(e){}}
 // ── v57: ¿reservó la siguiente sesión al pagar?
-function toggleRB(i){if(!instances[i])return;instances[i].rb=instances[i].rb!==true;renderInstances();}
+// v58: tres estados. Sin tocar = sin dato (no cuenta); Sí / No = respuesta. Tocar otra vez el mismo botón lo deja sin dato.
+function setRB(i,v){if(!instances[i])return;instances[i].rb=instances[i].rb===v?undefined:v;renderInstances();}
 // ── v57: demanda perdida e incidencias
 // Ticket medio del centro: precio medio de lo vendido en los últimos 90 días (si no hay ventas, media del catálogo)
 function gpAvgTicket(){
@@ -2524,7 +2525,7 @@ const gpDiff=(a,b)=>Math.round((new Date(b+"T12:00:00")-new Date(a+"T12:00:00"))
 const gpPct=(a,b)=>b?Math.round(a/b*100)+"%":"—";
 const gpPl=(n,a,b)=>n+" "+(n===1?a:b);
 const gpIni=nm=>String(nm||"").trim().split(/\s+/).filter(Boolean).map(x=>x[0].toUpperCase()+".").join("")||"?";
-const GP_EXP_MET={ticket:"Ticket medio",ret:"% Retención a 30 días",occ:"% Ocupación",mini:"Conversión Mini→Completo a 30 días",rb:"% Reagendó"};
+const GP_EXP_MET={ticket:"Ticket medio",fpd:"Facturado por día trabajado",mpd:"Masajes por día trabajado",eph:"Ingreso por hora trabajada",ret:"% Retención a 30 días",occ:"% Ocupación",mini:"Conversión Mini→Completo a 30 días",rb:"% Reagendó"};
 const gpIsMini=id=>!!(currentCenter().massages.find(x=>x.id===id)||{}).mini;
 // Clientes con nombre: fechas distintas ordenadas y masajes de cada fecha
 function gpClientDates(){
@@ -2548,6 +2549,10 @@ function gpCohort(from,to,firstFilter,cond){
 function gpMetric(met,from,to){
   const c=currentCenter(),days=cDays().filter(d=>d.date>=from&&d.date<=to),ms=days.flatMap(d=>d.massages);
   if(met==="ticket"){const n=ms.length;return {val:n?ms.reduce((a,m)=>a+(m.price||0),0)/n:null,n:n,txt:n?ef(ms.reduce((a,m)=>a+(m.price||0),0)/n):"—"};}
+  // v58: métricas de volumen normalizadas por día (u hora) efectivamente trabajado
+  if(met==="fpd"){const wd=days.length,b=ms.reduce((a,m)=>a+(m.price||0),0);return {val:wd?b/wd:null,n:wd,txt:wd?ef(b/wd):"—",unit:"días trabajados"};}
+  if(met==="mpd"){const wd=days.length;return {val:wd?ms.length/wd:null,n:wd,txt:wd?(ms.length/wd).toFixed(1).replace(".",","):"—",unit:"días trabajados"};}
+  if(met==="eph"){const h=days.reduce((a,d)=>a+d.workedH,0),t=days.reduce((a,d)=>a+d.dayTotal,0);return {val:h?t/h:null,n:days.length,txt:h?ef(t/h)+"/h":"—",unit:"días trabajados"};}
   if(met==="occ"){const mm=ms.reduce((a,m)=>a+(parseInt(m.duration)||60),0),wm=days.reduce((a,d)=>a+d.workedH,0)*60;return {val:wm?mm/wm:null,n:days.length,txt:wm?Math.round(mm/wm*100)+"%":"—",unit:"días"};}
   if(met==="rb"){const df=ms.filter(m=>m.rb===true||m.rb===false),y=df.filter(m=>m.rb===true).length;return {val:df.length?y/df.length:null,n:df.length,txt:gpPct(y,df.length)};}
   if(met==="ret"){const r=gpCohort(from,to,null,null);return {val:r.n?r.hit/r.n:null,n:r.n,pend:r.pend,txt:gpPct(r.hit,r.n),unit:"clientes nuevos"};}
@@ -2564,10 +2569,18 @@ function gpExpCompare(e){
 }
 function gpExpLine(e){
   const r=gpExpCompare(e),b=r.before,a=r.after;
-  let d="";if(b.val!=null&&a.val!=null){const dv=a.val-b.val;d=e.metric==="ticket"?(dv>=0?"+":"−")+ef(Math.abs(dv)):(dv>=0?"+":"−")+Math.abs(Math.round(dv*100))+" pp";}
+  let d="";if(b.val!=null&&a.val!=null){const dv=a.val-b.val,sg=dv>=0?"+":"−";d=["ticket","fpd","eph"].includes(e.metric)?sg+ef(Math.abs(dv)):e.metric==="mpd"?sg+Math.abs(dv).toFixed(1).replace(".",","):sg+Math.abs(Math.round(dv*100))+" pp";}
   const small=(b.n<10||a.n<10)?" · ⚠️ muestra pequeña":"";
   const pend=(a.pend||b.pend)?" · pendientes de madurar: "+((b.pend||0)+(a.pend||0)):"";
   return "Antes ("+r.N+" días, "+fmtDate(r.bF)+"–"+fmtDate(r.bT)+"): "+b.txt+" (n="+b.n+") → Después ("+fmtDate(r.aF)+"–"+fmtDate(r.aT)+"): "+a.txt+" (n="+a.n+")"+(d?" · Δ "+d:"")+small+pend;
+}
+// v58: contexto de cada ventana. Si en un lado trabajaste más días que en el otro, los totales
+// engañan: se comparan siempre medias por día trabajado y por hora, además de los ratios.
+function gpExpCtx(e){
+  const r=gpExpCompare(e),W=(f,t)=>{const ds=cDays().filter(d=>d.date>=f&&d.date<=t),ms=ds.flatMap(d=>d.massages);return {wd:ds.length,b:ms.reduce((a,m)=>a+(m.price||0),0),n:ms.length,h:ds.reduce((a,d)=>a+d.workedH,0),t:ds.reduce((a,d)=>a+d.dayTotal,0)};};
+  const A=W(r.bF,r.bT),B=W(r.aF,r.aT),pdE=x=>x.wd?ef(x.b/x.wd):"—",pdN=x=>x.wd?(x.n/x.wd).toFixed(1).replace(".",","):"—",ph=x=>x.h?ef(x.t/x.h):"—";
+  const desig=A.wd&&B.wd&&Math.max(A.wd,B.wd)/Math.min(A.wd,B.wd)>=1.5;
+  return "Días trabajados: antes "+A.wd+" de "+r.N+" · después "+B.wd+" de "+r.N+" · Facturado/día trabajado "+pdE(A)+" → "+pdE(B)+" · Masajes/día trabajado "+pdN(A)+" → "+pdN(B)+" · Ingreso/hora "+ph(A)+" → "+ph(B)+(desig?" · ⚠️ días trabajados muy distintos: compara medias por día, no totales":"");
 }
 const gpExps=()=>cData().exps||(cData().exps=[]);
 function gpExpCard(){
@@ -2578,6 +2591,7 @@ function gpExpCard(){
       <div style="font-size:calc(14px*var(--fs));color:var(--text);font-weight:700">${escH(e.name)} <span style="font-weight:400;font-size:calc(11px*var(--fs));color:${e.end&&e.end<=td?"var(--dim)":"#4abf7a"}">${e.end&&e.end<=td?"cerrado":"activo"}</span></div>
       <div class="pro-sub" style="margin:2px 0 4px">${GP_EXP_MET[e.metric]} · desde ${fmtDate(e.start)}${e.end?" hasta "+fmtDate(e.end):""}</div>
       <div style="font-size:calc(12px*var(--fs));color:var(--muted);line-height:1.5">${escH(gpExpLine(e))}</div>
+      <div style="font-size:calc(11px*var(--fs));color:var(--dim);line-height:1.5;margin-top:3px">${escH(gpExpCtx(e))}</div>
       <div style="display:flex;gap:7px;margin-top:6px">${!e.end||e.end>td?`<button class="period-btn" onclick="gpExpClose(${i})">⏹ Cerrar hoy</button>`:""}<button class="period-btn" style="color:#e07474" onclick="gpExpDel(${i})">🗑 Borrar</button></div>
     </div>`).join(""):`<div style="font-size:calc(12px*var(--fs));color:var(--muted)">Ningún experimento todavía.</div>`}
     <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">
@@ -2658,8 +2672,8 @@ function gpReportV57(from,to,label){
     o+="  Demanda que no cupo (agenda llena + fuera de turno): "+cap.length+" · "+ef(vc)+" / comisión "+ef(calcCommission([{price:vc}],c))+"\n";
     o+="  Huecos perdidos (cancelación tardía + no-show): "+ns.length+" · "+ef(vn)+" / comisión "+ef(calcCommission([{price:vn}],c))+"\n";}
   // Reagendamiento
-  const df=ms.filter(m=>m.rb===true||m.rb===false);
-  o+="\n"+S+"\n📅 REAGENDAMIENTO AL COBRAR\n  "+(df.length?df.filter(m=>m.rb).length+" de "+df.length+" masajes con el dato ("+gpPct(df.filter(m=>m.rb).length,df.length)+")"+(df.length<ms.length?" · "+(ms.length-df.length)+" sin dato (anteriores a la v57)":""):"Sin datos todavía (se marca con 📅 en cada masaje desde la v57).")+"\n";
+  const df=ms.filter(m=>m.rb===true||m.rb===false),si=df.filter(m=>m.rb).length,sinM=ms.length-df.length;
+  o+="\n"+S+"\n📅 REAGENDAMIENTO AL COBRAR\n  "+(df.length?"Sí "+si+" · No "+(df.length-si)+" → "+gpPct(si,df.length)+" sobre los que marcaste"+(sinM?" · "+gpPl(sinM,"masaje","masajes")+" sin marcar (no cuenta"+(sinM===1?"":"n")+")":""):"Sin datos todavía (se marca con 📅 Sí/No en cada masaje)."+(sinM?" "+gpPl(sinM,"masaje","masajes")+" sin marcar.":""))+"\n";
   // Alertas de clientes (iniciales: este texto se pega en chats con IA)
   o+="\n"+S+"\n👥 ALERTAS DE CLIENTES (iniciales; los nombres completos están en la app)\n";
   const top5=[...sum].sort((a,b)=>b.eur-a.eur).slice(0,5);
@@ -2672,7 +2686,7 @@ function gpReportV57(from,to,label){
   const ex=gpExps();
   o+="\n"+S+"\n🧪 EXPERIMENTOS\n";
   if(!ex.length)o+="  Ninguno registrado (Cerebro → 🧪 Experimentos).\n";
-  ex.forEach(e=>{o+="  · "+e.name+" — "+GP_EXP_MET[e.metric]+" — "+(e.end&&e.end<=td?"cerrado":"activo")+"\n    "+gpExpLine(e)+"\n";});
+  ex.forEach(e=>{o+="  · "+e.name+" — "+GP_EXP_MET[e.metric]+" — "+(e.end&&e.end<=td?"cerrado":"activo")+"\n    "+gpExpLine(e)+"\n    "+gpExpCtx(e)+"\n";});
   return o;
 }
 
@@ -2722,45 +2736,77 @@ function saveConfig(){
 }
 
 // ═══════════════ BACKUP ═══════════════
-function exportBackup(){try{localStorage.setItem("gp_last_backup",today());}catch(e){}const data=JSON.stringify({version:SCHEMA_VERSION,data:allData},null,2);const blob=new Blob([data],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="guidopro_backup_"+today()+".json";a.click();URL.revokeObjectURL(url);try{renderDashboard();}catch(e){}}
+// v58: el backup incluye también las notas de clientes y los centros ocultos. Es un archivo
+// tuyo, en tu móvil: NO lo compartas (lleva notas de salud de tus clientes). Las notas siguen
+// sin salir nunca en informes, portapapeles ni calendario.
+// rbTri: marca de copias hechas con ¿Reagendó? en tres estados (desde v58). En copias sin
+// esa marca (v57), un "no" puede ser un "no tocado", así que al importarlas pasa a "sin dato".
+function gpBackupPayload(){
+  const notes={};CENTERS.forEach(c=>{try{notes[c.key]=JSON.parse(localStorage.getItem("gp_notes_"+c.key))||{};}catch(e){notes[c.key]={};}});
+  return {version:SCHEMA_VERSION,rbTri:true,data:allData,notes:notes,hiddenCenters:gpHiddenC()};
+}
+// v58: una sola vez al arrancar, los ¿Reagendó? = "no" guardados con la v57 (que nacían en "no"
+// y no se distinguían de "no tocado") pasan a "sin dato". Desde la v58 "no" es una respuesta real.
+function gpMigrateRbTri(){
+  try{if(localStorage.getItem("gp_rb_tri"))return;
+    gpRbUntri(allData);saveData();
+    CENTERS.forEach(c=>{const k="gp_draft_"+c.key,dr=JSON.parse(localStorage.getItem(k)||"null");if(dr&&Array.isArray(dr.ins)){dr.ins.forEach(x=>{if(x.rb===false)delete x.rb;});localStorage.setItem(k,JSON.stringify(dr));}});
+    localStorage.setItem("gp_rb_tri","1");}catch(e){}
+}
+function gpRbUntri(data){Object.values(data||{}).forEach(cd=>((cd&&cd.days)||[]).forEach(d=>(d.massages||[]).forEach(m=>{if(m.rb===false)delete m.rb;})));}
+// Notas y centros ocultos de un backup. Combinar: lo que ya hay en el móvil manda y se añaden las
+// notas que falten. Reemplazar: se usan las del backup. Copias antiguas sin notas no borran nada.
+function gpImportExtras(d,merge){
+  if(d.notes&&typeof d.notes==="object")CENTERS.forEach(c=>{const inc=d.notes[c.key];if(!inc||typeof inc!=="object")return;
+    const k="gp_notes_"+c.key;let cur={};try{cur=JSON.parse(localStorage.getItem(k))||{};}catch(e){}
+    const out=merge?Object.assign({},inc,cur):Object.assign({},inc);
+    try{localStorage.setItem(k,JSON.stringify(out));}catch(e){}});
+  if(Array.isArray(d.hiddenCenters)&&(!merge||localStorage.getItem("gp_hidden_centers")===null)){
+    const h=d.hiddenCenters.filter(k=>CENTERS.some(c=>c.key===k));
+    if(h.length<CENTERS.length)try{localStorage.setItem("gp_hidden_centers",JSON.stringify(h));}catch(e){}}
+}
+function exportBackup(){try{localStorage.setItem("gp_last_backup",today());}catch(e){}const data=JSON.stringify(gpBackupPayload(),null,2);const blob=new Blob([data],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="guidopro_backup_"+today()+".json";a.click();URL.revokeObjectURL(url);try{renderDashboard();}catch(e){}}
 function importBackup(input){
   const file=input.files[0];if(!file)return;
   const reader=new FileReader();
   reader.onload=e=>{
-    try{
-      const d=JSON.parse(e.target.result);
-      // Support both formats: new multi-center {data:{...}} and old hotel5-only {days:[...]}
-      let incoming=null;
-      if(d.data){incoming=d.data;}
-      else if(d.days||Array.isArray(d)){incoming={hotel5:{days:d.days||d,payments:d.payments||[],goal:d.goal||0,cfg:d.cfg||{}}};}
-      if(!incoming){alert("❌ Formato inválido.");input.value="";return;}
-      const hasCurrent=Object.values(allData).some(cd=>(cd.days||[]).length>0);
-      let merge=false;
-      if(hasCurrent){merge=confirm("Ya tienes datos en esta app.\n\n✅ ACEPTAR = COMBINAR (añade los días del backup que no existan, conserva lo actual)\n\n❌ CANCELAR = REEMPLAZAR TODO con el backup");}
-      if(merge){
-        let added=0;
-        CENTERS.forEach(c=>{
-          const inc=incoming[c.key];if(!inc)return;
-          if(!allData[c.key])allData[c.key]=initCenterData();
-          const existingDates=new Set(allData[c.key].days.map(x=>x.date));
-          (inc.days||[]).forEach(dd=>{if(!existingDates.has(dd.date)){allData[c.key].days.push(normalizeDay(dd,c));added++;}});
-          allData[c.key].days.sort((a,b)=>a.date.localeCompare(b.date));
-          const existingPayIds=new Set(allData[c.key].payments.map(p=>p.id));
-          (inc.payments||[]).forEach(p=>{if(!existingPayIds.has(p.id))allData[c.key].payments.push(p);});
-          if(!allData[c.key].goal&&inc.goal)allData[c.key].goal=inc.goal;
-        });
-        saveData();updateHeader();
-        alert("✅ Combinado: "+added+" días añadidos del backup. Total: "+Object.values(allData).reduce((s,cd)=>s+(cd.days||[]).length,0)+" días.");
-      }else{
-        allData=incoming;
-        CENTERS.forEach(c=>{if(!allData[c.key])allData[c.key]=initCenterData();allData[c.key].days=(allData[c.key].days||[]).map(dd=>normalizeDay(dd,c));if(!allData[c.key].payments)allData[c.key].payments=[];});
-        saveData();updateHeader();
-        alert("✅ Backup restaurado. "+Object.values(allData).reduce((s,cd)=>s+(cd.days||[]).length,0)+" días en total.");
-      }
-    }catch{alert("❌ Error al leer el archivo.");}
+    try{gpRestoreBackup(JSON.parse(e.target.result));}catch{alert("❌ Error al leer el archivo.");}
     input.value="";
   };
   reader.readAsText(file);
+}
+function gpRestoreBackup(d){
+  // Support both formats: new multi-center {data:{...}} and old hotel5-only {days:[...]}
+  let incoming=null;
+  if(d.data){incoming=d.data;}
+  else if(d.days||Array.isArray(d)){incoming={hotel5:{days:d.days||d,payments:d.payments||[],goal:d.goal||0,cfg:d.cfg||{}}};}
+  if(!incoming){alert("❌ Formato inválido.");return;}
+  if(!d.rbTri)gpRbUntri(incoming);
+  const hasCurrent=Object.values(allData).some(cd=>(cd.days||[]).length>0);
+  let merge=false;
+  if(hasCurrent){merge=confirm("Ya tienes datos en esta app.\n\n✅ ACEPTAR = COMBINAR (añade los días del backup que no existan, conserva lo actual)\n\n❌ CANCELAR = REEMPLAZAR TODO con el backup");}
+  if(merge){
+    let added=0;
+    CENTERS.forEach(c=>{
+      const inc=incoming[c.key];if(!inc)return;
+      if(!allData[c.key])allData[c.key]=initCenterData();
+      const existingDates=new Set(allData[c.key].days.map(x=>x.date));
+      (inc.days||[]).forEach(dd=>{if(!existingDates.has(dd.date)){allData[c.key].days.push(normalizeDay(dd,c));added++;}});
+      allData[c.key].days.sort((a,b)=>a.date.localeCompare(b.date));
+      const existingPayIds=new Set(allData[c.key].payments.map(p=>p.id));
+      (inc.payments||[]).forEach(p=>{if(!existingPayIds.has(p.id))allData[c.key].payments.push(p);});
+      if(!allData[c.key].goal&&inc.goal)allData[c.key].goal=inc.goal;
+      // v58: experimentos del backup que no estén ya
+      if(Array.isArray(inc.exps)){const ids=new Set((allData[c.key].exps||[]).map(x=>x.id));allData[c.key].exps=(allData[c.key].exps||[]).concat(inc.exps.filter(x=>x&&!ids.has(x.id)));}
+    });
+    saveData();gpImportExtras(d,true);updateHeader();
+    alert("✅ Combinado: "+added+" días añadidos del backup. Total: "+Object.values(allData).reduce((s,cd)=>s+(cd.days||[]).length,0)+" días.");
+  }else{
+    allData=incoming;
+    CENTERS.forEach(c=>{if(!allData[c.key])allData[c.key]=initCenterData();allData[c.key].days=(allData[c.key].days||[]).map(dd=>normalizeDay(dd,c));if(!allData[c.key].payments)allData[c.key].payments=[];});
+    saveData();gpImportExtras(d,false);updateHeader();
+    alert("✅ Backup restaurado. "+Object.values(allData).reduce((s,cd)=>s+(cd.days||[]).length,0)+" días en total.");
+  }
 }
 
 // ═══════════════ UNREGISTERED CHECK ═══════════════
@@ -2783,7 +2829,7 @@ if("serviceWorker"in navigator){navigator.serviceWorker.register('./sw.js').then
 // solo así Android instala una app de verdad, con opción de desinstalar.
 
 // ═══════════════ INIT ═══════════════
-loadData();
+loadData();gpMigrateRbTri();
 setInterval(checkLock,30000);
 </script>
 </body>
